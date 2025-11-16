@@ -1,0 +1,18 @@
+{% extends 'usersideapp/base_sidebar.html' %}
+{% load static %}
+{% block page_title %}搜尋餐廳{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'usersideapp/css/Search_rest.css' %}">
+{% endblock %}
+{% block content %}
+<div class="map-search-wrapper">
+    <div class="map-search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="搜尋附近餐廳、料理或地點">
+        <button class="nav-btn">↻</button>
+    </div>
+</div>
+<div class="card-long">
+    <p>未整合地圖服務，這裡先展示搜尋列樣式。後續可串接實際 API。</p>
+</div>
+{% endblock %}

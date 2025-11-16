@@ -1,0 +1,82 @@
+{% extends 'usersideapp/base_sidebar.html' %}
+{% block page_title %}飲食紀錄{% endblock %}
+{% block content %}
+<div class="welcome-box record-header">
+    <div class="record-left">
+        <h1>飲食紀錄</h1>
+        <p>瀏覽過去的飲食記錄，觀察自己的飲食習慣。</p>
+    </div>
+    <div class="record-right">
+        <div class="record-filter-bar">
+            <select>
+                <option>最近 7 天</option>
+                <option>最近 30 天</option>
+                <option>本月</option>
+                <option>自訂區間（未實作）</option>
+            </select>
+            <button>套用</button>
+        </div>
+    </div>
+</div>
+
+<div class="section-title">歷史紀錄</div>
+<div class="record-list">
+    <div class="card-long record-item">
+        <div class="record-row">
+            <div class="record-date">
+                <div class="record-date-main">2025-11-14（昨天）</div>
+                <div class="record-date-sub">晚餐有外食 1 次</div>
+            </div>
+            <div class="record-summary">
+                <div>🍽 總熱量：<strong>1850 kcal</strong></div>
+                <div>🥚 蛋白質：約 <strong>82 g</strong></div>
+            </div>
+            <div class="record-actions">
+                <span class="record-tags">
+                    <span class="tag good">均衡</span>
+                    <span class="tag normal">外食</span>
+                </span>
+                <button class="record-detail-btn">查看詳情</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-long record-item">
+        <div class="record-row">
+            <div class="record-date">
+                <div class="record-date-main">2025-11-13</div>
+                <div class="record-date-sub">點心稍多，建議注意糖分攝取</div>
+            </div>
+            <div class="record-summary">
+                <div>🍽 總熱量：<strong>2100 kcal</strong></div>
+                <div>🍬 點心：<strong>3 次</strong></div>
+            </div>
+            <div class="record-actions">
+                <span class="record-tags">
+                    <span class="tag warn">點心偏多</span>
+                </span>
+                <button class="record-detail-btn">查看詳情</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-long record-item">
+        <div class="record-row">
+            <div class="record-date">
+                <div class="record-date-main">2025-11-12</div>
+                <div class="record-date-sub">以清淡家常菜為主</div>
+            </div>
+            <div class="record-summary">
+                <div>🍽 總熱量：<strong>1720 kcal</strong></div>
+                <div>🥗 蔬菜份量：<strong>足夠</strong></div>
+            </div>
+            <div class="record-actions">
+                <span class="record-tags">
+                    <span class="tag good">狀態良好</span>
+                </span>
+                <button class="record-detail-btn">查看詳情</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

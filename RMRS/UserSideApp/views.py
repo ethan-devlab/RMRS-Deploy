@@ -1,3 +1,1 @@
-from django.shortcuts import render
-
-# Create your views here.
+from .views import *  # noqa: F401,F403
