@@ -1,0 +1,821 @@
+/* =========================================
+   全域設定
+========================================= */
+body {
+    margin: 0;
+    font-family: "Poppins", "Noto Sans TC", sans-serif;
+
+    /* ✅ 背景圖 + 淡白色漸層疊加，避免太花 */
+    background:
+        linear-gradient(135deg,
+            rgba(243, 244, 246, 0.40),
+            rgba(228, 228, 228, 0.85)),
+        url("../img/home_bg.jpg") center / cover fixed no-repeat;
+
+    display: flex;
+}
+
+/* =========================================
+   左側 Sidebar（展開 / 收合）
+========================================= */
+.sidebar {
+    width: 240px;
+    min-height: 100vh;
+    background: white;
+    box-shadow: 3px 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    box-sizing: border-box;
+    transition: width 0.25s ease;
+    overflow: hidden;
+
+}
+
+/* --- 收合狀態 --- */
+.sidebar.collapsed {
+    width: 72px;
+}
+
+.sidebar.collapsed .logo {
+    display: none;
+}
+
+.sidebar.collapsed ul {
+    display: none;
+}
+
+.sidebar.collapsed .toggle-btn {
+    display: block;
+    margin: 0 auto;
+}
+
+/* =========================================
+   Sidebar：頂部（☰ + Foodie Logo）
+========================================= */
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+.toggle-btn {
+    background: transparent;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    padding: 4px 6px;
+}
+
+.logo {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+.logo-icon {
+    display: inline-block;
+    margin-right: 6px;
+}
+
+/* =========================================
+   Sidebar：選單列表
+========================================= */
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 10px 12px;
+    margin-bottom: 10px;
+
+    border-radius: 999px;
+
+    cursor: pointer;
+    font-size: 15px;
+    color: #374151;
+
+    transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s;
+}
+
+.sidebar li .menu-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: inherit;
+    text-decoration: none;
+    width: 100%;
+}
+
+/* hover 效果 */
+.sidebar li:not(.active):hover {
+    background: #f3f4ff;
+    transform: translateX(2px);
+}
+
+/* 當前選項 */
+.sidebar .active {
+    background: #111827;
+    color: white;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.35);
+}
+
+/* 登出 */
+.sidebar .logout {
+    margin-top: 20px;
+    color: #f97373;
+    font-weight: 600;
+}
+
+/* =========================================
+   主內容區域
+========================================= */
+.main {
+    flex: 1;
+    padding: 40px 60px;
+    overflow-y: auto;
+}
+
+/* 內容限制最大寬度：更美觀 */
+.main-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* =========================================
+   Welcome 卡片
+========================================= */
+.welcome-box {
+    background: linear-gradient(135deg, #ffffff, #f9fafb);
+    padding: 30px 32px;
+    border-radius: 20px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+    margin-bottom: 32px;
+}
+
+.welcome-box h1 {
+    margin: 0 0 10px;
+    font-size: 28px;
+}
+
+/* 讓卡片有動畫過渡 */
+.welcome-box,
+.card,
+.card-long {
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+    transform-origin: center;
+}
+
+/* 滑鼠移上去放大＋抬起一點 */
+.welcome-box:hover,
+.card:hover,
+.card-long:hover {
+    transform: translateY(-1.1px) scale(1.002);
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.18);
+}
+
+
+/* =========================================
+   區塊標題
+========================================= */
+.section-title {
+    font-size: 18px;
+    margin: 24px 0 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #111827;
+}
+
+.section-title::before {
+    content: "";
+    width: 4px;
+    height: 18px;
+    background: #f97316;
+    border-radius: 999px;
+}
+
+/* =========================================
+   推薦卡片排版
+========================================= */
+.card-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.card {
+    flex: 1;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* 長卡片（飲食紀錄、推播提醒） */
+.card-long {
+    background: white;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* =========================================
+   今日飲食專用樣式
+========================================= */
+
+/* Welcome 區塊排版調整一下 */
+.today-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+}
+
+.today-left h1 {
+    margin-bottom: 6px;
+}
+
+.today-left p {
+    margin: 0;
+    color: #6b7280;
+}
+
+.today-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.today-date-pill {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(17, 24, 39, 0.06);
+    font-size: 13px;
+}
+
+.today-summary {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    font-size: 13px;
+    color: #4b5563;
+}
+
+.today-summary strong {
+    font-weight: 700;
+}
+
+/* 小總覽卡片（早餐 / 午餐 / 晚餐 / 點心） */
+.today-stats-row {
+    margin-bottom: 28px;
+}
+
+.mini-card {
+    padding: 16px 18px;
+}
+
+.mini-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.mini-value {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.mini-note {
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+/* 餐次詳細卡片區 */
+.meal-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.meal-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.meal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.meal-tag {
+    font-size: 13px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #e5e7eb;
+}
+
+.meal-tag.breakfast {
+    background: #fee2e2;
+}
+
+.meal-tag.lunch {
+    background: #d1fae5;
+}
+
+.meal-tag.dinner {
+    background: #e0f2fe;
+}
+
+.meal-tag.snack {
+    background: #fef3c7;
+}
+
+.meal-kcal {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.meal-empty {
+    font-size: 13px;
+    color: #9ca3af;
+    margin: 0;
+}
+
+.meal-add-btn {
+    align-self: flex-start;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: none;
+    font-size: 13px;
+    cursor: pointer;
+    background: #111827;
+    color: #ffffff;
+    transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.meal-add-btn:hover {
+    background: #020617;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.25);
+}
+
+/* =========================================
+   飲食紀錄專用樣式
+========================================= */
+
+.record-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+}
+
+.record-left h1 {
+    margin-bottom: 6px;
+}
+
+.record-left p {
+    margin: 0;
+    color: #6b7280;
+}
+
+.record-right {
+    display: flex;
+    align-items: center;
+}
+
+.record-filter-bar {
+    display: flex;
+    gap: 8px;
+}
+
+.record-filter-bar select {
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid #d1d5db;
+    background: white;
+    font-size: 13px;
+    outline: none;
+}
+
+.record-filter-bar button {
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: none;
+    background: #111827;
+    color: white;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+/* 紀錄列表 */
+.record-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.record-item {
+    padding: 18px 20px;
+}
+
+.record-row {
+    display: grid;
+    grid-template-columns: 2fr 2fr 1.5fr;
+    gap: 12px;
+    align-items: center;
+}
+
+.record-date-main {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.record-date-sub {
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+.record-summary {
+    font-size: 13px;
+    color: #4b5563;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.record-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+}
+
+.record-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
+.tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+
+.tag.good {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.tag.normal {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.tag.warn {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.record-detail-btn {
+    padding: 5px 10px;
+    border-radius: 999px;
+    border: none;
+    background: #111827;
+    color: white;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+/* =========================================
+   推播通知專用樣式
+========================================= */
+
+.notify-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+}
+
+.notify-left p {
+    margin: 0;
+    color: #6b7280;
+}
+
+.notify-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.notify-status-pill {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(17, 24, 39, 0.05);
+    font-size: 13px;
+}
+
+.notify-status-pill .status-on {
+    color: #16a34a;
+    font-weight: 600;
+}
+
+/* 開關 switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 26px;
+}
+
+.switch.small {
+    width: 40px;
+    height: 22px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: #d1d5db;
+    transition: 0.2s;
+    border-radius: 999px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.2s;
+    border-radius: 999px;
+}
+
+.switch.small .slider:before {
+    height: 14px;
+    width: 14px;
+    bottom: 4px;
+}
+
+/* checked 狀態 */
+.switch input:checked+.slider {
+    background-color: #22c55e;
+}
+
+.switch input:checked+.slider:before {
+    transform: translateX(20px);
+}
+
+.switch.small input:checked+.slider:before {
+    transform: translateX(16px);
+}
+
+/* 提醒設定區 */
+.notify-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.notify-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 0;
+    border-bottom: 1px dashed #e5e7eb;
+}
+
+.notify-row:last-child {
+    border-bottom: none;
+}
+
+.notify-title {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.notify-sub {
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+.notify-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.notify-time-pill {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #eff6ff;
+    font-size: 12px;
+}
+
+.notify-time-pill.gray {
+    background: #e5e7eb;
+}
+
+/* 近期通知列表 */
+.notify-item {
+    padding: 16px 18px;
+}
+
+.notify-item-main {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.notify-item-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.notify-item-sub {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.notify-item-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.notify-badge {
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.notify-time-text {
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+/* =========================================
+   健康建議專用樣式
+========================================= */
+
+.health-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+}
+
+.health-left p {
+    margin: 0;
+    color: #6b7280;
+}
+
+.health-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.health-pill {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(17, 24, 39, 0.04);
+    font-size: 13px;
+}
+
+.health-status-good {
+    color: #16a34a;
+    font-weight: 600;
+}
+
+.health-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
+.health-tag {
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+}
+
+.health-tag.green {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.health-tag.yellow {
+    background: #fef9c3;
+    color: #92400e;
+}
+
+.health-tag.blue {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+/* 今日建議卡片 */
+.health-today-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.health-today-main {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.health-today-icon {
+    font-size: 28px;
+    margin-top: 2px;
+}
+
+.health-today-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.health-today-desc {
+    font-size: 13px;
+    color: #4b5563;
+}
+
+/* 共用的小清單樣式 */
+.health-list {
+    margin: 6px 0 0 0;
+    padding-left: 18px;
+    font-size: 13px;
+    color: #4b5563;
+}
+
+.health-list.small {
+    font-size: 12px;
+}
+
+/* 三欄建議卡片 */
+.health-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.health-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.health-card-title {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.health-card-text {
+    font-size: 13px;
+    color: #4b5563;
+}
+
+/* 生活型態卡片 */
+.health-lifestyle-card {
+    font-size: 13px;
+    color: #4b5563;
+}

@@ -1,0 +1,17 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foodie · 商家控制台</title>
+    <link rel="stylesheet" href="{% static 'merchantsideapp/css/dashboard.css' %}">
+</head>
+<body>
+<div class="dashboard">
+    <h1>商家控制台（預覽版）</h1>
+    <p>介面尚未串接資料。登入後會導向此頁，供後續串接菜單與訂單管理。</p>
+    <a href="{% url 'merchantsideapp:login' %}">返回登入</a>
+</div>
+</body>
+</html>

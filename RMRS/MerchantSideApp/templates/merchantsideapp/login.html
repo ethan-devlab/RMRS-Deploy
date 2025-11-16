@@ -1,0 +1,34 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foodie · 商家登入</title>
+    <link rel="stylesheet" href="{% static 'merchantsideapp/css/merchant_login.css' %}">
+</head>
+<body>
+<div class="login-container">
+    <h2>Welcome back</h2>
+    <p>使用商家帳號登入系統</p>
+
+    <input type="email" placeholder="商家 Email">
+    <input type="password" placeholder="密碼">
+
+    <button class="login-btn">登入</button>
+
+    <div class="signup">
+        <p>還沒有商家帳號嗎？ <a href="{% url 'merchantsideapp:register' %}">點我註冊</a></p>
+        <p><a href="{% url 'usersideapp:login' %}">點我切換使用者登入</a></p>
+    </div>
+</div>
+
+<script>
+    window.merchantRoutes = {
+        dashboard: "{% url 'merchantsideapp:dashboard' %}",
+        login: "{% url 'merchantsideapp:login' %}"
+    };
+</script>
+<script src="{% static 'merchantsideapp/js/merchant_login.js' %}"></script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block page_title %}Foodie{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'usersideapp/css/User_homepage.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <button class="toggle-btn" id="toggleBtn">☰</button>
+            <h2 class="logo">
+                <span class="logo-text">Foodie</span>
+            </h2>
+        </div>
+
+        <ul>
+            <li class="{% if active_nav == 'home' %}active{% endif %}" id="menu-home">
+                <span class="icon">🏠</span>
+                <span class="item-text">首頁</span>
+            </li>
+
+            <li class="{% if active_nav == 'search' %}active{% endif %}" id="menu-search">
+                <span class="icon">🍜</span>
+                <span class="item-text">搜尋餐廳</span>
+            </li>
+
+            <li class="{% if active_nav == 'random' %}active{% endif %}" id="menu-random">
+                <span class="icon">🎲</span>
+                <span class="item-text">隨機推薦</span>
+            </li>
+
+            <li class="{% if active_nav == 'today' %}active{% endif %}" id="menu-today">
+                <span class="icon">📝</span>
+                <span class="item-text">今日飲食</span>
+            </li>
+
+            <li class="{% if active_nav == 'record' %}active{% endif %}" id="menu-record">
+                <span class="icon">📅</span>
+                <span class="item-text">飲食紀錄</span>
+            </li>
+
+            <li class="{% if active_nav == 'notify' %}active{% endif %}" id="menu-notify">
+                <span class="icon">🔔</span>
+                <span class="item-text">推播通知</span>
+            </li>
+
+            <li class="{% if active_nav == 'health' %}active{% endif %}" id="menu-health">
+                <span class="icon">🥗</span>
+                <span class="item-text">健康建議</span>
+            </li>
+
+            <li class="{% if active_nav == 'settings' %}active{% endif %}" id="menu-setting">
+                <span class="icon">⚙️</span>
+                <span class="item-text">設定</span>
+            </li>
+
+            <li class="logout" id="menu-logout">
+                <span class="icon">🚪</span>
+                <span class="item-text">登出</span>
+            </li>
+        </ul>
+    </div>
+
+    <div class="main">
+        <div class="main-inner">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <script>
+        window.appRoutes = {
+            home: "{% url 'usersideapp:home' %}",
+            search: "{% url 'usersideapp:search' %}",
+            random: "{% url 'usersideapp:random' %}",
+            today: "{% url 'usersideapp:today' %}",
+            record: "{% url 'usersideapp:record' %}",
+            notify: "{% url 'usersideapp:notify' %}",
+            health: "{% url 'usersideapp:health' %}",
+            settings: "{% url 'usersideapp:settings' %}",
+            login: "{% url 'usersideapp:login' %}"
+        };
+    </script>
+    <script src="{% static 'usersideapp/js/User_homepage.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

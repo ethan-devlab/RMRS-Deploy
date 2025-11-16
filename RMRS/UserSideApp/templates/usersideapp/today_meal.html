@@ -1,0 +1,77 @@
+{% extends 'usersideapp/base_sidebar.html' %}
+{% block page_title %}今日飲食{% endblock %}
+{% block content %}
+<div class="welcome-box today-header">
+    <div class="today-left">
+        <h1>今日飲食</h1>
+        <p>記錄你今天吃了什麼，幫助追蹤健康狀態。</p>
+    </div>
+    <div class="today-right">
+        <div class="today-date-pill">📅 今日：2025-11-15</div>
+        <div class="today-summary">
+            <span>總熱量：<strong>— kcal</strong></span>
+            <span>蛋白質：<strong>— g</strong></span>
+        </div>
+    </div>
+</div>
+
+<div class="section-title">今日概況</div>
+<div class="card-row today-stats-row">
+    <div class="card mini-card">
+        <div class="mini-title">早餐</div>
+        <div class="mini-value">— kcal</div>
+        <div class="mini-note">尚未記錄</div>
+    </div>
+    <div class="card mini-card">
+        <div class="mini-title">午餐</div>
+        <div class="mini-value">— kcal</div>
+        <div class="mini-note">尚未記錄</div>
+    </div>
+    <div class="card mini-card">
+        <div class="mini-title">晚餐</div>
+        <div class="mini-value">— kcal</div>
+        <div class="mini-note">尚未記錄</div>
+    </div>
+    <div class="card mini-card">
+        <div class="mini-title">點心</div>
+        <div class="mini-value">— kcal</div>
+        <div class="mini-note">尚未記錄</div>
+    </div>
+</div>
+
+<div class="section-title">餐次詳細</div>
+<div class="meal-grid">
+    <div class="card meal-card">
+        <div class="meal-header">
+            <span class="meal-tag breakfast">早餐</span>
+            <span class="meal-kcal">— kcal</span>
+        </div>
+        <p class="meal-empty">還沒有新增早餐紀錄</p>
+        <button class="meal-add-btn">＋ 新增早餐</button>
+    </div>
+    <div class="card meal-card">
+        <div class="meal-header">
+            <span class="meal-tag lunch">午餐</span>
+            <span class="meal-kcal">— kcal</span>
+        </div>
+        <p class="meal-empty">還沒有新增午餐紀錄</p>
+        <button class="meal-add-btn">＋ 新增午餐</button>
+    </div>
+    <div class="card meal-card">
+        <div class="meal-header">
+            <span class="meal-tag dinner">晚餐</span>
+            <span class="meal-kcal">— kcal</span>
+        </div>
+        <p class="meal-empty">還沒有新增晚餐紀錄</p>
+        <button class="meal-add-btn">＋ 新增晚餐</button>
+    </div>
+    <div class="card meal-card">
+        <div class="meal-header">
+            <span class="meal-tag snack">點心</span>
+            <span class="meal-kcal">— kcal</span>
+        </div>
+        <p class="meal-empty">還沒有新增點心紀錄</p>
+        <button class="meal-add-btn">＋ 新增點心</button>
+    </div>
+</div>
+{% endblock %}

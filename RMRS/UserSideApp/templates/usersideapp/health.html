@@ -1,0 +1,87 @@
+{% extends 'usersideapp/base_sidebar.html' %}
+{% block page_title %}健康建議{% endblock %}
+{% block content %}
+<div class="welcome-box health-header">
+    <div class="health-left">
+        <h1>健康建議</h1>
+        <p>根據你的飲食與生活型態，提供簡單易懂的小建議。</p>
+    </div>
+    <div class="health-right">
+        <div class="health-pill">
+            本週狀態：<span class="health-status-good">普通偏健康</span>
+        </div>
+        <div class="health-tags">
+            <span class="health-tag green">蔬菜足夠</span>
+            <span class="health-tag yellow">碳水偏多</span>
+            <span class="health-tag blue">蛋白質略不足</span>
+        </div>
+    </div>
+</div>
+
+<div class="section-title">今日建議</div>
+<div class="card-long health-today-card">
+    <div class="health-today-main">
+        <div class="health-today-icon">🌤️</div>
+        <div>
+            <div class="health-today-title">今天可以這樣吃</div>
+            <div class="health-today-desc">
+                午晚餐盡量選擇「有菜、有蛋白質、有主食」的組合，晚餐可以稍微減少澱粉比例，
+                並避免太晚進食（最好在 20:00 前吃完）。
+            </div>
+        </div>
+    </div>
+    <ul class="health-list">
+        <li>選擇烹調方式以「煮、燉、蒸」為主，少油炸。</li>
+        <li>今天可以多試著喝一杯無糖茶或水，減少含糖飲料。</li>
+        <li>若有宵夜習慣，建議改成水果或高纖小點心替代。</li>
+    </ul>
+</div>
+
+<div class="section-title">飲食與營養</div>
+<div class="health-grid">
+    <div class="card health-card">
+        <div class="health-card-title">🥦 蔬菜攝取</div>
+        <p class="health-card-text">
+            這週的蔬菜份量大致足夠，可以維持「每餐至少半碗〜一碗青菜」的習慣，
+            特別是在外食時，多選擇附青菜的主餐或加點燙青菜。
+        </p>
+        <ul class="health-list small">
+            <li>便當可以優先選有兩樣以上青菜的店家。</li>
+            <li>火鍋、滷味時，多加一份蔬菜盤。</li>
+        </ul>
+    </div>
+
+    <div class="card health-card">
+        <div class="health-card-title">🍚 碳水與澱粉</div>
+        <p class="health-card-text">
+            最近主食比例略高一些，若想控制體重或血糖，可以從「減少飯量一點點」開始，
+            不需要完全不吃，維持穩定才重要。
+        </p>
+        <ul class="health-list small">
+            <li>正餐可從「一整碗飯」改成「八分滿」。</li>
+            <li>減少含糖飲料的頻率，一週控制在 1〜2 杯以內。</li>
+        </ul>
+    </div>
+
+    <div class="card health-card">
+        <div class="health-card-title">🍗 蛋白質補充</div>
+        <p class="health-card-text">
+            蛋白質稍微偏少，建議每餐嘗試多加入一份主菜，例如雞胸肉、魚、蛋或豆腐，
+            對於想維持肌肉量或有運動習慣特別重要。
+        </p>
+        <ul class="health-list small">
+            <li>一餐至少有一份「掌心大小」的蛋白質來源。</li>
+            <li>可以考慮下午點心改成優格、豆漿等高蛋白選擇。</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section-title">生活型態小提醒</div>
+<div class="card-long health-lifestyle-card">
+    <ul class="health-list">
+        <li>如果長時間久坐，可以每 1 小時起身活動 3〜5 分鐘，促進循環。</li>
+        <li>盡量在睡前 2〜3 小時內避免再吃正餐或過量點心，讓胃有時間休息。</li>
+        <li>每天固定一個喝水的小目標，例如 1500〜2000 ml，分多次慢慢喝。</li>
+    </ul>
+</div>
+{% endblock %}

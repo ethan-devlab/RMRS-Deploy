@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS meals (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE,
-    INDEX idx_restaurant_id (restaurant_id),
+    INDEX idx_meals_restaurant (restaurant_id),
     INDEX idx_category (category),
     INDEX idx_is_vegetarian (is_vegetarian),
     INDEX idx_is_available (is_available)
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS recommendation_history (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (meal_id) REFERENCES meals(id) ON DELETE CASCADE,
     FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE,
-    INDEX idx_user_id (user_id),
+    INDEX idx_rec_history_user (user_id),
     INDEX idx_recommended_at (recommended_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='推薦歷史記錄表';
 
@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS favorites (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (meal_id) REFERENCES meals(id) ON DELETE CASCADE,
     UNIQUE KEY unique_user_meal (user_id, meal_id),
-    INDEX idx_user_id (user_id)
+    INDEX idx_favorites_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='收藏餐點表';
 
 -- 評價表

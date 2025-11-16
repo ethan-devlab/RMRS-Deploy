@@ -1,0 +1,25 @@
+{% extends 'usersideapp/base_sidebar.html' %}
+{% block page_title %}Foodie · 首頁{% endblock %}
+{% block content %}
+<div class="welcome-box">
+    <h1>哈囉，使用者</h1>
+    <p>準備開始今天的飲食旅程吧！</p>
+</div>
+
+<div class="section-title">今日推薦餐廳</div>
+<div class="card-row">
+    <div class="card"></div>
+    <div class="card"></div>
+    <div class="card"></div>
+</div>
+
+<div class="section-title">我的飲食紀錄</div>
+<div class="card-long">
+    你今天還沒有記錄飲食喔！點擊「今日飲食」開始記錄。
+</div>
+
+<div class="section-title">推播提醒</div>
+<div class="card-long">
+    晚餐時間到了！準備吃什麼嗎？點選「隨機推薦」獲得靈感！
+</div>
+{% endblock %}

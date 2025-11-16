@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>使用者主頁</title>
+    <link rel="stylesheet" href="User_homepage.css">
+</head>
+<body>
+
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <button class="toggle-btn" id="toggleBtn">☰</button>
+        <h2 class="logo">
+            <span class="logo-text">Foodie</span>
+        </h2>
+    </div>
+
+    <ul>
+        <li class="active" id="menu-home">
+            <span class="icon">🏠</span>
+            <span class="item-text">首頁</span>
+        </li>
+
+        <li id="menu-search">
+            <span class="icon">🍜</span>
+            <span class="item-text">搜尋餐廳</span>
+        </li>
+
+        <li id="menu-random">
+            <span class="icon">🎲</span>
+            <span class="item-text">隨機推薦</span>
+        </li>
+
+        <li id="menu-today">
+            <span class="icon">📝</span>
+            <span class="item-text">今日飲食</span>
+        </li>
+
+        <li id="menu-record">
+            <span class="icon">📅</span>
+            <span class="item-text">飲食紀錄</span>
+        </li>
+
+        <li id="menu-notify">
+            <span class="icon">🔔</span>
+            <span class="item-text">推播通知</span>
+        </li>
+
+        <li id="menu-health">
+            <span class="icon">🥗</span>
+            <span class="item-text">健康建議</span>
+        </li>
+
+        <li id="menu-setting">
+            <span class="icon">⚙️</span>
+            <span class="item-text">設定</span>
+        </li>
+
+        <li class="logout" id="menu-logout">
+            <span class="icon">🚪</span>
+            <span class="item-text">登出</span>
+        </li>
+    </ul>
+</div>
+
+<div class="main">
+    <div class="main-inner">
+
+        <div class="welcome-box">
+            <h1>哈囉，使用者 </h1>
+            <p>準備開始今天的飲食旅程吧！</p>
+        </div>
+
+        <div class="section-title"> 今日推薦餐廳</div>
+        <div class="card-row">
+            <div class="card"></div>
+            <div class="card"></div>
+            <div class="card"></div>
+        </div>
+
+        <div class="section-title"> 我的飲食紀錄</div>
+        <div class="card-long">
+            你今天還沒有記錄飲食喔！點擊「今日飲食」開始記錄。
+        </div>
+
+        <div class="section-title"> 推播提醒</div>
+        <div class="card-long">
+            晚餐時間到了！準備吃什麼嗎？點選「隨機推薦」獲得靈感！
+        </div>
+
+    </div>
+</div>
+
+<script src="User_homepage.js"></script>
+
+</body>
+</html>
