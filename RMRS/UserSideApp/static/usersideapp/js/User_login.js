@@ -16,15 +16,12 @@ inputs.forEach(input => {
     });
 });
 
+const form = document.querySelector('.login-container form');
 const btn = document.querySelector('.login-btn');
-const authRoutes = window.authRoutes || {};
 
-if (btn) {
-    btn.addEventListener("click", () => {
+if (form && btn) {
+    form.addEventListener('submit', () => {
         btn.disabled = true;
         btn.innerHTML = "Loading...";
-        setTimeout(() => {
-            window.location.href = authRoutes.home || "/";
-        }, 1200);
     });
 }

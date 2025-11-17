@@ -1,0 +1,105 @@
+{% extends 'usersideapp/base_sidebar.html' %}
+{% block page_title %}我的互動{% endblock %}
+{% block content %}
+<div class="welcome-box">
+    <h1>我的互動</h1>
+    <p>管理餐廳評論與收藏餐點，記錄你的口味偏好。</p>
+</div>
+
+<div class="card-long">
+    <h3>撰寫評論</h3>
+    <form method="post" class="meal-form">
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="review">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="id_restaurant">餐廳</label>
+                {{ review_form.restaurant }}
+                {{ review_form.restaurant.errors }}
+            </div>
+            <div class="form-group">
+                <label for="id_meal">餐點</label>
+                {{ review_form.meal }}
+                {{ review_form.meal.errors }}
+            </div>
+        </div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="id_rating">評分</label>
+                {{ review_form.rating }}
+                {{ review_form.rating.errors }}
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="id_comment">心得</label>
+            {{ review_form.comment }}
+            {{ review_form.comment.errors }}
+        </div>
+        <div class="form-errors">{{ review_form.non_field_errors }}</div>
+        <button class="primary-btn" type="submit">送出評論</button>
+    </form>
+</div>
+
+<div class="card-long">
+    <h3>我的評論</h3>
+    {% if user_reviews %}
+    <ul class="review-list">
+        {% for review in user_reviews %}
+        <li>
+            <div class="review-header">
+                <div>
+                    <strong>{{ review.restaurant.name }}</strong>
+                    <span class="review-meal">{{ review.meal.name }}</span>
+                </div>
+                <span class="review-rating">⭐ {{ review.rating }}</span>
+            </div>
+            <p>{{ review.comment|default:"無評論內容" }}</p>
+            <p class="label">{{ review.created_at|date:"Y/m/d H:i" }}</p>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>尚未有評論紀錄。</p>
+    {% endif %}
+</div>
+
+<div class="card-long">
+    <h3>收藏餐點</h3>
+    <form method="post" class="meal-form favorite-form">
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="favorite_add">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="id_meal">選擇餐點</label>
+                {{ favorite_form.meal }}
+                {{ favorite_form.meal.errors }}
+            </div>
+        </div>
+        <button class="primary-btn" type="submit">加入收藏</button>
+    </form>
+</div>
+
+<div class="card-long">
+    <h3>我的收藏</h3>
+    {% if favorites %}
+    <ul class="favorite-list">
+        {% for favorite in favorites %}
+        <li>
+            <div>
+                <strong>{{ favorite.meal.name }}</strong>
+                <span class="label">{{ favorite.meal.restaurant.name }}</span>
+            </div>
+            <form method="post" class="inline-form">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="favorite_remove">
+                <input type="hidden" name="favorite_id" value="{{ favorite.id }}">
+                <button class="text-btn" type="submit">移除</button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>尚未收藏任何餐點。</p>
+    {% endif %}
+</div>
+{% endblock %}

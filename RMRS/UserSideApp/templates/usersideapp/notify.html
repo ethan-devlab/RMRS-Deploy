@@ -4,117 +4,74 @@
 <div class="welcome-box notify-header">
     <div class="notify-left">
         <h1>推播通知</h1>
-        <p>提醒你按時用餐，不錯過每一餐。</p>
+        <p>設定提醒時間並檢視最近推播，確保不錯過任何餐次。</p>
     </div>
     <div class="notify-right">
-        <div class="notify-status-pill">
-            狀態：<span class="status-on">已開啟</span>
-        </div>
-        <label class="switch">
-            <input type="checkbox" checked>
-            <span class="slider"></span>
-        </label>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="send_preview">
+            <button class="outline-btn" type="submit">＋ 建立測試提醒</button>
+        </form>
     </div>
 </div>
 
 <div class="section-title">提醒設定</div>
-<div class="card-long notify-settings">
+<form method="post" class="card-long notify-settings">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="update_settings">
+    {{ formset.management_form }}
+    {% for form in formset %}
     <div class="notify-row">
         <div class="notify-info">
-            <div class="notify-title">早餐提醒</div>
-            <div class="notify-sub">建議時間：08:00 左右</div>
+            <div class="notify-title">{{ form.instance.get_reminder_type_display }}</div>
+            <div class="notify-sub">頻道：{{ form.instance.get_channel_display }}</div>
         </div>
         <div class="notify-actions">
-            <span class="notify-time-pill">08:00</span>
+            {{ form.scheduled_time }}
+            {{ form.channel }}
             <label class="switch small">
-                <input type="checkbox" checked>
+                {{ form.is_enabled }}
                 <span class="slider"></span>
             </label>
         </div>
+        {{ form.id }}
     </div>
-
-    <div class="notify-row">
-        <div class="notify-info">
-            <div class="notify-title">午餐提醒</div>
-            <div class="notify-sub">建議時間：12:30 左右</div>
-        </div>
-        <div class="notify-actions">
-            <span class="notify-time-pill">12:30</span>
-            <label class="switch small">
-                <input type="checkbox" checked>
-                <span class="slider"></span>
-            </label>
-        </div>
-    </div>
-
-    <div class="notify-row">
-        <div class="notify-info">
-            <div class="notify-title">晚餐提醒</div>
-            <div class="notify-sub">建議時間：18:30 左右</div>
-        </div>
-        <div class="notify-actions">
-            <span class="notify-time-pill">18:30</span>
-            <label class="switch small">
-                <input type="checkbox" checked>
-                <span class="slider"></span>
-            </label>
-        </div>
-    </div>
-
-    <div class="notify-row">
-        <div class="notify-info">
-            <div class="notify-title">隨機推薦提醒</div>
-            <div class="notify-sub">依據你最近的飲食紀錄，適時推送餐廳建議。</div>
-        </div>
-        <div class="notify-actions">
-            <span class="notify-time-pill gray">自動</span>
-            <label class="switch small">
-                <input type="checkbox" checked>
-                <span class="slider"></span>
-            </label>
-        </div>
-    </div>
-</div>
+    {% if form.errors %}
+    <div class="form-errors">{{ form.errors }}</div>
+    {% endif %}
+    {% endfor %}
+    <button class="primary-btn" type="submit">儲存提醒設定</button>
+</form>
 
 <div class="section-title">近期通知</div>
+{% if notification_logs %}
 <div class="record-list">
-    <div class="card-long notify-item">
+    {% for log in notification_logs %}
+    <div class="card-long notify-item {% if log.status == 'read' %}is-read{% endif %}">
         <div class="notify-item-main">
             <div>
-                <div class="notify-item-title">晚餐時間到了！</div>
-                <div class="notify-item-sub">根據最近幾天的飲食紀錄，今晚推薦你選擇較清淡的餐點。</div>
+                <div class="notify-item-title">{{ log.title }}</div>
+                <div class="notify-item-sub">{{ log.body }}</div>
             </div>
             <div class="notify-item-meta">
-                <span class="notify-badge">系統提醒</span>
-                <span class="notify-time-text">今天 · 18:30</span>
+                <span class="notify-badge">{{ log.notification_type|default:"提醒" }}</span>
+                <span class="notify-time-text">{{ log.sent_at|date:"m/d H:i" }}</span>
             </div>
         </div>
+        {% if log.status != 'read' %}
+        <form method="post" class="inline-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="mark_read">
+            <input type="hidden" name="log_id" value="{{ log.id }}">
+            <button type="submit" class="text-btn">標記已讀</button>
+        </form>
+        {% else %}
+        <span class="badge muted">已讀</span>
+        {% endif %}
     </div>
-
-    <div class="card-long notify-item">
-        <div class="notify-item-main">
-            <div>
-                <div class="notify-item-title">中午吃飯時間～</div>
-                <div class="notify-item-sub">別忘了補充蛋白質，可以考慮雞胸肉便當或簡單丼飯。</div>
-            </div>
-            <div class="notify-item-meta">
-                <span class="notify-badge">午餐提醒</span>
-                <span class="notify-time-text">今天 · 12:30</span>
-            </div>
-        </div>
-    </div>
-
-    <div class="card-long notify-item">
-        <div class="notify-item-main">
-            <div>
-                <div class="notify-item-title">晚餐推薦：附近牛肉麵</div>
-                <div class="notify-item-sub">依據你最近偏好的餐點，推薦你試試附近評價 4.6 顆星的牛肉麵。</div>
-            </div>
-            <div class="notify-item-meta">
-                <span class="notify-badge">隨機推薦</span>
-                <span class="notify-time-text">昨天 · 18:20</span>
-            </div>
-        </div>
-    </div>
+    {% endfor %}
 </div>
+{% else %}
+<div class="card-long empty-state">尚未收到推播通知。</div>
+{% endif %}
 {% endblock %}

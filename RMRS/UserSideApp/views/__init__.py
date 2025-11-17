@@ -1,7 +1,8 @@
-from .auth import login_view, register_view
+from .auth import login_view, logout_view, register_view
 from .dashboard import (
 	health_advice,
 	home,
+	interactions,
 	notifications,
 	random_recommendation,
 	record_meal,
@@ -12,6 +13,7 @@ from .dashboard import (
 
 __all__ = [
 	"login_view",
+	"logout_view",
 	"register_view",
 	"home",
 	"search_restaurants",
@@ -20,5 +22,6 @@ __all__ = [
 	"record_meal",
 	"notifications",
 	"health_advice",
+	"interactions",
 	"settings",
 ]

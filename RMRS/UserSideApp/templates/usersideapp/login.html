@@ -14,22 +14,47 @@
         <h2>Welcome back</h2>
         <p>用使用者帳號來登入系統</p>
 
-        <input type="email" placeholder="使用者 Email">
-        <input type="password" placeholder="密碼">
+        {% if messages %}
+        <div class="flash-messages">
+            {% for message in messages %}
+            <div class="flash-message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
 
-        <button class="login-btn">登入</button>
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="form-errors">
+                {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="field-group">
+                {{ form.email }}
+                {% for error in form.email.errors %}
+                <p class="field-error">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <div class="field-group">
+                {{ form.password }}
+                {% for error in form.password.errors %}
+                <p class="field-error">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <button type="submit" class="login-btn">登入</button>
+        </form>
 
         <div class="signup">
             <p>還沒有使用者帳號嗎? <a href="{% url 'usersideapp:register' %}">點我註冊</a></p>
-            <p><a href="{% url 'usersideapp:login' %}">切換其他身分（預留）</a></p>
+            <p><a href="{% url 'merchantsideapp:login' %}">切換商家登入</a></p>
         </div>
     </div>
 
-    <script>
-        window.authRoutes = {
-            home: "{% url 'usersideapp:home' %}"
-        };
-    </script>
     <script src="{% static 'usersideapp/js/User_login.js' %}"></script>
 </body>
 

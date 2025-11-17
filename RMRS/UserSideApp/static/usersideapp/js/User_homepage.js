@@ -16,8 +16,8 @@ const navMapping = [
     { id: "menu-record", key: "record" },
     { id: "menu-notify", key: "notify" },
     { id: "menu-health", key: "health" },
+    { id: "menu-interactions", key: "interactions" },
     { id: "menu-setting", key: "settings" },
-    { id: "menu-logout", key: "login" },
 ];
 
 const redirectTo = (key) => {
@@ -32,3 +32,12 @@ navMapping.forEach(({ id, key }) => {
     if (!el) return;
     el.addEventListener("click", () => redirectTo(key));
 });
+
+const logoutItem = document.getElementById("menu-logout");
+const logoutForm = document.getElementById("logout-form");
+
+if (logoutItem && logoutForm) {
+    logoutItem.addEventListener("click", () => {
+        logoutForm.submit();
+    });
+}

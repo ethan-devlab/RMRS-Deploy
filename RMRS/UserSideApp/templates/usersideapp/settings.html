@@ -3,12 +3,119 @@
 {% block content %}
 <div class="welcome-box">
     <h1>設定</h1>
-    <p>使用者偏好與帳戶設定區域。尚未串接表單，後續可與實際資料模型整合。</p>
+    <p>調整你的飲食偏好與提醒呈現，系統會依據這些資訊提供更貼近需求的建議。</p>
 </div>
+
 <div class="card-long">
-    <ul class="health-list">
-        <li>個人資料、通知選項、飲食偏好等設定可在此調整。</li>
-        <li>目前僅提供介面展示，尚無儲存邏輯。</li>
+    <h3>帳戶資訊</h3>
+    <form method="post" class="meal-form">
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="account">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="id_full_name">顯示名稱</label>
+                {{ account_form.full_name }}
+                {{ account_form.full_name.errors }}
+            </div>
+            <div class="form-group">
+                <label for="id_email">Email</label>
+                {{ account_form.email }}
+                {{ account_form.email.errors }}
+            </div>
+        </div>
+        <p class="label">登入帳號：{{ current_user.username }}</p>
+        <button class="primary-btn" type="submit">更新帳戶</button>
+    </form>
+</div>
+
+<div class="card-long">
+    <h3>變更密碼</h3>
+    <form method="post" class="meal-form">
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="password">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="id_current_password">目前密碼</label>
+                {{ password_form.current_password }}
+                {{ password_form.current_password.errors }}
+            </div>
+            <div class="form-group">
+                <label for="id_new_password1">新密碼</label>
+                {{ password_form.new_password1 }}
+                {{ password_form.new_password1.errors }}
+            </div>
+            <div class="form-group">
+                <label for="id_new_password2">再次輸入新密碼</label>
+                {{ password_form.new_password2 }}
+                {{ password_form.new_password2.errors }}
+            </div>
+        </div>
+        <div class="form-errors">{{ password_form.non_field_errors }}</div>
+        <p class="label">建議使用 8 碼以上並混合大小寫與符號。</p>
+        <button class="primary-btn" type="submit">更新密碼</button>
+    </form>
+</div>
+
+<div class="card-long">
+    <h3>飲食偏好</h3>
+    <form method="post" class="meal-form">
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="preferences">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="id_cuisine_type">常見料理類型</label>
+                {{ preference_form.cuisine_type }}
+                {{ preference_form.cuisine_type.errors }}
+            </div>
+            <div class="form-group">
+                <label for="id_price_range">預算區間</label>
+                {{ preference_form.price_range }}
+                {{ preference_form.price_range.errors }}
+            </div>
+        </div>
+        <div class="form-grid">
+            <div class="form-group checkbox-group">
+                <label class="checkbox-label">
+                    {{ preference_form.is_vegetarian }}
+                    <span>偏好全素</span>
+                </label>
+                {{ preference_form.is_vegetarian.errors }}
+            </div>
+            <div class="form-group checkbox-group">
+                <label class="checkbox-label">
+                    {{ preference_form.avoid_spicy }}
+                    <span>避免辛辣</span>
+                </label>
+                {{ preference_form.avoid_spicy.errors }}
+            </div>
+        </div>
+        <button class="primary-btn" type="submit">儲存偏好</button>
+    </form>
+</div>
+
+<div class="card-long">
+    <h3>提醒設定概覽</h3>
+    {% if notification_settings %}
+    <ul class="notify-mini-list">
+        {% for setting in notification_settings %}
+        <li>
+            <div>
+                <strong>{{ setting.get_reminder_type_display }}</strong>
+                <div class="label">頻道：{{ setting.get_channel_display }}</div>
+            </div>
+            <div class="pill {% if setting.is_enabled %}on{% else %}off{% endif %}">
+                {% if setting.is_enabled %}
+                {{ setting.scheduled_time|default:"智慧推送" }}
+                {% else %}
+                已停用
+                {% endif %}
+            </div>
+        </li>
+        {% endfor %}
     </ul>
+    <p class="label">詳細調整可前往提醒中心。</p>
+    {% else %}
+    <p>尚未建立提醒設定，可前往「推播提醒」頁面建立。</p>
+    {% endif %}
 </div>
 {% endblock %}

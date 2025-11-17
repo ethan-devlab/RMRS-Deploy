@@ -1,0 +1,109 @@
+@startuml
+title Random Meal Recommendation System
+
+skinparam dpi 170
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam packagePadding 30
+skinparam classPadding 20
+left to right direction
+
+' ============================
+' USER SIDE MODULE
+' ============================
+package "User Side Module" {
+
+class User {
+    - userID : int
+    - name : String
+    - phone : String
+    - email : String
+    - password : String
+    - preferences : String
+    - createdAt : DateTime
+    --
+    + register()
+    + login()
+    + searchRestaurant(criteria)
+    + viewRecommendedRestaurants(location)
+    + viewDishDetail(dishID)
+    + recordMeal(dishID, qty)
+    + analyzeDiet()
+    + viewNutritionAdvice()
+    + receiveNotification()
+}
+
+class MealRecord {
+    - recordID : int
+    - userID : int
+    - dishID : int
+    - date : Date
+    - quantity : int
+    - totalCalories : float
+    - note : String
+    - createdAt : DateTime
+    --
+    + addRecord()
+    + getRecordsByUser(userID)
+    + analyzeWeeklyIntake()
+}
+
+class Notification {
+    - notificationID : int
+    - userID : int
+    - type : String
+    - message : String
+    - time : DateTime
+    - isRead : boolean
+    --
+    + sendNotification()
+    + scheduleReminder(type)
+}
+
+class RecommendationLog {
+    - recoID : int
+    - userID : int
+    - dishID : int
+    - createdAt : DateTime
+    - reason : String
+    --
+    + saveLog()
+}
+}
+
+' ============================
+' CORE ENGINE MODULE
+' ============================
+package "Core Recommendation Engine" {
+
+class RecommendationSystem {
+    --
+    + generateRandomRecommendation(user : User)
+    + filterByPreference(criteria)
+    + avoidRepeatedRestaurants(user : User)
+    + recommendNearbyRestaurants(location)
+    + recommendBasedOnHistory(user : User)
+}
+
+class NutritionAdvisor {
+    --
+    + generateDietAdvice(userID)
+    + analyzeMealNutrition(dishID)
+}
+}
+
+' ============================
+' GEO / MAP MODULE (moved to avoid overlap)
+' ============================
+package "Map & Geo Module" {
+
+class GeoService {
+    --
+    + calculateDistance(lat1, lon1, lat2, lon2)
+    + reverseGeocode(address)
+    + getUserCoordinates(userID)
+    + isRestaurantNearby(userLocation, restaurantLocation, radius)
+}
+
+class MapService {
+    --

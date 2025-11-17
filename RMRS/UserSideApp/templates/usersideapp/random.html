@@ -2,10 +2,178 @@
 {% block page_title %}隨機推薦{% endblock %}
 {% block content %}
 <div class="welcome-box">
-    <h1>隨機推薦</h1>
-    <p>這裡會顯示推薦的餐廳或菜色，後續可串接推薦系統。</p>
+
+    <div>
+        <h1>隨機推薦</h1>
+        <p>參考你的偏好、熱門收藏與資料庫策略，挑選今日最適合的餐點。</p>
+    </div>
+    {% if preference_snapshot %}
+    <div class="preference-chip">
+        <span>目前偏好</span>
+        <strong>{{ preference_snapshot }}</strong>
+    </div>
+    {% endif %}
 </div>
+
 <div class="card-long">
-    目前尚未連接後端資料，請之後整合 RecommendationSystem API。
+    <div class="section-head">
+        <h3>設定條件</h3>
+        <p class="label muted">可自訂條件或直接套用既有偏好</p>
+    </div>
+    <form method="post" class="recommendation-filter">
+        {% csrf_token %}
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="id_cuisine_type">料理類型</label>
+                {{ filter_form.cuisine_type }}
+            </div>
+            <div class="form-group">
+                <label for="id_price_range">價格範圍</label>
+                {{ filter_form.price_range }}
+            </div>
+            <div class="form-group">
+                <label for="id_city">城市</label>
+                {{ filter_form.city }}
+            </div>
+            <div class="form-group">
+                <label for="id_district">行政區</label>
+                {{ filter_form.district }}
+            </div>
+        </div>
+        <div class="form-grid">
+            <div class="form-group checkbox-group">
+                <label class="checkbox-label">
+                    {{ filter_form.is_vegetarian }} 僅顯示素食
+                </label>
+                <label class="checkbox-label">
+                    {{ filter_form.avoid_spicy }} 避免辛辣
+                </label>
+            </div>
+            <div class="form-group">
+                <label for="id_limit">推薦數量</label>
+                {{ filter_form.limit }}
+            </div>
+        </div>
+        {% if filter_form.errors %}
+        <div class="form-errors">
+            {% for field in filter_form %}
+                {% for error in field.errors %}
+                <p>{{ field.label }}：{{ error }}</p>
+                {% endfor %}
+            {% endfor %}
+            {% for error in filter_form.non_field_errors %}
+            <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <div class="form-actions">
+            <button class="primary-btn" type="submit" name="action" value="filters">取得推薦</button>
+            <button class="outline-btn" type="submit" name="action" value="use_preferences">套用我的偏好</button>
+            <button class="text-btn" type="submit" name="action" value="surprise">給我驚喜</button>
+        </div>
+    </form>
 </div>
+
+<div class="card-long">
+    <div class="section-head">
+        <h3>智慧推薦</h3>
+        <p class="label">{{ primary_reason }}</p>
+    </div>
+    {% if recommendation_alert %}
+    <div class="alert info">{{ recommendation_alert }}</div>
+    {% endif %}
+    {% if primary_recommendations %}
+    <div class="recommendation-grid">
+        {% for card in primary_recommendations %}
+        <div class="recommendation-card">
+            <div class="card-title-row">
+                <div>
+                    <h4>{{ card.meal.name }}</h4>
+                    <p class="muted">{{ card.restaurant.name }}</p>
+                </div>
+                {% if card.favorite_count %}
+                <span class="badge hot">❤️ {{ card.favorite_count }}</span>
+                {% endif %}
+            </div>
+            <p class="recommendation-meta">
+                {% if card.restaurant.cuisine_type %}
+                <span>{{ card.restaurant.cuisine_type }}</span>
+                {% endif %}
+                {% if card.restaurant.price_range %}
+                <span>價格 {{ card.restaurant.price_range }}</span>
+                {% endif %}
+                {% if card.restaurant.city %}
+                <span>{{ card.restaurant.city }} {{ card.restaurant.district }}</span>
+                {% endif %}
+            </p>
+            {% if card.meal.description %}
+            <p class="muted">{{ card.meal.description }}</p>
+            {% endif %}
+            <div class="recommendation-tags">
+                {% if card.meal.is_vegetarian %}
+                <span class="pill veggie">素</span>
+                {% endif %}
+                {% if not card.meal.is_spicy %}
+                <span class="pill mild">不辣</span>
+                {% else %}
+                <span class="pill spicy">微辣</span>
+                {% endif %}
+                {% if card.reason %}
+                <span class="pill muted">{{ card.reason }}</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>暫時沒有符合條件的餐點，試著調整條件或點擊「給我驚喜」。</p>
+    {% endif %}
+</div>
+
+{% for section in secondary_sections %}
+<div class="card-long">
+    <div class="section-head">
+        <h3>{{ section.title }}</h3>
+        <p class="label muted">{{ section.subtitle }}</p>
+    </div>
+    {% if section.cards %}
+    <div class="recommendation-grid compact">
+        {% for card in section.cards %}
+        <div class="recommendation-card">
+            <div class="card-title-row">
+                <div>
+                    <h4>{{ card.meal.name }}</h4>
+                    <p class="muted">{{ card.restaurant.name }}</p>
+                </div>
+                {% if card.favorite_count %}
+                <span class="badge hot">❤️ {{ card.favorite_count }}</span>
+                {% endif %}
+            </div>
+            <p class="recommendation-meta">
+                {% if card.restaurant.cuisine_type %}
+                <span>{{ card.restaurant.cuisine_type }}</span>
+                {% endif %}
+                {% if card.restaurant.price_range %}
+                <span>價格 {{ card.restaurant.price_range }}</span>
+                {% endif %}
+            </p>
+            <div class="recommendation-tags">
+                {% if card.meal.is_vegetarian %}
+                <span class="pill veggie">素</span>
+                {% endif %}
+                {% if not card.meal.is_spicy %}
+                <span class="pill mild">不辣</span>
+                {% endif %}
+                {% if card.reason %}
+                <span class="pill muted">{{ card.reason }}</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>目前沒有資料可以顯示。</p>
+    {% endif %}
+</div>
+{% endfor %}
 {% endblock %}

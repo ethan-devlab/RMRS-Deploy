@@ -1,25 +1,122 @@
 {% extends 'usersideapp/base_sidebar.html' %}
 {% block page_title %}Foodie · 首頁{% endblock %}
 {% block content %}
-<div class="welcome-box">
-    <h1>哈囉，使用者</h1>
-    <p>準備開始今天的飲食旅程吧！</p>
+<div class="welcome-box home-hero">
+    <div>
+        <h1>哈囉，{{ current_user.full_name|default:current_user.username }}</h1>
+        <p>今天目前累積 <strong>{{ today_stats.total_calories|floatformat:0 }}</strong> kcal，持續保持好習慣！</p>
+    </div>
+    <div class="hero-stats">
+        <div class="hero-stat">
+            <span class="label">蛋白質</span>
+            <span class="value">{{ today_stats.total_protein|floatformat:1 }} g</span>
+        </div>
+        <div class="hero-stat">
+            <span class="label">碳水</span>
+            <span class="value">{{ today_stats.total_carbs|floatformat:1 }} g</span>
+        </div>
+        <div class="hero-stat">
+            <span class="label">脂肪</span>
+            <span class="value">{{ today_stats.total_fat|floatformat:1 }} g</span>
+        </div>
+    </div>
 </div>
 
-<div class="section-title">今日推薦餐廳</div>
-<div class="card-row">
-    <div class="card"></div>
-    <div class="card"></div>
-    <div class="card"></div>
+<div class="section-title">今日概況</div>
+<div class="card-row home-summary">
+    <div class="card mini-card">
+        <div class="mini-title">當日熱量</div>
+        <div class="mini-value">{{ today_stats.total_calories|floatformat:0 }} kcal</div>
+        <p class="mini-note">{{ today_date|date:"m/d" }}</p>
+    </div>
+    <div class="card mini-card">
+        <div class="mini-title">本週已記錄</div>
+        <div class="mini-value">{{ weekly_summary.meal_count|default:0 }} 餐</div>
+        <p class="mini-note">週起：{{ weekly_summary.week_start|date:"m/d" }}</p>
+    </div>
+    <div class="card mini-card">
+        <div class="mini-title">下一次提醒</div>
+        <div class="mini-value">
+            {% if next_reminder %}
+            {{ next_reminder.get_reminder_type_display }} ·
+            {{ next_reminder.scheduled_time|default:"智慧推送" }}
+            {% else %}
+            尚未排程
+            {% endif %}
+        </div>
+        <p class="mini-note">
+            {% if next_reminder %}
+            推播狀態：{{ next_reminder.is_enabled|yesno:"開啟,關閉" }}
+            {% else %}
+            尚未設定提醒
+            {% endif %}
+        </p>
+    </div>
 </div>
 
-<div class="section-title">我的飲食紀錄</div>
-<div class="card-long">
-    你今天還沒有記錄飲食喔！點擊「今日飲食」開始記錄。
+<div class="section-title">最近的飲食紀錄</div>
+{% if recent_meals %}
+<div class="record-list">
+    {% for meal in recent_meals %}
+    <div class="card-long record-item">
+        <div class="record-row">
+            <div>
+                <div class="record-date-main">{{ meal.date|date:"m/d" }} · {{ meal.get_meal_type_display }}</div>
+                <div class="record-date-sub">{{ meal.meal_name }}</div>
+            </div>
+            <div class="record-summary">
+                <div>🍽 {{ meal.calories }} kcal</div>
+                <div>🥚 {{ meal.protein_grams }} g 蛋白質</div>
+            </div>
+            <div class="record-actions">
+                <a href="{% url 'usersideapp:record' %}" class="link-btn">查看</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
 </div>
+{% else %}
+<div class="card-long empty-state">
+    目前尚未有飲食紀錄，點擊「今日飲食」開始紀錄吧！
+</div>
+{% endif %}
 
-<div class="section-title">推播提醒</div>
-<div class="card-long">
-    晚餐時間到了！準備吃什麼嗎？點選「隨機推薦」獲得靈感！
+<div class="section-title">推播提醒與通知</div>
+<div class="card-row notify-overview">
+    <div class="card">
+        <h3>提醒設定</h3>
+        <ul class="notify-mini-list">
+            {% for setting in notification_settings %}
+            <li>
+                <span>{{ setting.get_reminder_type_display }}</span>
+                <span class="pill {{ setting.is_enabled|yesno:'on,off' }}">
+                    {% if setting.is_enabled %}
+                    {{ setting.scheduled_time|default:"智慧推送" }}
+                    {% else %}
+                    已關閉
+                    {% endif %}
+                </span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="card">
+        <h3>最新通知</h3>
+        {% if latest_notifications %}
+        <ul class="notify-mini-list">
+            {% for item in latest_notifications %}
+            <li>
+                <div>
+                    <strong>{{ item.title }}</strong>
+                    <p>{{ item.body }}</p>
+                </div>
+                <span class="time">{{ item.sent_at|date:"m/d H:i" }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="empty-note">尚未收到通知</p>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

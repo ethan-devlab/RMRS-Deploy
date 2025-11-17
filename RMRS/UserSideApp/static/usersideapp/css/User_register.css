@@ -50,6 +50,10 @@ body {
     border-color: #000;
 }
 
+.form-field {
+    text-align: left;
+}
+
 .register-btn {
     width: 100%;
     padding: 12px;
@@ -70,4 +74,49 @@ body {
     color: #000;
     text-decoration: none;
     font-weight: 600;
+}
+
+.flash-messages {
+    margin-bottom: 16px;
+    text-align: left;
+}
+
+.flash-message {
+    padding: 10px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.flash-message.success {
+    background: #ecfdf5;
+    color: #065f46;
+}
+
+.flash-message.error,
+.flash-message.danger {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.flash-message.info {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.form-errors {
+    text-align: left;
+    background: #fef2f2;
+    padding: 10px 12px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    color: #b91c1c;
+    font-size: 13px;
+}
+
+.field-error {
+    text-align: left;
+    color: #b91c1c;
+    font-size: 12px;
+    margin: -10px 0 12px;
 }
