@@ -29,7 +29,11 @@ SECRET_KEY = 'django-insecure-q=(ky!6y(l-x8hj_%=z&y*sh%7o@xj=#v1!)os&08))&z=0_y_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['moving-cunning-snapper.ngrok-free.app', '127.0.0.1', 'localhost']
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://moving-cunning-snapper.ngrok-free.app",
+    ]
 
 
 # Application definition
