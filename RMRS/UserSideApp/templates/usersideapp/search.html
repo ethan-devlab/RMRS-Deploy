@@ -51,6 +51,22 @@
                             {% if has_user_location %}已套用目前位置{% else %}自動偵測附近位置中...{% endif %}
                         </span>
                     </div>
+                    {% if selected_location_display or nearest_distance_label %}
+                    <div class="location-summary">
+                        {% if selected_location_display %}
+                        <div class="location-summary__item">
+                            <span class="location-summary__label">目前搜尋位置</span>
+                            <span class="location-summary__value">{{ selected_location_display }}</span>
+                        </div>
+                        {% endif %}
+                        {% if nearest_distance_label %}
+                        <div class="location-summary__item">
+                            <span class="location-summary__label">最近餐廳距離</span>
+                            <span class="location-summary__value">{{ nearest_distance_label }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
                     {{ form.latitude }}
                     {{ form.longitude }}
                 </form>
@@ -75,9 +91,9 @@
             <div class="map-frame">
                 {% if folium_map %}
                 <div class="map-toolbar">
-                    <p>可拖曳縮放或使用右上角按鈕切換全螢幕。</p>
+                    <p>可拖曳、使用當前位置或直接點擊地圖來設定搜尋座標。</p>
                 </div>
-                <div class="folium-map">
+                <div class="folium-map" data-map-id="{{ folium_map_id }}">
                     {{ folium_map|safe }}
                 </div>
                 {% else %}
@@ -111,6 +127,9 @@
                 {% if restaurant.address %}
                 <p class="result-address">{{ restaurant.address }}</p>
                 {% endif %}
+                {% if restaurant.user_distance_km %}
+                <p class="result-distance">距離目前位置約 {{ restaurant.user_distance_km|floatformat:1 }} 公里</p>
+                {% endif %}
                 <div class="result-tags">
                     <span class="tag">{{ restaurant.get_price_range_display }}</span>
                     {% if restaurant.latitude and restaurant.longitude %}
@@ -138,6 +157,8 @@
         const lonInput = document.getElementById("{{ form.longitude.auto_id }}");
         const statusEl = document.querySelector("[data-location-status]");
         const locateBtn = document.querySelector("[data-locate-btn]");
+        const mapWrapper = document.querySelector(".folium-map");
+        const mapId = mapWrapper ? mapWrapper.dataset.mapId : null;
 
         if (!form || !latInput || !lonInput) {
             return;
@@ -153,29 +174,55 @@
             statusEl.dataset.state = state || "";
         }
 
+        function applyCoordinates(lat, lon, autoSubmit, statusMessage) {
+            const latNum = parseFloat(lat);
+            const lonNum = parseFloat(lon);
+            if (Number.isNaN(latNum) || Number.isNaN(lonNum)) {
+                return false;
+            }
+            latInput.value = latNum.toFixed(6);
+            lonInput.value = lonNum.toFixed(6);
+            if (statusMessage) {
+                setStatus(statusMessage, "success");
+            }
+            if (autoSubmit) {
+                form.submit();
+            }
+            return true;
+        }
+
         function requestLocation(autoSubmit) {
             if (!navigator.geolocation) {
                 setStatus("瀏覽器不支援定位功能", "error");
                 return;
             }
-            setStatus("正在取得定位...", "pending");
+            setStatus("正在取得位置...", "pending");
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    const lat = position.coords.latitude.toFixed(6);
-                    const lon = position.coords.longitude.toFixed(6);
-                    latInput.value = lat;
-                    lonInput.value = lon;
-                    setStatus("已套用目前位置", "success");
-                    if (autoSubmit) {
-                        form.submit();
-                    }
+                    applyCoordinates(
+                        position.coords.latitude,
+                        position.coords.longitude,
+                        autoSubmit,
+                        "已使用目前位置"
+                    );
                 },
                 () => {
-                    setStatus("無法取得定位，請允許存取或稍後再試。", "error");
+                    setStatus("無法取得位置，請允許存取或稍後再試。", "error");
                 },
                 { enableHighAccuracy: true, timeout: 10000 }
             );
         }
+
+        window.addEventListener("message", function (event) {
+            const data = event.data || {};
+            if (data.type !== "rmrs-map-click") {
+                return;
+            }
+            if (mapId && data.mapId && data.mapId !== mapId) {
+                return;
+            }
+            applyCoordinates(data.lat, data.lng, true, "已套用地圖座標");
+        });
 
         if (locateBtn) {
             locateBtn.addEventListener("click", function () {
@@ -186,8 +233,9 @@
         if (!hasCoords) {
             requestLocation(true);
         } else {
-            setStatus("已套用目前位置", "success");
+            setStatus("已使用目前位置", "success");
         }
     });
 </script>
 {% endblock %}
+

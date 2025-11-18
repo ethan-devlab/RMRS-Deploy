@@ -1,4 +1,5 @@
 import json
+import math
 from datetime import timedelta
 
 import folium
@@ -43,6 +44,32 @@ from ..services import (
 
 DEFAULT_MAP_CENTER = (23.6978, 120.9605)
 MAX_MAP_RESULTS = 50
+EARTH_RADIUS_KM = 6371.0
+
+
+def _haversine_distance_km(origin: tuple[float, float], target: tuple[float, float]) -> float:
+    """Compute approximate distance in kilometers between two lat/lon pairs."""
+    lat1, lon1 = origin
+    lat2, lon2 = target
+    lat1_rad, lon1_rad = math.radians(lat1), math.radians(lon1)
+    lat2_rad, lon2_rad = math.radians(lat2), math.radians(lon2)
+    dlat = lat2_rad - lat1_rad
+    dlon = lon2_rad - lon1_rad
+    a = math.sin(dlat / 2) ** 2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon / 2) ** 2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return round(EARTH_RADIUS_KM * c, 2)
+
+
+def _format_distance_label(distance_km):
+    """Return a friendly distance label in km/m."""
+    if distance_km is None:
+        return None
+    if distance_km < 1:
+        meters = int(distance_km * 1000)
+        if meters < 50:
+            return "小於 50 公尺"
+        return f"{meters:,} 公尺"
+    return f"{distance_km:.1f} 公里"
 
 
 def _serialize_components(record: DailyMealRecord) -> str:
@@ -161,19 +188,36 @@ def search_restaurants(request):
 
     markers = []
     for restaurant in restaurants:
+        restaurant.user_distance_km = None
         if restaurant.latitude is None or restaurant.longitude is None:
             continue
+        lat = float(restaurant.latitude)
+        lon = float(restaurant.longitude)
+        distance_km = (
+            _haversine_distance_km(user_location, (lat, lon)) if user_location else None
+        )
+        restaurant.user_distance_km = distance_km
         markers.append(
             {
                 "name": restaurant.name,
-                "lat": float(restaurant.latitude),
-                "lon": float(restaurant.longitude),
+                "lat": lat,
+                "lon": lon,
                 "address": restaurant.address or "",
                 "cuisine": restaurant.cuisine_type or "",
                 "price": restaurant.get_price_range_display(),
                 "rating": restaurant.rating,
+                "distance_km": distance_km,
             }
         )
+
+    nearest_distance_km = min(
+        (marker["distance_km"] for marker in markers if marker["distance_km"] is not None),
+        default=None,
+    )
+    nearest_distance_label = _format_distance_label(nearest_distance_km)
+    selected_location_display = (
+        f"{user_location[0]:.5f}, {user_location[1]:.5f}" if user_location else None
+    )
 
     center_lat, center_lon = DEFAULT_MAP_CENTER
     zoom_start = 13 if markers else 7
@@ -207,9 +251,14 @@ def search_restaurants(request):
             radius=8,
             color="#2563eb",
             fill=True,
-            fill_color="#2563eb",
-            fill_opacity=0.9,
+            fill_color="#93c5fd",
+            fill_opacity=0.5,
             tooltip="目前位置",
+        ).add_to(restaurant_map)
+        folium.Marker(
+            location=user_location,
+            tooltip="目前搜尋位置",
+            icon=folium.Icon(color="blue", icon="info-sign"),
         ).add_to(restaurant_map)
         bounds_points.append([user_location[0], user_location[1]])
 
@@ -234,6 +283,8 @@ def search_restaurants(request):
             detail_parts.append(f"評分：{marker['rating']}")
         if detail_parts:
             popup_lines.append(" ・ ".join(detail_parts))
+        if marker["distance_km"] is not None:
+            popup_lines.append(f"距離：約 {marker['distance_km']:.1f} 公里")
         popup_html = "<br/>".join(popup_lines)
         folium.Marker(
             [marker["lat"], marker["lon"]],
@@ -241,6 +292,47 @@ def search_restaurants(request):
             popup=folium.Popup(popup_html, max_width=280),
         ).add_to(restaurant_map)
 
+    map_name = restaurant_map.get_name()
+    folium.Element(
+        f"""
+        <script>
+        (function() {{
+            function setupRMRSMapBridge() {{
+                var map = {map_name};
+                if (!map) {{
+                    return;
+                }}
+                var selectionMarker = null;
+                map.on("click", function(evt) {{
+                    var lat = evt.latlng.lat;
+                    var lng = evt.latlng.lng;
+                    if (selectionMarker) {{
+                        selectionMarker.setLatLng(evt.latlng);
+                    }} else {{
+                        selectionMarker = L.marker(evt.latlng, {{title: "自選位置"}}).addTo(map);
+                    }}
+                    if (window.parent) {{
+                        window.parent.postMessage(
+                            {{
+                                type: "rmrs-map-click",
+                                lat: lat,
+                                lng: lng,
+                                mapId: "{map_name}"
+                            }},
+                            "*"
+                        );
+                    }}
+                }});
+            }}
+            if (document.readyState !== "loading") {{
+                setupRMRSMapBridge();
+            }} else {{
+                document.addEventListener("DOMContentLoaded", setupRMRSMapBridge);
+            }}
+        }})();
+        </script>
+        """
+    ).add_to(restaurant_map.get_root().html)
     folium_map_html = restaurant_map._repr_html_()
     map_hint = None
     if not markers and not user_location:
@@ -258,9 +350,12 @@ def search_restaurants(request):
             "result_count": total_results,
             "limit_reached": limited,
             "folium_map": folium_map_html,
+            "folium_map_id": map_name,
             "map_has_markers": bool(markers),
-             "has_user_location": bool(user_location),
-             "map_hint": map_hint,
+            "has_user_location": bool(user_location),
+            "map_hint": map_hint,
+            "selected_location_display": selected_location_display,
+            "nearest_distance_label": nearest_distance_label,
         },
     )
 
