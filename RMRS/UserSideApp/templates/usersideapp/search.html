@@ -7,8 +7,8 @@
 {% block content %}
 <div class="search-page">
     <div class="map-shell">
-        <div class="map-overlay">
-            <div class="search-panel">
+        <div class="map-controls">
+            <div class="search-panel search-panel--docked">
                 <div class="search-header">
                     <div>
                         <h1>探索附近餐廳</h1>
@@ -67,6 +67,9 @@
                 </div>
                 {% endif %}
             </div>
+            {% if map_hint %}
+            <p class="map-hint map-hint--inline">{{ map_hint }}</p>
+            {% endif %}
         </div>
         <div class="map-stage">
             <div class="map-frame">
@@ -83,9 +86,6 @@
                 </div>
                 {% endif %}
             </div>
-            {% if map_hint %}
-            <p class="map-hint map-hint--floating">{{ map_hint }}</p>
-            {% endif %}
         </div>
     </div>
 
