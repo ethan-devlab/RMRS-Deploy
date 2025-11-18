@@ -1,18 +1,193 @@
-{% extends 'usersideapp/base_sidebar.html' %}
+﻿{% extends 'usersideapp/base_sidebar.html' %}
 {% load static %}
 {% block page_title %}搜尋餐廳{% endblock %}
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'usersideapp/css/Search_rest.css' %}">
 {% endblock %}
 {% block content %}
-<div class="map-search-wrapper">
-    <div class="map-search-bar">
-        <span class="search-icon">🔍</span>
-        <input type="text" placeholder="搜尋附近餐廳、料理或地點">
-        <button class="nav-btn">↻</button>
+<div class="search-page">
+    <div class="map-shell">
+        <div class="map-overlay">
+            <div class="search-panel">
+                <div class="search-header">
+                    <div>
+                        <h1>探索附近餐廳</h1>
+                        <p>使用條件篩選快速找到餐廳，並在地圖上查看實際位置。</p>
+                    </div>
+                    <div class="result-count">
+                        <span>{{ result_count }} 家餐廳</span>
+                        {% if limit_reached %}
+                        <small>僅顯示前 {{ restaurants|length }} 筆，請縮小條件以顯示更多</small>
+                        {% endif %}
+                    </div>
+                </div>
+                <form method="get" class="search-form" autocomplete="off">
+                    <div class="search-field search-field--primary">
+                        <span class="search-icon">🔍</span>
+                        {{ form.keyword }}
+                        <button type="submit" class="search-submit">搜尋</button>
+                    </div>
+                    <div class="search-filters">
+                        <label class="filter-field">
+                            <span>{{ form.city.label }}</span>
+                            {{ form.city }}
+                        </label>
+                        <label class="filter-field">
+                            <span>{{ form.district.label }}</span>
+                            {{ form.district }}
+                        </label>
+                        <label class="filter-field">
+                            <span>{{ form.cuisine_type.label }}</span>
+                            {{ form.cuisine_type }}
+                        </label>
+                        <label class="filter-field">
+                            <span>{{ form.price_range.label }}</span>
+                            {{ form.price_range }}
+                        </label>
+                    </div>
+                    <div class="search-actions">
+                        <button type="button" class="locate-button" data-locate-btn>使用目前位置</button>
+                        <span class="locate-status" data-location-status>
+                            {% if has_user_location %}已套用目前位置{% else %}自動偵測附近位置中...{% endif %}
+                        </span>
+                    </div>
+                    {{ form.latitude }}
+                    {{ form.longitude }}
+                </form>
+                {% if form.errors %}
+                <div class="form-errors">
+                    {% for field in form %}
+                    {% for error in field.errors %}
+                    <p>{{ field.label }}：{{ error }}</p>
+                    {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="map-stage">
+            <div class="map-frame">
+                {% if folium_map %}
+                <div class="map-toolbar">
+                    <p>可拖曳縮放或使用右上角按鈕切換全螢幕。</p>
+                </div>
+                <div class="folium-map">
+                    {{ folium_map|safe }}
+                </div>
+                {% else %}
+                <div class="map-placeholder">
+                    <p>地圖載入失敗，請重新整理頁面。</p>
+                </div>
+                {% endif %}
+            </div>
+            {% if map_hint %}
+            <p class="map-hint map-hint--floating">{{ map_hint }}</p>
+            {% endif %}
+        </div>
     </div>
+
+    <section class="search-results">
+        <div class="results-header">
+            <h2>搜尋結果</h2>
+        </div>
+        <div class="result-list">
+            {% for restaurant in restaurants %}
+            <article class="result-card">
+                <div class="result-card-header">
+                    <h3>{{ restaurant.name }}</h3>
+                    {% if restaurant.rating %}
+                    <span class="rating-badge">★ {{ restaurant.rating }}</span>
+                    {% endif %}
+                </div>
+                <p class="result-meta">
+                    {{ restaurant.city|default:"" }}{{ restaurant.district|default:"" }}
+                    {% if restaurant.cuisine_type %}
+                    · {{ restaurant.cuisine_type }}
+                    {% endif %}
+                </p>
+                {% if restaurant.address %}
+                <p class="result-address">{{ restaurant.address }}</p>
+                {% endif %}
+                <div class="result-tags">
+                    <span class="tag">{{ restaurant.get_price_range_display }}</span>
+                    {% if restaurant.latitude and restaurant.longitude %}
+                    <span class="tag tag--success">已提供座標</span>
+                    {% else %}
+                    <span class="tag tag--muted">未提供座標</span>
+                    {% endif %}
+                </div>
+            </article>
+            {% empty %}
+            <div class="result-empty">
+                <p>目前沒有符合條件的餐廳，請調整篩選條件後再試一次。</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
 </div>
-<div class="card-long">
-    <p>未整合地圖服務，這裡先展示搜尋列樣式。後續可串接實際 API。</p>
-</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.querySelector(".search-form");
+        const latInput = document.getElementById("{{ form.latitude.auto_id }}");
+        const lonInput = document.getElementById("{{ form.longitude.auto_id }}");
+        const statusEl = document.querySelector("[data-location-status]");
+        const locateBtn = document.querySelector("[data-locate-btn]");
+
+        if (!form || !latInput || !lonInput) {
+            return;
+        }
+
+        const hasCoords = Boolean(latInput.value && lonInput.value);
+
+        function setStatus(message, state) {
+            if (!statusEl) {
+                return;
+            }
+            statusEl.textContent = message;
+            statusEl.dataset.state = state || "";
+        }
+
+        function requestLocation(autoSubmit) {
+            if (!navigator.geolocation) {
+                setStatus("瀏覽器不支援定位功能", "error");
+                return;
+            }
+            setStatus("正在取得定位...", "pending");
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude.toFixed(6);
+                    const lon = position.coords.longitude.toFixed(6);
+                    latInput.value = lat;
+                    lonInput.value = lon;
+                    setStatus("已套用目前位置", "success");
+                    if (autoSubmit) {
+                        form.submit();
+                    }
+                },
+                () => {
+                    setStatus("無法取得定位，請允許存取或稍後再試。", "error");
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }
+
+        if (locateBtn) {
+            locateBtn.addEventListener("click", function () {
+                requestLocation(true);
+            });
+        }
+
+        if (!hasCoords) {
+            requestLocation(true);
+        } else {
+            setStatus("已套用目前位置", "success");
+        }
+    });
+</script>
 {% endblock %}

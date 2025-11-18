@@ -455,6 +455,78 @@ class FavoriteForm(forms.ModelForm):
         return favorite
 
 
+
+class RestaurantSearchForm(forms.Form):
+    keyword = forms.CharField(
+        label="搜尋關鍵字",
+        required=False,
+        widget=forms.TextInput(
+            attrs={"placeholder": "輸入餐廳、餐點或關鍵字", "class": "search-input"}
+        ),
+    )
+    city = forms.CharField(
+        label="城市",
+        required=False,
+        widget=forms.TextInput(
+            attrs={"placeholder": "例：台北", "class": "filter-input"}
+        ),
+    )
+    district = forms.CharField(
+        label="行政區",
+        required=False,
+        widget=forms.TextInput(
+            attrs={"placeholder": "例：信義", "class": "filter-input"}
+        ),
+    )
+    cuisine_type = forms.CharField(
+        label="餐飲類型",
+        required=False,
+        widget=forms.TextInput(
+            attrs={"placeholder": "例：日式、火鍋", "class": "filter-input"}
+        ),
+    )
+    price_range = forms.ChoiceField(
+        label="價格範圍",
+        required=False,
+        choices=[("", "不限")] + list(Restaurant.PriceRange.choices),
+        widget=forms.Select(attrs={"class": "filter-input"}),
+    )
+    latitude = forms.FloatField(required=False, widget=forms.HiddenInput())
+    longitude = forms.FloatField(required=False, widget=forms.HiddenInput())
+
+    def _clean_text(self, field: str) -> str:
+        value = self.cleaned_data.get(field) or ""
+        return value.strip()
+
+    def clean_keyword(self):
+        return self._clean_text("keyword")
+
+    def clean_city(self):
+        return self._clean_text("city")
+
+    def clean_district(self):
+        return self._clean_text("district")
+
+    def clean_cuisine_type(self):
+        return self._clean_text("cuisine_type")
+
+    def clean_latitude(self):
+        value = self.cleaned_data.get("latitude")
+        if value is None:
+            return value
+        if not -90 <= value <= 90:
+            raise forms.ValidationError("緯度範圍需在 -90 到 90 之間。")
+        return value
+
+    def clean_longitude(self):
+        value = self.cleaned_data.get("longitude")
+        if value is None:
+            return value
+        if not -180 <= value <= 180:
+            raise forms.ValidationError("經度範圍需在 -180 到 180 之間。")
+        return value
+
+
 class RecommendationFilterForm(forms.Form):
     cuisine_type = forms.CharField(
         label="料理類型",
