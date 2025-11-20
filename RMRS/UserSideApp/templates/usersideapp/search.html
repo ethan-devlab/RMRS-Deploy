@@ -137,6 +137,17 @@
                     {% else %}
                     <span class="tag tag--muted">未提供座標</span>
                     {% endif %}
+                {% if restaurant.latitude and restaurant.longitude %}
+                <div class="result-actions">
+                    <button type="button"
+                            class="result-action-btn"
+                            data-nav-btn
+                            data-dest-lat="{{ restaurant.latitude }}"
+                            data-dest-lon="{{ restaurant.longitude }}">
+                        開始導航
+                    </button>
+                </div>
+                {% endif %}
                 </div>
             </article>
             {% empty %}
@@ -159,6 +170,7 @@
         const locateBtn = document.querySelector("[data-locate-btn]");
         const mapWrapper = document.querySelector(".folium-map");
         const mapId = mapWrapper ? mapWrapper.dataset.mapId : null;
+        const navButtons = Array.from(document.querySelectorAll("[data-nav-btn]"));
 
         if (!form || !latInput || !lonInput) {
             return;
@@ -184,6 +196,9 @@
             lonInput.value = lonNum.toFixed(6);
             if (statusMessage) {
                 setStatus(statusMessage, "success");
+            }
+            if (navButtons.length) {
+                updateNavigationButtons();
             }
             if (autoSubmit) {
                 form.submit();
@@ -228,6 +243,66 @@
             locateBtn.addEventListener("click", function () {
                 requestLocation(true);
             });
+        }
+
+        function getOriginCoords() {
+            const originLat = parseFloat(latInput.value);
+            const originLon = parseFloat(lonInput.value);
+            if (Number.isNaN(originLat) || Number.isNaN(originLon)) {
+                return null;
+            }
+            return { lat: originLat, lon: originLon };
+        }
+
+        function updateNavigationButtons() {
+            if (!navButtons.length) {
+                return;
+            }
+            const origin = getOriginCoords();
+            navButtons.forEach((btn) => {
+                const destLat = parseFloat(btn.dataset.destLat);
+                const destLon = parseFloat(btn.dataset.destLon);
+                const hasDestination = Number.isFinite(destLat) && Number.isFinite(destLon);
+                if (!hasDestination) {
+                    btn.disabled = true;
+                    btn.title = "此餐廳缺少完整座標資訊";
+                    return;
+                }
+                if (!origin) {
+                    btn.disabled = true;
+                    btn.title = "請先設定目前位置後再使用導航";
+                    return;
+                }
+                btn.disabled = false;
+                btn.removeAttribute("title");
+            });
+        }
+
+        function openNavigation(btn) {
+            const origin = getOriginCoords();
+            const destLat = parseFloat(btn.dataset.destLat);
+            const destLon = parseFloat(btn.dataset.destLon);
+            if (!origin || !Number.isFinite(destLat) || !Number.isFinite(destLon)) {
+                return;
+            }
+            const url = new URL("https://www.google.com/maps/dir/");
+            url.searchParams.set("api", "1");
+            url.searchParams.set("origin", origin.lat + "," + origin.lon);
+            url.searchParams.set("destination", destLat + "," + destLon);
+            window.open(url.toString(), "_blank", "noopener");
+        }
+
+        if (navButtons.length) {
+            navButtons.forEach((btn) => {
+                btn.addEventListener("click", function (event) {
+                    event.preventDefault();
+                    if (btn.disabled) {
+                        return;
+                    }
+                    openNavigation(btn);
+                });
+            });
+            updateNavigationButtons();
         }
 
         if (!hasCoords) {
