@@ -136,3 +136,14 @@ CREATE TABLE IF NOT EXISTS meal_tags (
     FOREIGN KEY (meal_id) REFERENCES meals(id) ON DELETE CASCADE,
     FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='餐點標籤關聯表';
+
+UPDATE restaurants set latitude=25.023642708787854, longitude=121.54820942883636 where id=1;
+UPDATE restaurants set latitude=25.034073187155865, longitude=121.56457108234869 where id=2;
+UPDATE restaurants set latitude=25.051805807521976, longitude=121.54294329584192 where id=3;
+UPDATE restaurants set latitude=25.046506736729228, longitude=121.50570015351326 where id=4;
+UPDATE restaurants set latitude=25.05146605159818, longitude=121.55598246700612 where id=5;
+UPDATE restaurants set latitude=25.03706144689002, longitude=121.54837983816992 where id=6;
+UPDATE restaurants set latitude=25.03151073146947, longitude=121.5189205228268 where id=7;
+UPDATE restaurants set latitude=25.056918683801086, longitude=121.5097920823493 where id=8;
+UPDATE restaurants set latitude=25.0482428344523, longitude=121.55226473817027 where id=9;
+UPDATE restaurants set latitude=25.023788512866773, longitude=121.54819869584112 where id=10;
