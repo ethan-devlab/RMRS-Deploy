@@ -104,6 +104,253 @@ def summarize_today(user: AppUser, target_date: Optional[date] = None) -> TodayM
     )
 
 
+def build_health_summary(user: AppUser, days: int = 7) -> Dict[str, object]:
+    today = timezone.now().date()
+    window_days = max(1, days)
+    start_date = today - timedelta(days=window_days - 1)
+    records = DailyMealRecord.objects.filter(user=user, date__gte=start_date)
+    has_data = records.exists()
+    range_label = f"最近 {window_days} 天"
+    if not has_data:
+        return {
+            "has_data": False,
+            "range_label": range_label,
+            "status_label": "尚未有資料",
+            "status_tone": "neutral",
+            "tags": [],
+            "today_tip": {
+                "icon": "🌱",
+                "title": "開始記錄，取得專屬建議",
+                "description": "目前尚未有飲食紀錄，先從記錄今日的餐點開始，系統就能幫你整理分析。",
+                "actions": [
+                    "每天至少填寫 2〜3 餐，幾天後就能看到趨勢",
+                    "提供熱量與營養素數值可獲得更精準的提醒",
+                ],
+            },
+            "nutrition_sections": [
+                {
+                    "icon": "🥦",
+                    "title": "蔬菜攝取",
+                    "body": "記錄每餐時也可以順手寫下蔬菜份量，系統會提醒是否達到半盤蔬菜的習慣。",
+                    "suggestions": [
+                        "便當/外食時主動加點一份燙青菜",
+                        "火鍋或滷味記得選擇深綠色蔬菜",
+                    ],
+                },
+                {
+                    "icon": "🍚",
+                    "title": "碳水與澱粉",
+                    "body": "輸入飯、麵或飲料的份量，可以幫助系統偵測碳水佔比是否過高。",
+                    "suggestions": [
+                        "從八分滿白飯或半份麵開始調整",
+                        "含糖飲料可改成無糖茶或氣泡水",
+                    ],
+                },
+                {
+                    "icon": "🍗",
+                    "title": "蛋白質補充",
+                    "body": "每餐加上一份掌心大小的蛋白質來源，有助於維持肌肉量。",
+                    "suggestions": [
+                        "午晚餐各加一份雞胸肉、魚或豆腐",
+                        "下午點心可改成無糖豆漿、優格",
+                    ],
+                },
+            ],
+            "lifestyle_tips": [
+                "設定喝水目標 1500〜2000 ml，分多次補充",
+                "久坐族每 60 分鐘起身活動 3 分鐘",
+            ],
+        }
+
+    totals = records.aggregate(
+        total_calories=Sum("calories"),
+        total_protein=Sum("protein_grams"),
+        total_carbs=Sum("carb_grams"),
+        total_fat=Sum("fat_grams"),
+    )
+    total_calories = float(totals["total_calories"] or 0)
+    total_protein = float(totals["total_protein"] or 0)
+    total_carbs = float(totals["total_carbs"] or 0)
+    total_fat = float(totals["total_fat"] or 0)
+    active_days = max(1, records.values("date").distinct().count())
+    avg_calories = total_calories / active_days if active_days else 0
+    avg_protein = total_protein / active_days if active_days else 0
+    avg_carbs = total_carbs / active_days if active_days else 0
+    avg_fat = total_fat / active_days if active_days else 0
+    avg_meals = records.count() / active_days if active_days else 0
+
+    macro_calories = (total_protein * 4) + (total_carbs * 4) + (total_fat * 9)
+    macro_calories = macro_calories or 1
+    protein_ratio = (total_protein * 4) / macro_calories
+    carb_ratio = (total_carbs * 4) / macro_calories
+    fat_ratio = (total_fat * 9) / macro_calories
+
+    if avg_calories < 1300:
+        status_label = "熱量略偏低"
+        status_tone = "caution"
+    elif avg_calories > 2300:
+        status_label = "熱量略偏高"
+        status_tone = "caution"
+    else:
+        status_label = "普通偏健康"
+        status_tone = "good"
+
+    tags: List[Dict[str, str]] = []
+    if protein_ratio < 0.18:
+        tags.append({"text": "蛋白質略不足", "tone": "blue"})
+    elif protein_ratio > 0.28:
+        tags.append({"text": "蛋白質充足", "tone": "green"})
+    else:
+        tags.append({"text": "蛋白質穩定", "tone": "green"})
+
+    if carb_ratio > 0.55:
+        tags.append({"text": "碳水偏多", "tone": "yellow"})
+    elif carb_ratio < 0.45:
+        tags.append({"text": "碳水略低", "tone": "blue"})
+    else:
+        tags.append({"text": "碳水平衡", "tone": "green"})
+
+    if avg_meals >= 3:
+        tags.append({"text": "飲食紀錄規律", "tone": "green"})
+    else:
+        tags.append({"text": "紀錄可再充實", "tone": "yellow"})
+
+    def select_focus_tip() -> Dict[str, object]:
+        deviations = []
+        if protein_ratio < 0.18:
+            deviations.append(("protein_low", 0.18 - protein_ratio))
+        if carb_ratio > 0.55:
+            deviations.append(("carb_high", carb_ratio - 0.55))
+        if avg_calories < 1300:
+            deviations.append(("cal_low", (1300 - avg_calories) / 1300))
+        if avg_meals < 3:
+            deviations.append(("logging_low", 3 - avg_meals))
+        if not deviations:
+            return {
+                "icon": "🌤️",
+                "title": "維持均衡的黃金三角",
+                "description": (
+                    "本週整體數據穩定，持續維持『有菜、有蛋白質、有主食』的配餐即可。"
+                ),
+                "actions": [
+                    "午、晚餐各保留一份掌心大小蛋白質",
+                    "每餐至少半碗蔬菜，顏色越多越好",
+                    "外食時留意含糖飲料的頻率",
+                ],
+            }
+        focus_key = max(deviations, key=lambda item: item[1])[0]
+        if focus_key == "protein_low":
+            return {
+                "icon": "🍗",
+                "title": "今天多補一份蛋白質",
+                "description": (
+                    "最近每餐蛋白質偏少，可以從早餐或下午點心加蛋、豆漿或優格開始。"
+                ),
+                "actions": [
+                    "午晚餐優先選擇有雞肉、魚或豆腐的主菜",
+                    "下午加餐可改成無糖豆漿或希臘優格",
+                    "每餐至少有一份掌心大小的蛋白質",
+                ],
+            }
+        if focus_key == "carb_high":
+            return {
+                "icon": "🍚",
+                "title": "澱粉份量微調",
+                "description": "碳水佔比略高，試著將白飯減少 2〜3 口或改成半碗糙米。",
+                "actions": [
+                    "點便當時請店家少飯或加青菜",
+                    "含糖飲料改成無糖／微糖，減少額外熱量",
+                    "晚餐記得在 20:00 前結束，避免宵夜",
+                ],
+            }
+        if focus_key == "cal_low":
+            return {
+                "icon": "🥗",
+                "title": "熱量略低，加點能量",
+                "description": "平均熱量偏低，記得補充全穀根莖或健康脂肪來源。",
+                "actions": [
+                    "早餐加入全麥吐司或地瓜",
+                    "沙拉可以加酪梨、堅果或初榨橄欖油",
+                    "運動日記得多補一餐高蛋白點心",
+                ],
+            }
+        return {
+            "icon": "📝",
+            "title": "多記錄幾餐，建議更準確",
+            "description": "平均每天僅記錄 {:.1f} 餐，建議補齊三餐讓建議更完整。".format(avg_meals),
+            "actions": [
+                "設定提醒，餐後 5 分鐘內完成紀錄",
+                "若忘記實際份量，可先估算後再修正",
+                "照片或文字都能幫助回顧飲食",
+            ],
+        }
+
+    today_tip = select_focus_tip()
+
+    nutrition_sections = [
+        {
+            "icon": "🥦",
+            "title": "蔬菜與纖維",
+            "body": (
+                f"過去 {active_days} 天平均每餐記錄 {avg_meals:.1f} 次，建議繼續維持『半盤蔬菜』的習慣。"
+            ),
+            "suggestions": [
+                "外食選項可優先有兩種以上青菜的店家",
+                "火鍋/滷味時加點深色蔬菜，增加纖維",
+            ],
+        },
+        {
+            "icon": "🍚",
+            "title": "碳水與澱粉",
+            "body": (
+                f"碳水約佔總熱量的 {carb_ratio * 100:.0f}%，{ '略高' if carb_ratio > 0.55 else '維持在合理範圍'}。"
+            ),
+            "suggestions": [
+                "午晚餐可從八分滿飯量或半份麵開始調整",
+                "下午若想吃甜點，可搭配無糖飲品降低總糖量",
+            ],
+        },
+        {
+            "icon": "🍗",
+            "title": "蛋白質補充",
+            "body": (
+                f"平均每天蛋白質約 {avg_protein:.0f} g，可作為維持肌力的基礎，再視需求加強。"
+            ),
+            "suggestions": [
+                "早餐加入蛋、豆漿或優格，均衡三餐",
+                "午晚餐固定保留掌心大小的蛋白質來源",
+            ],
+        },
+    ]
+
+    lifestyle_tips = [
+        "久坐族每 60 分鐘起身活動 3〜5 分鐘",
+        "設定喝水目標 1500〜2000 ml，分批補充",
+    ]
+    if avg_meals < 3:
+        lifestyle_tips.insert(0, "每天至少記錄三餐，系統才能給出更完整分析。")
+    if avg_calories > 2300:
+        lifestyle_tips.append("晚餐後減少加餐，避免多餘熱量囤積。")
+
+    return {
+        "has_data": True,
+        "range_label": range_label,
+        "status_label": status_label,
+        "status_tone": status_tone,
+        "tags": tags,
+        "today_tip": today_tip,
+        "nutrition_sections": nutrition_sections,
+        "lifestyle_tips": lifestyle_tips,
+        "averages": {
+            "calories": round(avg_calories),
+            "protein": round(avg_protein),
+            "carbs": round(avg_carbs),
+            "fat": round(avg_fat),
+            "meals_per_day": round(avg_meals, 1),
+        },
+    }
+
+
 def ensure_notification_settings(user: AppUser) -> List[NotificationSetting]:
     """Guarantee that the user has baseline reminder rows for each meal."""
     defaults: List[Tuple[str, Optional[time]]] = [
@@ -252,7 +499,7 @@ class RecommendationEngine:
     def random_meals(self, limit: Optional[int] = None) -> List[Meal]:
         return list(
             self._base_queryset()
-            .order_by("-restaurant__rating", "-created_at")
+            .order_by("?")
             [: self._ensure_limit(limit)]
         )
 

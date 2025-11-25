@@ -259,6 +259,14 @@ body {
     align-items: flex-start;
 }
 
+.review-footer {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
 .review-header {
     width: 100%;
     display: flex;
@@ -614,26 +622,127 @@ body {
     font-size: 14px;
 }
 
+.recommendation-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.recommendation-filter .filter-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.recommendation-filter .filter-section {
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    padding: 20px;
+    background: linear-gradient(145deg, #ffffff, #f8fafc);
+}
+
 .recommendation-filter .form-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 16px;
-    margin-bottom: 16px;
+}
+
+.recommendation-filter .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.recommendation-filter .form-group label,
+.recommendation-filter .group-label {
+    font-weight: 600;
+    color: #111827;
+    font-size: 14px;
 }
 
 .recommendation-filter .form-group input,
 .recommendation-filter .form-group select {
     width: 100%;
-    border-radius: 10px;
-    border: 1px solid #e5e7eb;
-    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid #d1d5db;
+    padding: 11px 12px;
     font-size: 14px;
+    font-family: inherit;
+    box-sizing: border-box;
+    background: #fff;
 }
 
-.recommendation-filter .checkbox-group {
-    display: flex;
-    gap: 20px;
+.recommendation-filter .filter-section--inline .form-grid {
+    grid-template-columns: minmax(0, 2fr) minmax(160px, 1fr);
     align-items: center;
+}
+
+.preference-toggle {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.checkbox-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    font-weight: 500;
+    color: #374151;
+}
+
+.checkbox-pill input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+}
+
+.limit-control {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.limit-control input {
+    max-width: 140px;
+}
+
+.limit-hint {
+    font-size: 12px;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.form-errors {
+    border: 1px solid #fecaca;
+    background: #fef2f2;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-top: -6px;
+}
+
+.form-errors p {
+    margin: 4px 0;
+}
+
+@media (max-width: 768px) {
+    .recommendation-filter .filter-section--inline .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-actions {
+        justify-content: stretch;
+    }
 }
 
 .section-head {
@@ -736,6 +845,23 @@ body {
     padding: 12px 16px;
     border-radius: 12px;
     margin-bottom: 16px;
+}
+
+.recommendation-filter {
+    position: relative;
+}
+
+.recommendation-filter.is-loading::after {
+    content: "更新中...";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.75);
+    border-radius: 16px;
+    font-weight: 600;
+    color: #111827;
 }
 
 .user-name {
@@ -1320,6 +1446,28 @@ body {
     color: #6b7280;
 }
 
+.health-metrics {
+    margin-top: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.health-metric {
+    background: #f3f4f6;
+    border-radius: 12px;
+    padding: 10px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 120px;
+}
+
+.health-metric .label {
+    font-size: 12px;
+    color: #6b7280;
+}
+
 .health-right {
     display: flex;
     flex-direction: column;
@@ -1334,9 +1482,33 @@ body {
     font-size: 13px;
 }
 
+.health-status-good,
+.health-status-caution,
+.health-status-alert,
+.health-status-neutral {
+    font-weight: 600;
+}
+
 .health-status-good {
     color: #16a34a;
-    font-weight: 600;
+}
+
+.health-status-caution {
+    color: #b45309;
+}
+
+.health-status-alert {
+    color: #b91c1c;
+}
+
+.health-status-neutral {
+    color: #6b7280;
+}
+
+.health-range {
+    font-size: 12px;
+    color: #94a3b8;
+    margin: 0;
 }
 
 .health-tags {
@@ -1365,6 +1537,11 @@ body {
 .health-tag.blue {
     background: #dbeafe;
     color: #1d4ed8;
+}
+
+.health-tag.neutral {
+    background: #e5e7eb;
+    color: #374151;
 }
 
 /* 今日建議卡片 */
@@ -1436,4 +1613,14 @@ body {
 .health-lifestyle-card {
     font-size: 13px;
     color: #4b5563;
+}
+
+@media (max-width: 768px) {
+    .health-header {
+        flex-direction: column;
+    }
+
+    .health-right {
+        align-items: flex-start;
+    }
 }

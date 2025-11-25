@@ -129,7 +129,13 @@
             {{ meal_form.meal_notes }}
             {{ meal_form.meal_notes.errors }}
         </div>
-        <div class="form-errors">{{ meal_form.non_field_errors }}</div>
+        {% if meal_form.non_field_errors %}
+        <div class="form-errors">
+            {% for error in meal_form.non_field_errors %}
+            <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
         <div class="form-actions">
             <button class="primary-btn" type="submit">
                 {% if editing_record %}儲存變更{% else %}儲存紀錄{% endif %}

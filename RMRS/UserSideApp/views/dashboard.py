@@ -1,14 +1,15 @@
 import json
-import math
 from datetime import timedelta
 
 import folium
 from folium.plugins import Fullscreen, LocateControl
 from django.contrib import messages
 from django.db.models import Q, Sum
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.utils.html import escape
+from django.views.decorators.http import require_POST
 
 from MerchantSideApp.models import Restaurant
 
@@ -35,6 +36,7 @@ from ..models import (
 )
 from ..services import (
     RecommendationEngine,
+    build_health_summary,
     ensure_notification_settings,
     log_meal_record_notification,
     recalculate_weekly_summary,
@@ -44,32 +46,6 @@ from ..services import (
 
 DEFAULT_MAP_CENTER = (23.6978, 120.9605)
 MAX_MAP_RESULTS = 50
-EARTH_RADIUS_KM = 6371.0
-
-
-def _haversine_distance_km(origin: tuple[float, float], target: tuple[float, float]) -> float:
-    """Compute approximate distance in kilometers between two lat/lon pairs."""
-    lat1, lon1 = origin
-    lat2, lon2 = target
-    lat1_rad, lon1_rad = math.radians(lat1), math.radians(lon1)
-    lat2_rad, lon2_rad = math.radians(lat2), math.radians(lon2)
-    dlat = lat2_rad - lat1_rad
-    dlon = lon2_rad - lon1_rad
-    a = math.sin(dlat / 2) ** 2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon / 2) ** 2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-    return round(EARTH_RADIUS_KM * c, 2)
-
-
-def _format_distance_label(distance_km):
-    """Return a friendly distance label in km/m."""
-    if distance_km is None:
-        return None
-    if distance_km < 1:
-        meters = int(distance_km * 1000)
-        if meters < 50:
-            return "小於 50 公尺"
-        return f"{meters:,} 公尺"
-    return f"{distance_km:.1f} 公里"
 
 
 def _serialize_components(record: DailyMealRecord) -> str:
@@ -112,6 +88,144 @@ def _render(request, template_name: str, active_nav: str, extra: dict | None = N
     if extra:
         context.update(extra)
     return render(request, template_name, context)
+
+
+def _build_recommendation_cards(meals, reason: str, used_ids: set[int] | None = None):
+    used_ids = used_ids or set()
+    cards = []
+    for meal in meals:
+        if meal.id in used_ids:
+            continue
+        cards.append(
+            {
+                "meal": meal,
+                "restaurant": meal.restaurant,
+                "favorite_count": getattr(meal, "favorite_count", 0) or 0,
+                "reason": reason,
+            }
+        )
+        used_ids.add(meal.id)
+    return cards
+
+
+def _serialize_card(card: dict) -> dict:
+    meal = card["meal"]
+    restaurant = card["restaurant"]
+    price_label = ""
+    if getattr(restaurant, "price_range", None):
+        try:
+            price_label = restaurant.get_price_range_display()
+        except Exception:  # pragma: no cover - defensive
+            price_label = restaurant.price_range
+    return {
+        "meal": {
+            "id": meal.id,
+            "name": meal.name,
+            "description": meal.description or "",
+            "isVegetarian": bool(meal.is_vegetarian),
+            "isSpicy": bool(meal.is_spicy),
+        },
+        "restaurant": {
+            "id": restaurant.id,
+            "name": restaurant.name,
+            "cuisineType": restaurant.cuisine_type or "",
+            "priceRange": restaurant.price_range or "",
+            "priceLabel": price_label or "",
+            "city": restaurant.city or "",
+            "district": restaurant.district or "",
+        },
+        "favoriteCount": card.get("favorite_count", 0),
+        "reason": card.get("reason") or "",
+    }
+
+
+def _collect_form_errors(form) -> dict:
+    if not form.is_bound or form.is_valid():
+        return {}
+    errors = {}
+    for field, field_errors in form.errors.items():
+        errors[field] = [str(error) for error in field_errors]
+    return errors
+
+
+def _build_random_context(user, data=None):
+    engine = RecommendationEngine(user)
+    preference = getattr(user, "preferences", None)
+    initial_data = engine.initial_data(preference)
+    filter_form = RecommendationFilterForm(initial=initial_data)
+    filters_used = engine.filters_from_data(initial_data)
+    primary_reason = "根據你的偏好"
+    primary_meals = []
+    recommendation_alert = None
+    action = (data or {}).get("action") if data else None
+
+    if data:
+        if action == "use_preferences":
+            filters_used = engine.filters_from_preferences(preference, (data or {}).get("limit"))
+            primary_meals = engine.preference_recommendations(filters_used.limit)
+            primary_reason = "根據你的偏好"
+        elif action == "surprise":
+            primary_meals = engine.random_meals((data or {}).get("limit") or filters_used.limit)
+            primary_reason = "驚喜推薦"
+        else:
+            filter_form = RecommendationFilterForm(data=data, initial=initial_data)
+            if filter_form.is_valid():
+                filters_used = engine.filters_from_data(filter_form.cleaned_data)
+                primary_meals = engine.apply_filters(filters_used)
+                primary_reason = engine.describe_filters(filters_used)
+            else:
+                primary_meals = []
+    else:
+        primary_meals = engine.preference_recommendations(filters_used.limit)
+
+    if not primary_meals:
+        primary_meals = engine.popular_meals(filters_used.limit)
+        recommendation_alert = "目前找不到符合條件的餐點，先為你帶來熱門選擇。"
+        primary_reason = "熱門推薦"
+
+    used_ids: set[int] = set()
+    primary_cards = _build_recommendation_cards(primary_meals, primary_reason, used_ids)
+
+    sections_config = [
+        ("熱門收藏", "依收藏數排序", engine.popular_meals(4)),
+        ("親民價位", "低價位也能享受美味", engine.budget_friendly(4)),
+        ("素食推薦", "友善素食選擇", engine.vegetarian_spotlight(4)),
+        ("清爽不辣", "適合想吃清淡的一天", engine.mild_flavor(4)),
+        ("新的體驗", "你尚未收藏或評論過", engine.new_experiences(4)),
+    ]
+    secondary_sections = []
+    for title, subtitle, meals in sections_config:
+        cards = _build_recommendation_cards(meals, subtitle, used_ids)
+        if cards:
+            secondary_sections.append(
+                {
+                    "title": title,
+                    "subtitle": subtitle,
+                    "cards": cards,
+                }
+            )
+
+    preference_snapshot = None
+    if preference:
+        parts = []
+        if preference.cuisine_type:
+            parts.append(preference.cuisine_type)
+        if preference.price_range:
+            parts.append(f"價格 {preference.price_range}")
+        if preference.is_vegetarian:
+            parts.append("素食")
+        if preference.avoid_spicy:
+            parts.append("不辣")
+        preference_snapshot = " · ".join(parts) if parts else "尚未設定明確條件"
+
+    return {
+        "filter_form": filter_form,
+        "primary_recommendations": primary_cards,
+        "primary_reason": primary_reason,
+        "secondary_sections": secondary_sections,
+        "recommendation_alert": recommendation_alert,
+        "preference_snapshot": preference_snapshot,
+    }
 
 
 @user_login_required
@@ -188,36 +302,19 @@ def search_restaurants(request):
 
     markers = []
     for restaurant in restaurants:
-        restaurant.user_distance_km = None
         if restaurant.latitude is None or restaurant.longitude is None:
             continue
-        lat = float(restaurant.latitude)
-        lon = float(restaurant.longitude)
-        distance_km = (
-            _haversine_distance_km(user_location, (lat, lon)) if user_location else None
-        )
-        restaurant.user_distance_km = distance_km
         markers.append(
             {
                 "name": restaurant.name,
-                "lat": lat,
-                "lon": lon,
+                "lat": float(restaurant.latitude),
+                "lon": float(restaurant.longitude),
                 "address": restaurant.address or "",
                 "cuisine": restaurant.cuisine_type or "",
                 "price": restaurant.get_price_range_display(),
                 "rating": restaurant.rating,
-                "distance_km": distance_km,
             }
         )
-
-    nearest_distance_km = min(
-        (marker["distance_km"] for marker in markers if marker["distance_km"] is not None),
-        default=None,
-    )
-    nearest_distance_label = _format_distance_label(nearest_distance_km)
-    selected_location_display = (
-        f"{user_location[0]:.5f}, {user_location[1]:.5f}" if user_location else None
-    )
 
     center_lat, center_lon = DEFAULT_MAP_CENTER
     zoom_start = 13 if markers else 7
@@ -251,14 +348,9 @@ def search_restaurants(request):
             radius=8,
             color="#2563eb",
             fill=True,
-            fill_color="#93c5fd",
-            fill_opacity=0.5,
+            fill_color="#2563eb",
+            fill_opacity=0.9,
             tooltip="目前位置",
-        ).add_to(restaurant_map)
-        folium.Marker(
-            location=user_location,
-            tooltip="目前搜尋位置",
-            icon=folium.Icon(color="blue", icon="info-sign"),
         ).add_to(restaurant_map)
         bounds_points.append([user_location[0], user_location[1]])
 
@@ -283,8 +375,6 @@ def search_restaurants(request):
             detail_parts.append(f"評分：{marker['rating']}")
         if detail_parts:
             popup_lines.append(" ・ ".join(detail_parts))
-        if marker["distance_km"] is not None:
-            popup_lines.append(f"距離：約 {marker['distance_km']:.1f} 公里")
         popup_html = "<br/>".join(popup_lines)
         folium.Marker(
             [marker["lat"], marker["lon"]],
@@ -292,47 +382,6 @@ def search_restaurants(request):
             popup=folium.Popup(popup_html, max_width=280),
         ).add_to(restaurant_map)
 
-    map_name = restaurant_map.get_name()
-    folium.Element(
-        f"""
-        <script>
-        (function() {{
-            function setupRMRSMapBridge() {{
-                var map = {map_name};
-                if (!map) {{
-                    return;
-                }}
-                var selectionMarker = null;
-                map.on("click", function(evt) {{
-                    var lat = evt.latlng.lat;
-                    var lng = evt.latlng.lng;
-                    if (selectionMarker) {{
-                        selectionMarker.setLatLng(evt.latlng);
-                    }} else {{
-                        selectionMarker = L.marker(evt.latlng, {{title: "自選位置"}}).addTo(map);
-                    }}
-                    if (window.parent) {{
-                        window.parent.postMessage(
-                            {{
-                                type: "rmrs-map-click",
-                                lat: lat,
-                                lng: lng,
-                                mapId: "{map_name}"
-                            }},
-                            "*"
-                        );
-                    }}
-                }});
-            }}
-            if (document.readyState !== "loading") {{
-                setupRMRSMapBridge();
-            }} else {{
-                document.addEventListener("DOMContentLoaded", setupRMRSMapBridge);
-            }}
-        }})();
-        </script>
-        """
-    ).add_to(restaurant_map.get_root().html)
     folium_map_html = restaurant_map._repr_html_()
     map_hint = None
     if not markers and not user_location:
@@ -350,12 +399,9 @@ def search_restaurants(request):
             "result_count": total_results,
             "limit_reached": limited,
             "folium_map": folium_map_html,
-            "folium_map_id": map_name,
             "map_has_markers": bool(markers),
-            "has_user_location": bool(user_location),
-            "map_hint": map_hint,
-            "selected_location_display": selected_location_display,
-            "nearest_distance_label": nearest_distance_label,
+             "has_user_location": bool(user_location),
+             "map_hint": map_hint,
         },
     )
 
@@ -363,106 +409,39 @@ def search_restaurants(request):
 @user_login_required
 def random_recommendation(request):
     user = get_current_user(request)
-    engine = RecommendationEngine(user)
-    preference = getattr(user, "preferences", None)
-    initial_data = engine.initial_data(preference)
-    filter_form = RecommendationFilterForm(initial=initial_data)
-    filters_used = engine.filters_from_data(initial_data)
-    primary_reason = "根據你的偏好"
-    primary_meals = []
-    recommendation_alert = None
-    action = request.POST.get("action") if request.method == "POST" else None
-
-    if request.method == "POST":
-        if action == "use_preferences":
-            filters_used = engine.filters_from_preferences(preference, request.POST.get("limit"))
-            primary_meals = engine.preference_recommendations(filters_used.limit)
-            primary_reason = "根據你的偏好"
-        elif action == "surprise":
-            surprise_limit = request.POST.get("limit") or filters_used.limit
-            primary_meals = engine.random_meals(surprise_limit)
-            primary_reason = "驚喜推薦"
-        else:
-            filter_form = RecommendationFilterForm(data=request.POST, initial=initial_data)
-            if filter_form.is_valid():
-                filters_used = engine.filters_from_data(filter_form.cleaned_data)
-                primary_meals = engine.apply_filters(filters_used)
-                primary_reason = engine.describe_filters(filters_used)
-            else:
-                primary_meals = []
-    else:
-        primary_meals = engine.preference_recommendations(filters_used.limit)
-
-    if not primary_meals:
-        primary_meals = engine.popular_meals(filters_used.limit)
-        recommendation_alert = "目前找不到符合條件的餐點，先為你帶來熱門選擇。"
-        primary_reason = "熱門推薦"
-
-    used_ids: set[int] = set()
-
-    def build_cards(meals, reason):
-        cards = []
-        for meal in meals:
-            if meal.id in used_ids:
-                continue
-            cards.append(
-                {
-                    "meal": meal,
-                    "restaurant": meal.restaurant,
-                    "favorite_count": getattr(meal, "favorite_count", 0) or 0,
-                    "reason": reason,
-                }
-            )
-            used_ids.add(meal.id)
-        return cards
-
-    primary_cards = build_cards(primary_meals, primary_reason)
-
-    sections_config = [
-        ("熱門收藏", "依收藏數排序", engine.popular_meals(4)),
-        ("親民價位", "低價位也能享受美味", engine.budget_friendly(4)),
-        ("素食推薦", "友善素食選擇", engine.vegetarian_spotlight(4)),
-        ("清爽不辣", "適合想吃清淡的一天", engine.mild_flavor(4)),
-        ("新的體驗", "你尚未收藏或評論過", engine.new_experiences(4)),
-    ]
-    secondary_sections = []
-    for title, subtitle, meals in sections_config:
-        cards = build_cards(meals, subtitle)
-        if cards:
-            secondary_sections.append(
-                {
-                    "title": title,
-                    "subtitle": subtitle,
-                    "cards": cards,
-                }
-            )
-
-    preference_snapshot = None
-    if preference:
-        parts = []
-        if preference.cuisine_type:
-            parts.append(preference.cuisine_type)
-        if preference.price_range:
-            parts.append(f"價格 {preference.price_range}")
-        if preference.is_vegetarian:
-            parts.append("素食")
-        if preference.avoid_spicy:
-            parts.append("不辣")
-        preference_snapshot = " · ".join(parts) if parts else "尚未設定明確條件"
-
+    form_data = request.POST if request.method == "POST" else None
+    context = _build_random_context(user, form_data)
     return _render(
         request,
         "usersideapp/random.html",
         "random",
-        {
-            "filter_form": filter_form,
-            "primary_recommendations": primary_cards,
-            "primary_reason": primary_reason,
-            "secondary_sections": secondary_sections,
-            "recommendation_alert": recommendation_alert,
-            "preference_snapshot": preference_snapshot,
-        },
+        context,
     )
+
+
+@require_POST
+@user_login_required
+def random_recommendation_data(request):
+    user = get_current_user(request)
+    context = _build_random_context(user, request.POST)
+    data = {
+        "primary": {
+            "reason": context["primary_reason"],
+            "cards": [_serialize_card(card) for card in context["primary_recommendations"]],
+        },
+        "secondary": [
+            {
+                "title": section["title"],
+                "subtitle": section["subtitle"],
+                "cards": [_serialize_card(card) for card in section["cards"]],
+            }
+            for section in context["secondary_sections"]
+        ],
+        "alert": context["recommendation_alert"],
+        "preferenceSnapshot": context["preference_snapshot"],
+        "formErrors": _collect_form_errors(context["filter_form"]),
+    }
+    return JsonResponse(data)
 
 
 @user_login_required
@@ -651,7 +630,14 @@ def notifications(request):
 
 @user_login_required
 def health_advice(request):
-    return _render(request, "usersideapp/health.html", "health")
+    user = get_current_user(request)
+    summary = build_health_summary(user)
+    return _render(
+        request,
+        "usersideapp/health.html",
+        "health",
+        {"health_summary": summary},
+    )
 
 
 @user_login_required
@@ -706,7 +692,17 @@ def settings(request):
 @user_login_required
 def interactions(request):
     user = get_current_user(request)
-    review_form = ReviewForm(user=user)
+    edit_review_id = request.GET.get("edit_review")
+    editing_review = None
+    if edit_review_id:
+        editing_review = (
+            Review.objects.filter(user=user, pk=edit_review_id)
+            .select_related("restaurant", "meal")
+            .first()
+        )
+        if not editing_review:
+            messages.error(request, "找不到要編輯的評論。")
+    review_form = ReviewForm(user=user, instance=editing_review)
     favorite_form = FavoriteForm(user=user)
     user_reviews = (
         Review.objects.filter(user=user)
@@ -721,11 +717,31 @@ def interactions(request):
     if request.method == "POST":
         action = request.POST.get("form_type")
         if action == "review":
-            review_form = ReviewForm(user=user, data=request.POST)
+            review_instance = None
+            review_id = request.POST.get("review_id")
+            if review_id:
+                review_instance = Review.objects.filter(user=user, pk=review_id).first()
+                if not review_instance:
+                    messages.error(request, "無法編輯指定的評論。")
+            review_form = ReviewForm(user=user, data=request.POST, instance=review_instance)
             if review_form.is_valid():
-                review_form.save()
-                messages.success(request, "感謝您的評論！")
-                return redirect("usersideapp:interactions")
+                meal = review_form.cleaned_data["meal"]
+                duplicate_qs = Review.objects.filter(user=user, meal=meal)
+                if review_instance:
+                    duplicate_qs = duplicate_qs.exclude(pk=review_instance.pk)
+                if duplicate_qs.exists():
+                    review_form.add_error(
+                        "meal",
+                        "你已評論過此餐點，可直接編輯原評論。",
+                    )
+                else:
+                    review_form.save()
+                    if review_instance:
+                        messages.success(request, "評論已更新。")
+                    else:
+                        messages.success(request, "感謝您的評論！")
+                    return redirect("usersideapp:interactions")
+            editing_review = review_instance or editing_review
             messages.error(request, "評論送出失敗，請檢查欄位。")
         elif action == "favorite_add":
             favorite_form = FavoriteForm(user=user, data=request.POST)
@@ -751,5 +767,6 @@ def interactions(request):
             "favorite_form": favorite_form,
             "user_reviews": user_reviews,
             "favorites": favorites,
+            "editing_review": editing_review,
         },
     )

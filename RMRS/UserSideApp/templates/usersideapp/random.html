@@ -1,4 +1,5 @@
 {% extends 'usersideapp/base_sidebar.html' %}
+{% load static %}
 {% block page_title %}隨機推薦{% endblock %}
 {% block content %}
 <div class="welcome-box">
@@ -20,53 +21,65 @@
         <h3>設定條件</h3>
         <p class="label muted">可自訂條件或直接套用既有偏好</p>
     </div>
-    <form method="post" class="recommendation-filter">
+    <form method="post" class="recommendation-filter" data-endpoint="{% url 'usersideapp:random_data' %}">
         {% csrf_token %}
-        <div class="form-grid">
-            <div class="form-group">
-                <label for="id_cuisine_type">料理類型</label>
-                {{ filter_form.cuisine_type }}
+        <div class="filter-layout">
+            <div class="filter-section filter-section--grid">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="id_cuisine_type">料理類型</label>
+                        {{ filter_form.cuisine_type }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_price_range">價格範圍</label>
+                        {{ filter_form.price_range }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_city">城市</label>
+                        {{ filter_form.city }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_district">行政區</label>
+                        {{ filter_form.district }}
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="id_price_range">價格範圍</label>
-                {{ filter_form.price_range }}
-            </div>
-            <div class="form-group">
-                <label for="id_city">城市</label>
-                {{ filter_form.city }}
-            </div>
-            <div class="form-group">
-                <label for="id_district">行政區</label>
-                {{ filter_form.district }}
+            <div class="filter-section filter-section--inline">
+                <div class="form-grid filter-inline">
+                    <div class="form-group preference-group">
+                        <span class="group-label">飲食偏好</span>
+                        <div class="preference-toggle">
+                            <label class="checkbox-pill">
+                                {{ filter_form.is_vegetarian }}
+                                <span>僅顯示素食</span>
+                            </label>
+                            <label class="checkbox-pill">
+                                {{ filter_form.avoid_spicy }}
+                                <span>避免辛辣</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group limit-group">
+                        <label for="id_limit">推薦數量</label>
+                        <div class="limit-control">
+                            {{ filter_form.limit }}
+                            <small class="muted limit-hint">1–12 筆</small>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="form-grid">
-            <div class="form-group checkbox-group">
-                <label class="checkbox-label">
-                    {{ filter_form.is_vegetarian }} 僅顯示素食
-                </label>
-                <label class="checkbox-label">
-                    {{ filter_form.avoid_spicy }} 避免辛辣
-                </label>
-            </div>
-            <div class="form-group">
-                <label for="id_limit">推薦數量</label>
-                {{ filter_form.limit }}
-            </div>
-        </div>
-        {% if filter_form.errors %}
-        <div class="form-errors">
+        <div class="form-errors" id="filter-errors" {% if not filter_form.errors %}hidden{% endif %}>
             {% for field in filter_form %}
-                {% for error in field.errors %}
-                <p>{{ field.label }}：{{ error }}</p>
-                {% endfor %}
+            {% for error in field.errors %}
+            <p>{{ field.label }}：{{ error }}</p>
+            {% endfor %}
             {% endfor %}
             {% for error in filter_form.non_field_errors %}
             <p>{{ error }}</p>
             {% endfor %}
         </div>
-        {% endif %}
-        <div class="form-actions">
+        <div class="form-actions filter-actions">
             <button class="primary-btn" type="submit" name="action" value="filters">取得推薦</button>
             <button class="outline-btn" type="submit" name="action" value="use_preferences">套用我的偏好</button>
             <button class="text-btn" type="submit" name="action" value="surprise">給我驚喜</button>
@@ -77,13 +90,11 @@
 <div class="card-long">
     <div class="section-head">
         <h3>智慧推薦</h3>
-        <p class="label">{{ primary_reason }}</p>
+        <p class="label" id="primary-reason">{{ primary_reason }}</p>
     </div>
-    {% if recommendation_alert %}
-    <div class="alert info">{{ recommendation_alert }}</div>
-    {% endif %}
-    {% if primary_recommendations %}
-    <div class="recommendation-grid">
+    <div class="alert info" id="recommendation-alert" {% if not recommendation_alert %}hidden{% endif %}>{{
+        recommendation_alert|default_if_none:"" }}</div>
+    <div class="recommendation-grid" id="primary-recommendation-grid" data-empty-text="暫時沒有符合條件的餐點，試著調整條件或點擊「給我驚喜」。">
         {% for card in primary_recommendations %}
         <div class="recommendation-card">
             <div class="card-title-row">
@@ -124,56 +135,62 @@
             </div>
         </div>
         {% endfor %}
+        {% if not primary_recommendations %}
+        <p class="muted recommendation-empty">暫時沒有符合條件的餐點，試著調整條件或點擊「給我驚喜」。</p>
+        {% endif %}
     </div>
-    {% else %}
-    <p>暫時沒有符合條件的餐點，試著調整條件或點擊「給我驚喜」。</p>
-    {% endif %}
 </div>
 
-{% for section in secondary_sections %}
-<div class="card-long">
-    <div class="section-head">
-        <h3>{{ section.title }}</h3>
-        <p class="label muted">{{ section.subtitle }}</p>
-    </div>
-    {% if section.cards %}
-    <div class="recommendation-grid compact">
-        {% for card in section.cards %}
-        <div class="recommendation-card">
-            <div class="card-title-row">
-                <div>
-                    <h4>{{ card.meal.name }}</h4>
-                    <p class="muted">{{ card.restaurant.name }}</p>
-                </div>
-                {% if card.favorite_count %}
-                <span class="badge hot">❤️ {{ card.favorite_count }}</span>
-                {% endif %}
-            </div>
-            <p class="recommendation-meta">
-                {% if card.restaurant.cuisine_type %}
-                <span>{{ card.restaurant.cuisine_type }}</span>
-                {% endif %}
-                {% if card.restaurant.price_range %}
-                <span>價格 {{ card.restaurant.price_range }}</span>
-                {% endif %}
-            </p>
-            <div class="recommendation-tags">
-                {% if card.meal.is_vegetarian %}
-                <span class="pill veggie">素</span>
-                {% endif %}
-                {% if not card.meal.is_spicy %}
-                <span class="pill mild">不辣</span>
-                {% endif %}
-                {% if card.reason %}
-                <span class="pill muted">{{ card.reason }}</span>
-                {% endif %}
-            </div>
+<div id="secondary-sections">
+    {% for section in secondary_sections %}
+    <div class="card-long">
+        <div class="section-head">
+            <h3>{{ section.title }}</h3>
+            <p class="label muted">{{ section.subtitle }}</p>
         </div>
-        {% endfor %}
+        {% if section.cards %}
+        <div class="recommendation-grid compact">
+            {% for card in section.cards %}
+            <div class="recommendation-card">
+                <div class="card-title-row">
+                    <div>
+                        <h4>{{ card.meal.name }}</h4>
+                        <p class="muted">{{ card.restaurant.name }}</p>
+                    </div>
+                    {% if card.favorite_count %}
+                    <span class="badge hot">❤️ {{ card.favorite_count }}</span>
+                    {% endif %}
+                </div>
+                <p class="recommendation-meta">
+                    {% if card.restaurant.cuisine_type %}
+                    <span>{{ card.restaurant.cuisine_type }}</span>
+                    {% endif %}
+                    {% if card.restaurant.price_range %}
+                    <span>價格 {{ card.restaurant.price_range }}</span>
+                    {% endif %}
+                </p>
+                <div class="recommendation-tags">
+                    {% if card.meal.is_vegetarian %}
+                    <span class="pill veggie">素</span>
+                    {% endif %}
+                    {% if not card.meal.is_spicy %}
+                    <span class="pill mild">不辣</span>
+                    {% endif %}
+                    {% if card.reason %}
+                    <span class="pill muted">{{ card.reason }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p>目前沒有資料可以顯示。</p>
+        {% endif %}
     </div>
-    {% else %}
-    <p>目前沒有資料可以顯示。</p>
-    {% endif %}
+    {% endfor %}
 </div>
-{% endfor %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'usersideapp/js/random_recommendations.js' %}"></script>
 {% endblock %}

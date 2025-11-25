@@ -11,6 +11,13 @@
     <form method="post" class="meal-form">
         {% csrf_token %}
         <input type="hidden" name="form_type" value="review">
+        {% if editing_review %}
+        <input type="hidden" name="review_id" value="{{ editing_review.id }}">
+        <div class="editing-banner">
+            <span>正在編輯：{{ editing_review.meal.name }} 的評論</span>
+            <a class="text-btn" href="{% url 'usersideapp:interactions' %}">取消</a>
+        </div>
+        {% endif %}
         <div class="form-grid">
             <div class="form-group">
                 <label for="id_restaurant">餐廳</label>
@@ -35,8 +42,19 @@
             {{ review_form.comment }}
             {{ review_form.comment.errors }}
         </div>
-        <div class="form-errors">{{ review_form.non_field_errors }}</div>
-        <button class="primary-btn" type="submit">送出評論</button>
+        {% if review_form.non_field_errors %}
+        <div class="form-errors">
+            {% for error in review_form.non_field_errors %}
+            <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <div class="form-actions">
+            <button class="primary-btn" type="submit">{{ editing_review|yesno:"更新評論,送出評論" }}</button>
+            {% if editing_review %}
+            <a class="text-btn" href="{% url 'usersideapp:interactions' %}">取消編輯</a>
+            {% endif %}
+        </div>
     </form>
 </div>
 
@@ -54,7 +72,10 @@
                 <span class="review-rating">⭐ {{ review.rating }}</span>
             </div>
             <p>{{ review.comment|default:"無評論內容" }}</p>
-            <p class="label">{{ review.created_at|date:"Y/m/d H:i" }}</p>
+            <div class="review-footer">
+                <p class="label">{{ review.created_at|date:"Y/m/d H:i" }}</p>
+                <a class="text-btn" href="{% url 'usersideapp:interactions' %}?edit_review={{ review.id }}">編輯</a>
+            </div>
         </li>
         {% endfor %}
     </ul>

@@ -321,6 +321,56 @@ class UserPortalTestCase(TestCase):
 		self.assertEqual(Review.objects.filter(user=self.user).count(), 1)
 		self.assertContains(response, "感謝您的評論！")
 
+	def test_user_cannot_create_duplicate_review(self):
+		self._login()
+		Review.objects.create(
+			user=self.user,
+			meal=self.meal,
+			restaurant=self.restaurant,
+			rating=4,
+			comment="第一次評論",
+		)
+		response = self.client.post(
+			reverse("usersideapp:interactions"),
+			{
+				"form_type": "review",
+				"restaurant": self.restaurant.id,
+				"meal": self.meal.id,
+				"rating": 5,
+				"comment": "嘗試重複",
+			},
+		)
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, "你已評論過此餐點")
+		self.assertEqual(Review.objects.filter(user=self.user, meal=self.meal).count(), 1)
+
+	def test_user_can_edit_review_via_hidden_field(self):
+		self._login()
+		review = Review.objects.create(
+			user=self.user,
+			meal=self.meal,
+			restaurant=self.restaurant,
+			rating=3,
+			comment="初始評論",
+		)
+		response = self.client.post(
+			reverse("usersideapp:interactions"),
+			{
+				"form_type": "review",
+				"review_id": review.id,
+				"restaurant": self.restaurant.id,
+				"meal": self.meal.id,
+				"rating": 5,
+				"comment": "更新後評論",
+			},
+			follow=True,
+		)
+		self.assertEqual(response.status_code, 200)
+		review.refresh_from_db()
+		self.assertEqual(review.rating, 5)
+		self.assertEqual(review.comment, "更新後評論")
+		self.assertContains(response, "評論已更新")
+
 	def test_review_requires_matching_restaurant(self):
 		self._login()
 		response = self.client.post(
@@ -419,3 +469,69 @@ class UserPortalTestCase(TestCase):
 			all(card["restaurant"].price_range == Restaurant.PriceRange.LOW for card in primary)
 		)
 		self.assertContains(response, "銅板便當")
+
+	def test_random_api_returns_primary_cards(self):
+		self._login()
+		response = self.client.post(
+			reverse("usersideapp:random_data"),
+			{"action": "surprise", "limit": 1},
+		)
+		self.assertEqual(response.status_code, 200)
+		payload = response.json()
+		self.assertIn("primary", payload)
+		self.assertGreaterEqual(len(payload["primary"].get("cards", [])), 1)
+
+	def test_random_api_reports_validation_errors(self):
+		self._login()
+		response = self.client.post(
+			reverse("usersideapp:random_data"),
+			{"action": "filters", "price_range": "超貴"},
+		)
+		self.assertEqual(response.status_code, 200)
+		payload = response.json()
+		self.assertIn("formErrors", payload)
+		self.assertTrue(payload["formErrors"])
+
+	def test_health_page_without_records_prompts_logging(self):
+		self._login()
+		response = self.client.get(reverse("usersideapp:health"))
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, "開始記錄，取得專屬建議")
+
+	def test_health_page_with_recent_records_shows_macro_feedback(self):
+		self._login()
+		today = timezone.now().date()
+		DailyMealRecord.objects.create(
+			user=self.user,
+			date=today,
+			meal_type=DailyMealRecord.MealType.BREAKFAST,
+			meal_name="高碳早餐",
+			calories=520,
+			protein_grams=18,
+			carb_grams=85,
+			fat_grams=12,
+		)
+		DailyMealRecord.objects.create(
+			user=self.user,
+			date=today,
+			meal_type=DailyMealRecord.MealType.LUNCH,
+			meal_name="高碳午餐",
+			calories=720,
+			protein_grams=25,
+			carb_grams=110,
+			fat_grams=20,
+		)
+		DailyMealRecord.objects.create(
+			user=self.user,
+			date=today,
+			meal_type=DailyMealRecord.MealType.DINNER,
+			meal_name="澱粉晚餐",
+			calories=680,
+			protein_grams=20,
+			carb_grams=95,
+			fat_grams=18,
+		)
+		response = self.client.get(reverse("usersideapp:health"))
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, "碳水偏多")
+		self.assertContains(response, "澱粉份量微調")
