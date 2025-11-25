@@ -1,0 +1,129 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foodie · 新增餐點</title>
+    <link rel="stylesheet" href="{% static 'merchantsideapp/css/merchant_add_meal.css' %}">
+</head>
+
+<body>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <button class="toggle-btn" id="toggleBtn">☰</button>
+            <h2 class="logo"><span class="logo-text">Foodie 商家端</span></h2>
+        </div>
+        <ul>
+            <li id="menu-dashboard">
+                <span class="icon">🏠</span>
+                <span class="item-text">主頁總覽</span>
+            </li>
+            <li class="active" id="menu-add">
+                <span class="icon">➕</span>
+                <span class="item-text">新增餐點</span>
+            </li>
+            <li id="menu-manage">
+                <span class="icon">📋</span>
+                <span class="item-text">管理餐點</span>
+            </li>
+            <li class="logout" id="menu-logout">
+                <span class="icon">🚪</span>
+                <span class="item-text">登出</span>
+            </li>
+        </ul>
+    </div>
+
+    <div class="main">
+        <div class="main-inner">
+            <div class="add-card">
+                <div class="upload-banner">
+                    <div class="upload-left">
+                        <div class="upload-title">快點進此上傳餐點照片！豐富你的菜單內容，將會有更好銷售量。</div>
+                        <div class="upload-sub">建議尺寸 1000 × 731 · 檔案大小建議 200KB ～ 20MB（JPG / PNG）</div>
+                        <div class="upload-actions">
+                            <label for="meal-photo" class="upload-btn">📷 上傳餐點照片</label>
+                            <span class="upload-hint">或者將檔案拖曳至此</span>
+                        </div>
+                    </div>
+                    <div class="upload-illu">🍰</div>
+                </div>
+
+                <div class="add-form-section">
+                    <h2 class="add-title">餐點基本資料</h2>
+                    <form class="add-form">
+                        <div class="field-row two-cols">
+                            <div class="field-group">
+                                <label class="field-label">品項名稱－中文 <span class="req">*</span></label>
+                                <input type="text" class="field-input" placeholder="例如：招牌紅燒牛肉麵">
+                            </div>
+                            <div class="field-group">
+                                <label class="field-label">品項名稱－EN（選填）</label>
+                                <input type="text" class="field-input" placeholder="例如：Signature Beef Noodle Soup">
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <label class="field-label">品項敘述－中文（選填）</label>
+                            <textarea class="field-input textarea" placeholder="新增餐點特色或套餐內容，提升消費者點餐意願！"></textarea>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">品項敘述－EN（選填）</label>
+                            <textarea class="field-input textarea"
+                                placeholder="Optional English description of the dish."></textarea>
+                        </div>
+
+                        <div class="field-row two-cols">
+                            <div class="field-group">
+                                <label class="field-label">品項類別 <span class="req">*</span></label>
+                                <select class="field-input">
+                                    <option value="">請選擇類別</option>
+                                    <option>主食</option>
+                                    <option>湯品</option>
+                                    <option>小菜 / 點心</option>
+                                    <option>飲料</option>
+                                    <option>其他</option>
+                                </select>
+                            </div>
+                            <div class="field-group">
+                                <label class="field-label">菜單時段（選填）</label>
+                                <select class="field-input">
+                                    <option value="">不限時段</option>
+                                    <option>早餐</option>
+                                    <option>午餐</option>
+                                    <option>晚餐</option>
+                                    <option>宵夜</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="field-group short">
+                            <label class="field-label">價格（元） <span class="req">*</span></label>
+                            <input type="number" class="field-input" placeholder="例如：180">
+                        </div>
+
+                        <input type="file" id="meal-photo" accept="image/*" style="display:none;">
+
+                        <div class="add-actions">
+                            <button type="button" class="add-btn primary">儲存餐點（示意）</button>
+                            <button type="reset" class="add-btn ghost">清除內容</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.merchantRoutes = {
+            dashboard: "{% url 'merchantsideapp:dashboard' %}",
+            addMeal: "{% url 'merchantsideapp:add_meal' %}",
+            manageMeals: "{% url 'merchantsideapp:manage_meals' %}",
+            login: "{% url 'merchantsideapp:login' %}"
+        };
+    </script>
+    <script src="{% static 'merchantsideapp/js/merchant_homepage.js' %}"></script>
+</body>
+
+</html>

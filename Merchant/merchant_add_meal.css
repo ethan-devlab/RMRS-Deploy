@@ -1,0 +1,890 @@
+/* =========================================
+   全域設定
+========================================= */
+body {
+    margin: 0;
+    font-family: "Poppins", "Noto Sans TC", sans-serif;
+
+    /* ✅ 背景圖 + 淡白色漸層疊加，避免太花 */
+    background:
+        linear-gradient(
+            135deg,
+            rgba(243, 244, 246, 0.40),
+            rgba(228, 228, 228, 0.85)
+        ),
+        url("img/home_bg.jpg") center / cover fixed no-repeat;
+
+    display: flex;
+}
+
+/* =========================================
+   左側 Sidebar（展開 / 收合）
+========================================= */
+.sidebar {
+    width: 240px;
+    min-height: 100vh;
+    background: #ffffff;
+    box-shadow: 3px 0 10px rgba(0,0,0,0.1);
+    padding: 20px;
+    box-sizing: border-box;
+    transition: width 0.25s ease;
+    overflow: hidden;
+}
+
+/* 收合狀態 */
+.sidebar.collapsed {
+    width: 72px;
+}
+
+.sidebar.collapsed .logo {
+    display: none;
+}
+
+.sidebar.collapsed ul {
+    display: none;
+}
+
+.sidebar.collapsed .toggle-btn {
+    display: block;
+    margin: 0 auto;
+}
+
+/* Sidebar 頂部：☰ + Logo */
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+.toggle-btn {
+    background: transparent;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    padding: 4px 6px;
+}
+
+.logo {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+/* Sidebar 選單 */
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 10px 12px;
+    margin-bottom: 10px;
+
+    border-radius: 999px;
+
+    cursor: pointer;
+    font-size: 15px;
+    color: #374151;
+
+    transition: background 0.18s ease,
+                transform 0.18s ease,
+                box-shadow 0.18s ease;
+}
+
+.sidebar li:not(.active):hover {
+    background: #f3f4ff;
+    transform: translateX(2px);
+}
+
+.sidebar .active {
+    background: #111827;
+    color: #ffffff;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.35);
+}
+
+.sidebar .logout {
+    margin-top: 24px;
+    color: #f97373;
+    font-weight: 600;
+}
+
+/* =========================================
+   主內容區
+========================================= */
+.main {
+    flex: 1;
+    padding: 40px 60px;
+    overflow-y: auto;
+}
+
+.main-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* 共用卡片樣式 */
+.welcome-box {
+    background: linear-gradient(135deg, #ffffff, #f9fafb);
+    padding: 26px 30px;
+    border-radius: 20px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+    margin-bottom: 32px;
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.welcome-box:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 0 22px 50px rgba(15, 23, 42, 0.18);
+}
+
+.section-title {
+    font-size: 18px;
+    margin: 24px 0 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #111827;
+}
+
+.section-title::before {
+    content: "";
+    width: 4px;
+    height: 18px;
+    background: #f97316;
+    border-radius: 999px;
+}
+
+.card-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.card {
+    flex: 1;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.card:hover {
+    transform: translateY(-3px) scale(1.01);
+    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.16);
+}
+
+.card-long {
+    background: #ffffff;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.card-long:hover {
+    transform: translateY(-3px) scale(1.01);
+    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.16);
+}
+
+/* =========================================
+   商家主頁專用（merchant_homepage.html）
+========================================= */
+
+.merchant-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+}
+
+.merchant-left h1 {
+    margin: 0 0 6px;
+    font-size: 26px;
+}
+
+.merchant-left p {
+    margin: 0;
+    color: #6b7280;
+}
+
+.merchant-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.stat-pill {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(249, 115, 22, 0.08);
+    font-size: 13px;
+}
+
+.stat-ok {
+    color: #ea580c;
+    font-weight: 600;
+}
+
+.stat-small {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+/* 快速操作卡片 */
+.quick-actions .action-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.action-icon {
+    font-size: 22px;
+}
+
+.action-title {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.action-desc {
+    font-size: 13px;
+    color: #4b5563;
+}
+
+.action-btn {
+    align-self: flex-start;
+    margin-top: 6px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: none;
+    font-size: 13px;
+    cursor: pointer;
+    background: #111827;
+    color: #ffffff;
+    transition: background 0.15s ease,
+                transform 0.15s ease,
+                box-shadow 0.15s ease;
+}
+
+.action-btn.secondary {
+    background: #f97316;
+}
+
+.action-btn:hover {
+    background: #020617;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.25);
+}
+
+.action-btn.ghost {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+/* 最近編輯餐點（範例用） */
+.recent-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.recent-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px dashed #e5e7eb;
+}
+
+.recent-row:last-child {
+    border-bottom: none;
+}
+
+.recent-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.recent-name {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.recent-sub {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.recent-sub .on {
+    color: #16a34a;
+    font-weight: 600;
+}
+
+.recent-sub .off {
+    color: #b91c1c;
+    font-weight: 600;
+}
+
+.recent-btn {
+    padding: 5px 10px;
+    border-radius: 999px;
+    border: none;
+    font-size: 12px;
+    cursor: pointer;
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.recent-empty {
+    font-size: 12px;
+    color: #9ca3af;
+    margin-top: 6px;
+}
+
+/* =========================================
+   Toggle Switch（上架狀態小開關）
+========================================= */
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 42px;
+    height: 22px;
+}
+
+.switch.small {
+    width: 40px;
+    height: 20px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: #e5e7eb;
+    transition: .2s;
+    border-radius: 999px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 2px;
+    background-color: white;
+    transition: .2s;
+    border-radius: 50%;
+}
+
+.switch.small input:checked + .slider {
+    background-color: #22c55e;
+}
+
+.switch.small input:checked + .slider:before {
+    transform: translateX(18px);
+}
+
+/* =========================================
+   新增餐點頁專用（merchant_add_meal.html）
+========================================= */
+
+/* 標題卡片 */
+.add-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+}
+
+.add-header-left p {
+    margin: 0;
+    color: #6b7280;
+}
+
+.add-header-right {
+    display: flex;
+    align-items: center;
+}
+
+.step-pill {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(59, 130, 246, 0.08);
+    font-size: 13px;
+    color: #1d4ed8;
+}
+
+/* 整張表單卡片 */
+.add-form-card {
+    padding: 22px 24px 18px;
+    margin-bottom: 24px;
+}
+
+.sub-title {
+    font-size: 16px;
+    margin: 0 0 14px;
+}
+
+/* 📷 上傳餐點照片 Banner */
+.photo-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 16px;
+    padding: 16px 18px;
+    margin-bottom: 20px;
+
+    border-radius: 16px;
+    border: 1px dashed #fecaca;
+    background: linear-gradient(135deg, #fff1f2, #ffe4f1);
+}
+
+.photo-banner-left {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.photo-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #9f1239;
+}
+
+.photo-sub {
+    font-size: 12px;
+    color: #9f1239;
+    opacity: 0.8;
+}
+
+.photo-banner-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.photo-banner-btn {
+    display: inline-block;
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: #fb7185;
+    color: #ffffff;
+    font-size: 13px;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 10px 24px rgba(248, 113, 113, 0.45);
+    transition: transform 0.15s ease,
+                box-shadow 0.15s ease,
+                background 0.15s ease;
+}
+
+.photo-banner-btn:hover {
+    background: #f97373;
+    transform: translateY(-1px);
+    box-shadow: 0 14px 30px rgba(248, 113, 113, 0.6);
+}
+
+.photo-banner-hint {
+    font-size: 12px;
+    color: #9f1239;
+    opacity: 0.85;
+}
+
+/* 右邊插畫：目前先用 emoji，可之後換圖片 */
+.photo-banner-illu {
+    width: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    filter: drop-shadow(0 10px 18px rgba(248, 113, 113, 0.45));
+}
+
+/* 表單本體 */
+.meal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+    color: #374151;
+}
+
+.form-group label {
+    font-weight: 600;
+}
+
+.required {
+    color: #ef4444;
+}
+
+/* input / select / textarea 樣式 */
+.meal-form input[type="text"],
+.meal-form input[type="number"],
+.meal-form select,
+.meal-form textarea {
+    padding: 9px 11px;
+    border-radius: 10px;
+    border: 1px solid #d1d5db;
+    font-size: 13px;
+    outline: none;
+    font-family: inherit;
+    background: #ffffff;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.meal-form input:focus,
+.meal-form select:focus,
+.meal-form textarea:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.16);
+}
+
+.meal-form textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* 上架狀態區 */
+.status-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.status-text {
+    font-size: 13px;
+    color: #16a34a;
+}
+
+/* 上傳檔案：隱藏原生 input，用自訂按鈕 */
+.photo-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.meal-form input[type="file"] {
+    display: none;
+}
+
+.photo-hint {
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+/* 表單按鈕列 */
+.form-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.action-btn {
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: none;
+    font-size: 13px;
+    cursor: pointer;
+    background: #111827;
+    color: #ffffff;
+    transition: background 0.15s ease,
+                transform 0.15s ease,
+                box-shadow 0.15s ease;
+}
+
+.action-btn:hover {
+    background: #020617;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.35);
+}
+
+.action-btn.ghost {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+/* RWD：窄螢幕調整 */
+@media (max-width: 1024px) {
+    .photo-banner {
+        flex-direction: column;
+    }
+
+    .photo-banner-illu {
+        width: 100%;
+        justify-content: flex-start;
+        font-size: 32px;
+    }
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+/* =========================================
+   新增餐點頁：仿圖的樣式
+========================================= */
+
+/* 整張卡片外框 */
+.add-card {
+    background: #ffffff;
+    border-radius: 18px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+    padding: 18px 20px 22px;
+    margin-top: 10px;
+}
+
+/* 粉紅上傳 Banner */
+.upload-banner {
+    border-radius: 14px;
+    border: 1px dashed #fecaca;
+    background: linear-gradient(135deg, #fff1f2, #ffe4f2);
+    padding: 16px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.upload-left {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+
+.upload-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #9f1239;
+}
+
+.upload-sub {
+    font-size: 12px;
+    color: #9f1239;
+    opacity: 0.8;
+}
+
+.upload-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.upload-btn {
+    display: inline-block;
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: #fb7185;
+    color: #ffffff;
+    font-size: 13px;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 8px 20px rgba(248, 113, 113, 0.55);
+    transition: background 0.15s ease,
+                transform 0.15s ease,
+                box-shadow 0.15s ease;
+}
+
+.upload-btn:hover {
+    background: #f97373;
+    transform: translateY(-1px);
+    box-shadow: 0 12px 26px rgba(248, 113, 113, 0.75);
+}
+
+.upload-hint {
+    font-size: 12px;
+    color: #9f1239;
+    opacity: 0.85;
+}
+
+/* 右邊小插畫：先用 emoji 代替 */
+.upload-illu {
+    width: 110px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    filter: drop-shadow(0 10px 16px rgba(248, 113, 113, 0.4));
+}
+
+/* 下方表單區 */
+.add-form-section {
+    margin-top: 10px;
+}
+
+.add-title {
+    font-size: 18px;
+    margin: 0 0 14px;
+}
+
+.add-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* 每一排 */
+.field-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.field-row.two-cols {
+    flex-direction: row;
+}
+
+.field-row.two-cols > .field-group {
+    flex: 1;
+}
+
+/* 單格 */
+.field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.field-group.short {
+    max-width: 260px;
+}
+
+/* label */
+.field-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.req {
+    color: #ef4444;
+}
+
+/* input / select / textarea 灰底 pill */
+.field-input {
+    border-radius: 999px;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    padding: 10px 14px;
+    font-size: 13px;
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.field-input.textarea {
+    border-radius: 18px;
+    min-height: 70px;
+    resize: vertical;
+    line-height: 1.5;
+}
+
+.field-input:focus {
+    border-color: #f97373;
+    background: #ffffff;
+    box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.35);
+}
+
+/* 按鈕列 */
+.add-actions {
+    margin-top: 6px;
+    display: flex;
+    gap: 10px;
+}
+
+.add-btn {
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: none;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s ease,
+                box-shadow 0.15s ease,
+                transform 0.15s ease;
+}
+
+.add-btn.primary {
+    background: #111827;
+    color: #ffffff;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.35);
+}
+
+.add-btn.primary:hover {
+    background: #020617;
+    transform: translateY(-1px);
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.45);
+}
+
+.add-btn.ghost {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.add-btn.ghost:hover {
+    background: #e5e7eb;
+}
+
+/* RWD：窄螢幕調整 */
+@media (max-width: 1024px) {
+    .upload-banner {
+        flex-direction: column;
+    }
+
+    .upload-illu {
+        width: 100%;
+        justify-content: flex-start;
+        font-size: 34px;
+    }
+}
+
+@media (max-width: 768px) {
+    .field-row.two-cols {
+        flex-direction: column;
+    }
+
+    .field-group.short {
+        max-width: 100%;
+    }
+}

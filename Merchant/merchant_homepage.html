@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商家主頁 - Foodie Merchant</title>
+    <link rel="stylesheet" href="merchant_homepage.css">
+</head>
+<body>
+
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <button class="toggle-btn" id="toggleBtn">☰</button>
+        <h2 class="logo">
+            <span class="logo-text">Foodie 商家端</span>
+        </h2>
+    </div>
+
+    <ul>
+        <!-- 主頁總覽 -->
+        <li class="active" id="menu-dashboard">
+            <span class="icon">🏠</span>
+            <span class="item-text">主頁總覽</span>
+        </li>
+
+        <!-- 新增餐點 -->
+        <li id="menu-add">
+            <span class="icon">➕</span>
+            <span class="item-text">新增餐點</span>
+        </li>
+
+        <!-- 管理餐點 -->
+        <li id="menu-manage">
+            <span class="icon">📋</span>
+            <span class="item-text">管理餐點</span>
+        </li>
+
+        <!-- 登出 -->
+        <li class="logout" id="menu-logout">
+            <span class="icon">🚪</span>
+            <span class="item-text">登出</span>
+        </li>
+    </ul>
+</div>
+
+<div class="main">
+    <div class="main-inner">
+
+        <!-- 歡迎區塊 -->
+        <div class="welcome-box merchant-header">
+            <div class="merchant-left">
+                <h1>歡迎回來，老闆！</h1>
+                <p>你可以在這裡新增餐點、編輯或下架既有餐點，方便管理菜單。</p>
+            </div>
+
+            <div class="merchant-right">
+                <div class="stat-pill">
+                    目前狀態：<span class="stat-ok">可以接單</span>
+                </div>
+                <div class="stat-small">
+                    <span>今天已建立餐點：-- 筆</span>
+                    <span>最後更新時間：剛剛</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 快速操作 -->
+        <div class="section-title">快速操作</div>
+        <div class="card-row quick-actions">
+            <div class="card action-card">
+                <div class="action-icon">➕</div>
+                <div class="action-title">新增餐點</div>
+                <div class="action-desc">
+                    建立新的餐點品項，包含名稱、分類、價格、描述與上傳照片。
+                </div>
+                <button class="action-btn" id="btn-go-add">前往新增餐點</button>
+            </div>
+
+            <div class="card action-card">
+                <div class="action-icon">📋</div>
+                <div class="action-title">管理餐點</div>
+                <div class="action-desc">
+                    編輯已建立的餐點，可調整價格、修改內容，或將餐點上架 / 下架。
+                </div>
+                <button class="action-btn secondary" id="btn-go-manage">前往管理餐點</button>
+            </div>
+        </div>
+
+        <!-- 最近編輯的餐點（純展示用樣板） -->
+        <div class="section-title">最近編輯的餐點</div>
+        <div class="card-long recent-list">
+            <div class="recent-row">
+                <div class="recent-main">
+                    <div class="recent-name">招牌紅燒牛肉麵</div>
+                    <div class="recent-sub">最後編輯：今天 · 價格 $180 · 狀態：<span class="on">上架中</span></div>
+                </div>
+                <button class="recent-btn">前往管理</button>
+            </div>
+
+            <div class="recent-row">
+                <div class="recent-main">
+                    <div class="recent-name">香煎雞腿排飯</div>
+                    <div class="recent-sub">最後編輯：昨天 · 價格 $150 · 狀態：<span class="off">已下架</span></div>
+                </div>
+                <button class="recent-btn">前往管理</button>
+            </div>
+
+            <div class="recent-empty">
+                （以上為示意資料，之後可改成由系統帶入真實餐點）
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="merchant_homepage.js"></script>
+</body>
+</html>
