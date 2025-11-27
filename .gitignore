@@ -167,3 +167,6 @@ database.zip
 Merchant.zip
 all_templates
 Merchant
+
+# MacOS files
+.DS_Store
