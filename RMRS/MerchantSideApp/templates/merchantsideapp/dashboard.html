@@ -39,7 +39,7 @@
         <div class="main-inner">
             <div class="welcome-box merchant-header">
                 <div class="merchant-left">
-                    <h1>歡迎回來，老闆！</h1>
+                    <h1>歡迎回來，{{ restaurant.name|default:"老闆" }}！</h1>
                     <p>你可以在這裡新增餐點、編輯或下架既有餐點，方便管理菜單。</p>
                 </div>
                 <div class="merchant-right">
@@ -93,7 +93,8 @@
             dashboard: "{% url 'merchantsideapp:dashboard' %}",
             addMeal: "{% url 'merchantsideapp:add_meal' %}",
             manageMeals: "{% url 'merchantsideapp:manage_meals' %}",
-            login: "{% url 'merchantsideapp:login' %}"
+            login: "{% url 'merchantsideapp:login' %}",
+            logout: "{% url 'merchantsideapp:logout' %}"
         };
     </script>
     <script src="{% static 'merchantsideapp/js/merchant_homepage.js' %}"></script>

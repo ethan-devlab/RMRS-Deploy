@@ -12,10 +12,35 @@
     <h2>Welcome back</h2>
     <p>使用商家帳號登入系統</p>
 
-    <input type="email" placeholder="商家 Email">
-    <input type="password" placeholder="密碼">
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
 
-    <button class="login-btn">登入</button>
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="form-errors">
+                {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+        {% endif %}
+        <div class="form-field">
+            {{ form.email }}
+            {% if form.email.errors %}
+                <div class="field-errors">{% for error in form.email.errors %}<p>{{ error }}</p>{% endfor %}</div>
+            {% endif %}
+        </div>
+        <div class="form-field">
+            {{ form.password }}
+            {% if form.password.errors %}
+                <div class="field-errors">{% for error in form.password.errors %}<p>{{ error }}</p>{% endfor %}</div>
+            {% endif %}
+        </div>
+        <button type="submit" class="login-btn">登入</button>
+    </form>
 
     <div class="signup">
         <p>還沒有商家帳號嗎？ <a href="{% url 'merchantsideapp:register' %}">點我註冊</a></p>
@@ -26,7 +51,8 @@
 <script>
     window.merchantRoutes = {
         dashboard: "{% url 'merchantsideapp:dashboard' %}",
-        login: "{% url 'merchantsideapp:login' %}"
+        login: "{% url 'merchantsideapp:login' %}",
+        logout: "{% url 'merchantsideapp:logout' %}",
     };
 </script>
 <script src="{% static 'merchantsideapp/js/merchant_login.js' %}"></script>

@@ -15,14 +15,11 @@ inputs.forEach((input) => {
 });
 
 const btn = document.querySelector(".login-btn");
-const routes = window.merchantRoutes || {};
+const form = document.querySelector(".login-container form");
 
-if (btn) {
-    btn.addEventListener("click", () => {
+if (btn && form) {
+    form.addEventListener("submit", () => {
         btn.disabled = true;
-        btn.innerHTML = "Loading...";
-        setTimeout(() => {
-            window.location.href = routes.dashboard || routes.login || "/merchant/";
-        }, 1200);
+        btn.textContent = "登入中...";
     });
 }

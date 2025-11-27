@@ -111,3 +111,26 @@ class MealTag(models.Model):
 
     def __str__(self) -> str:
         return f"{self.meal_id}:{self.tag_id}"
+
+
+class MerchantAccount(models.Model):
+    """Authentication profile for merchants tied to a single restaurant."""
+
+    restaurant = models.OneToOneField(
+        Restaurant,
+        related_name="merchant_account",
+        on_delete=models.CASCADE,
+    )
+    email = models.EmailField(max_length=255, unique=True)
+    password_hash = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True, db_default=Now())
+    updated_at = models.DateTimeField(auto_now=True, db_default=Now())
+
+    class Meta:
+        db_table = "merchant_accounts"
+        indexes = [
+            models.Index(fields=["email"], name="idx_merchant_email"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.email} -> {self.restaurant_id}"

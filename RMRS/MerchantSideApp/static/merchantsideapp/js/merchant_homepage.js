@@ -29,7 +29,7 @@
             "menu-dashboard": "dashboard",
             "menu-add": "addMeal",
             "menu-manage": "manageMeals",
-            "menu-logout": "login",
+            "menu-logout": "logout",
         };
 
         Object.entries(mapping).forEach(([elementId, routeKey]) => {
