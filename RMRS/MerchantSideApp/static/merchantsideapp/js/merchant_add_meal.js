@@ -106,7 +106,7 @@
             actionsWrap.className = "nutrition-item-actions";
             const editBtn = document.createElement("button");
             editBtn.type = "button";
-            editBtn.className = "nutrition-edit";
+            editBtn.className = "nutrition-action nutrition-edit";
             editBtn.textContent = "編輯";
             editBtn.addEventListener("click", () => {
                 populateFields(entry);
@@ -116,7 +116,7 @@
             });
             const removeBtn = document.createElement("button");
             removeBtn.type = "button";
-            removeBtn.className = "nutrition-remove";
+            removeBtn.className = "nutrition-action nutrition-remove";
             removeBtn.textContent = "刪除";
             removeBtn.addEventListener("click", () => {
                 entries.splice(index, 1);

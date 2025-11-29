@@ -9,6 +9,17 @@ from .models import Meal, MerchantAccount, Restaurant
 
 
 class MerchantRegistrationForm(forms.Form):
+    merchant_name = forms.CharField(
+        label="使用者名稱",
+        max_length=60,
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": "使用者名稱",
+                "autocomplete": "nickname",
+                "class": "form-input",
+            }
+        ),
+    )
     restaurant_name = forms.CharField(
         label="餐廳名稱",
         max_length=100,
@@ -62,6 +73,12 @@ class MerchantRegistrationForm(forms.Form):
             raise forms.ValidationError("餐廳名稱不可空白。")
         return name
 
+    def clean_merchant_name(self):
+        name = self.cleaned_data["merchant_name"].strip()
+        if not name:
+            raise forms.ValidationError("使用者名稱不可空白。")
+        return name
+
     def clean_email(self):
         email = self.cleaned_data["email"].strip().lower()
         if MerchantAccount.objects.filter(email__iexact=email).exists():
@@ -82,6 +99,7 @@ class MerchantRegistrationForm(forms.Form):
             restaurant = Restaurant.objects.create(name=restaurant_name)
             merchant = MerchantAccount.objects.create(
                 restaurant=restaurant,
+                display_name=self.cleaned_data["merchant_name"],
                 email=self.cleaned_data["email"],
                 password_hash=make_password(self.cleaned_data["password1"]),
             )
@@ -250,3 +268,194 @@ class MealCreateForm(forms.ModelForm):
         if commit:
             meal.save()
         return meal
+
+
+class MerchantAccountForm(forms.ModelForm):
+    class Meta:
+        model = MerchantAccount
+        fields = ["display_name", "email"]
+        widgets = {
+            "display_name": forms.TextInput(
+                attrs={
+                    "class": "field-input",
+                    "placeholder": "使用者名稱",
+                    "autocomplete": "nickname",
+                }
+            ),
+            "email": forms.EmailInput(
+                attrs={
+                    "class": "field-input",
+                    "placeholder": "商家登入 Email",
+                    "autocomplete": "email",
+                }
+            )
+        }
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].strip().lower()
+        qs = MerchantAccount.objects.filter(email__iexact=email)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError("此 Email 已被其他帳號使用。")
+        return email
+
+    def clean_display_name(self):
+        name = (self.cleaned_data.get("display_name") or "").strip()
+        if not name:
+            raise forms.ValidationError("使用者名稱不可空白。")
+        return name
+
+
+class MerchantPasswordChangeForm(forms.Form):
+    current_password = forms.CharField(
+        label="目前密碼",
+        widget=forms.PasswordInput(
+            attrs={
+                "class": "field-input",
+                "autocomplete": "current-password",
+            }
+        ),
+    )
+    new_password1 = forms.CharField(
+        label="新密碼",
+        widget=forms.PasswordInput(
+            attrs={
+                "class": "field-input",
+                "autocomplete": "new-password",
+            }
+        ),
+    )
+    new_password2 = forms.CharField(
+        label="再次輸入新密碼",
+        widget=forms.PasswordInput(
+            attrs={
+                "class": "field-input",
+                "autocomplete": "new-password",
+            }
+        ),
+    )
+
+    def __init__(self, merchant: MerchantAccount, *args, **kwargs):
+        self.merchant = merchant
+        super().__init__(*args, **kwargs)
+
+    def clean_current_password(self):
+        current = self.cleaned_data.get("current_password", "")
+        if not check_password(current, self.merchant.password_hash):
+            raise forms.ValidationError("目前密碼不正確。")
+        return current
+
+    def clean_new_password1(self):
+        new_password = self.cleaned_data.get("new_password1", "")
+        if len(new_password) < 8:
+            raise forms.ValidationError("新密碼需至少 8 碼。")
+        return new_password
+
+    def clean(self):
+        cleaned = super().clean()
+        p1 = cleaned.get("new_password1")
+        p2 = cleaned.get("new_password2")
+        if p1 and p2 and p1 != p2:
+            raise forms.ValidationError("兩次輸入的新密碼不一致。")
+        return cleaned
+
+    def save(self):
+        new_password = self.cleaned_data["new_password1"]
+        self.merchant.password_hash = make_password(new_password)
+        self.merchant.save(update_fields=["password_hash", "updated_at"])
+        return self.merchant
+
+
+class RestaurantProfileForm(forms.ModelForm):
+    class Meta:
+        model = Restaurant
+        fields = [
+            "name",
+            "address",
+            "city",
+            "district",
+            "phone",
+            "cuisine_type",
+            "price_range",
+            "latitude",
+            "longitude",
+        ]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": "field-input",
+                    "placeholder": "餐廳名稱",
+                    "autocomplete": "organization",
+                }
+            ),
+            "address": forms.TextInput(
+                attrs={
+                    "class": "field-input",
+                    "placeholder": "地址",
+                    "autocomplete": "street-address",
+                }
+            ),
+            "city": forms.TextInput(
+                attrs={
+                    "class": "field-input",
+                    "placeholder": "城市",
+                }
+            ),
+            "district": forms.TextInput(
+                attrs={
+                    "class": "field-input",
+                    "placeholder": "行政區",
+                }
+            ),
+            "phone": forms.TextInput(
+                attrs={
+                    "class": "field-input",
+                    "placeholder": "聯絡電話",
+                    "autocomplete": "tel",
+                }
+            ),
+            "cuisine_type": forms.TextInput(
+                attrs={
+                    "class": "field-input",
+                    "placeholder": "料理風格 (如：早午餐、日式)",
+                }
+            ),
+            "price_range": forms.Select(attrs={"class": "field-input"}),
+            "latitude": forms.NumberInput(
+                attrs={
+                    "class": "field-input",
+                    "placeholder": "緯度 (例如 25.03396)",
+                    "step": "0.000001",
+                }
+            ),
+            "longitude": forms.NumberInput(
+                attrs={
+                    "class": "field-input",
+                    "placeholder": "經度 (例如 121.56447)",
+                    "step": "0.000001",
+                }
+            ),
+        }
+
+    def clean_name(self):
+        name = (self.cleaned_data.get("name") or "").strip()
+        if not name:
+            raise forms.ValidationError("餐廳名稱不可空白。")
+        return name
+
+    def clean_latitude(self):
+        value = self.cleaned_data.get("latitude")
+        if value is None:
+            return value
+        if not (-90 <= value <= 90):
+            raise forms.ValidationError("緯度應介於 -90 到 90 之間。")
+        return value
+
+    def clean_longitude(self):
+        value = self.cleaned_data.get("longitude")
+        if value is None:
+            return value
+        if not (-180 <= value <= 180):
+            raise forms.ValidationError("經度應介於 -180 到 180 之間。")
+        return value

@@ -1,0 +1,188 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foodie · 商家設定</title>
+    <link rel="stylesheet" href="{% static 'merchantsideapp/css/merchant_settings.css' %}">
+</head>
+
+<body>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <button class="toggle-btn" id="toggleBtn">☰</button>
+            <h2 class="logo"><span class="logo-text">Foodie 商家端</span></h2>
+        </div>
+        <ul>
+            <li id="menu-dashboard">
+                <span class="icon">🏠</span>
+                <span class="item-text">主頁總覽</span>
+            </li>
+            <li id="menu-add">
+                <span class="icon">➕</span>
+                <span class="item-text">新增餐點</span>
+            </li>
+            <li id="menu-manage">
+                <span class="icon">📋</span>
+                <span class="item-text">管理餐點</span>
+            </li>
+            <li class="active" id="menu-settings">
+                <span class="icon">⚙️</span>
+                <span class="item-text">設定</span>
+            </li>
+            <li class="logout" id="menu-logout">
+                <span class="icon">🚪</span>
+                <span class="item-text">登出</span>
+            </li>
+        </ul>
+    </div>
+
+    <div class="main">
+        <div class="main-inner">
+            {% if messages %}
+                <ul class="messages">
+                    {% for message in messages %}
+                        <li class="{{ message.tags }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <div class="welcome-box settings-hero">
+                <h1>商家設定中心</h1>
+                <p>調整帳戶與餐廳資訊，保持營運資料最新，方便消費者找到你。</p>
+            </div>
+
+            <div class="settings-card">
+                <div class="settings-card-header">
+                    <div>
+                        <h3>帳戶資訊</h3>
+                        <p class="settings-note">登入 Email 也會拿來接收系統通知。</p>
+                    </div>
+                </div>
+                <form method="post" class="settings-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="account">
+                    <div class="settings-form-grid">
+                        <div class="field-group">
+                            <label class="field-label" for="id_display_name">顯示名稱</label>
+                            {{ account_form.display_name }}
+                            {{ account_form.display_name.errors }}
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label" for="id_email">商家 Email</label>
+                            {{ account_form.email }}
+                            {{ account_form.email.errors }}
+                        </div>
+                    </div>
+                    <div class="settings-actions">
+                        <button class="primary-btn" type="submit">更新帳戶</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="settings-card">
+                <h3>變更密碼</h3>
+                <form method="post" class="settings-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="password">
+                    <div class="settings-form-grid">
+                        <div class="field-group">
+                            <label class="field-label" for="id_current_password">目前密碼</label>
+                            {{ password_form.current_password }}
+                            {{ password_form.current_password.errors }}
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label" for="id_new_password1">新密碼</label>
+                            {{ password_form.new_password1 }}
+                            {{ password_form.new_password1.errors }}
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label" for="id_new_password2">再次輸入新密碼</label>
+                            {{ password_form.new_password2 }}
+                            {{ password_form.new_password2.errors }}
+                        </div>
+                    </div>
+                    <div class="field-errors">{{ password_form.non_field_errors }}</div>
+                    <p class="settings-note">建議使用 8 碼以上並混合大小寫及符號。</p>
+                    <div class="settings-actions">
+                        <button class="secondary-btn" type="submit">更新密碼</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="settings-card">
+                <h3>餐廳資訊</h3>
+                <form method="post" class="settings-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="restaurant">
+                    <div class="settings-form-grid">
+                        <div class="field-group">
+                            <label class="field-label" for="id_name">餐廳名稱</label>
+                            {{ restaurant_form.name }}
+                            {{ restaurant_form.name.errors }}
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label" for="id_address">地址</label>
+                            {{ restaurant_form.address }}
+                            {{ restaurant_form.address.errors }}
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label" for="id_city">城市</label>
+                            {{ restaurant_form.city }}
+                            {{ restaurant_form.city.errors }}
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label" for="id_district">行政區</label>
+                            {{ restaurant_form.district }}
+                            {{ restaurant_form.district.errors }}
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label" for="id_phone">聯絡電話</label>
+                            {{ restaurant_form.phone }}
+                            {{ restaurant_form.phone.errors }}
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label" for="id_cuisine_type">料理風格</label>
+                            {{ restaurant_form.cuisine_type }}
+                            {{ restaurant_form.cuisine_type.errors }}
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label" for="id_price_range">價位區間</label>
+                            {{ restaurant_form.price_range }}
+                            {{ restaurant_form.price_range.errors }}
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label" for="id_latitude">緯度</label>
+                            {{ restaurant_form.latitude }}
+                            {{ restaurant_form.latitude.errors }}
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label" for="id_longitude">經度</label>
+                            {{ restaurant_form.longitude }}
+                            {{ restaurant_form.longitude.errors }}
+                        </div>
+                    </div>
+                    <div class="settings-actions">
+                        <button class="primary-btn" type="submit">更新餐廳資訊</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.merchantRoutes = {
+            dashboard: "{% url 'merchantsideapp:dashboard' %}",
+            addMeal: "{% url 'merchantsideapp:add_meal' %}",
+            manageMeals: "{% url 'merchantsideapp:manage_meals' %}",
+            settings: "{% url 'merchantsideapp:settings' %}",
+            login: "{% url 'merchantsideapp:login' %}",
+            logout: "{% url 'merchantsideapp:logout' %}"
+        };
+    </script>
+    <script src="{% static 'merchantsideapp/js/merchant_homepage.js' %}"></script>
+</body>
+
+</html>

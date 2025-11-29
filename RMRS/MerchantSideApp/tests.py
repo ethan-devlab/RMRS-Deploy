@@ -1,7 +1,7 @@
 import json
 from datetime import timedelta
 
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import check_password, make_password
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -16,6 +16,7 @@ class MerchantAuthTests(TestCase):
 		self.restaurant = Restaurant.objects.create(name="測試餐廳")
 		self.merchant = MerchantAccount.objects.create(
 			restaurant=self.restaurant,
+			display_name="麻辣一哥",
 			email="owner@example.com",
 			password_hash=make_password("SecurePass!23"),
 		)
@@ -24,6 +25,7 @@ class MerchantAuthTests(TestCase):
 		response = self.client.post(
 			reverse("merchantsideapp:register"),
 			{
+				"merchant_name": "新商家",
 				"restaurant_name": "新餐廳",
 				"email": "new-owner@example.com",
 				"password1": "AnotherPass#45",
@@ -39,11 +41,13 @@ class MerchantAuthTests(TestCase):
 		self.assertIn(SESSION_MERCHANT_KEY, session)
 		new_merchant = MerchantAccount.objects.get(email="new-owner@example.com")
 		self.assertEqual(new_merchant.restaurant.name, "新餐廳")
+		self.assertEqual(new_merchant.display_name, "新商家")
 
 	def test_register_requires_unique_email(self):
 		response = self.client.post(
 			reverse("merchantsideapp:register"),
 			{
+				"merchant_name": "重複商家",
 				"restaurant_name": "重複餐廳",
 				"email": "owner@example.com",
 				"password1": "RepeatPass!23",
@@ -89,7 +93,7 @@ class MerchantAuthTests(TestCase):
 		session.save()
 		response = self.client.get(reverse("merchantsideapp:dashboard"))
 		self.assertEqual(response.status_code, 200)
-		self.assertContains(response, "測試餐廳")
+		self.assertContains(response, "麻辣一哥")
 
 
 class MerchantMealCreationTests(TestCase):
@@ -97,6 +101,7 @@ class MerchantMealCreationTests(TestCase):
 		self.restaurant = Restaurant.objects.create(name="勇者餐館")
 		self.merchant = MerchantAccount.objects.create(
 			restaurant=self.restaurant,
+			display_name="勇者商家",
 			email="meal-owner@example.com",
 			password_hash=make_password("SecurePass!23"),
 		)
@@ -172,6 +177,7 @@ class MerchantMealManagementTests(TestCase):
 		self.restaurant = Restaurant.objects.create(name="巧手廚坊")
 		self.merchant = MerchantAccount.objects.create(
 			restaurant=self.restaurant,
+			display_name="巧手廚師",
 			email="manage-owner@example.com",
 			password_hash=make_password("ManagePass!45"),
 		)
@@ -281,6 +287,7 @@ class MerchantDashboardTests(TestCase):
 		self.restaurant = Restaurant.objects.create(name="星級餐館", is_active=True)
 		self.merchant = MerchantAccount.objects.create(
 			restaurant=self.restaurant,
+			display_name="星級主廚",
 			email="dash-owner@example.com",
 			password_hash=make_password("DashPass!12"),
 		)
@@ -311,7 +318,8 @@ class MerchantDashboardTests(TestCase):
 		self.assertEqual(response.status_code, 200)
 		self.assertContains(response, "奶油海鮮燉飯")
 		self.assertContains(response, "日式炸豬排")
-		self.assertContains(response, "可接單")
+		self.assertContains(response, "營業")
+		self.assertContains(response, "星級主廚")
 
 	def test_update_restaurant_status(self):
 		self._login()
@@ -322,3 +330,114 @@ class MerchantDashboardTests(TestCase):
 		self.assertEqual(response.status_code, 302)
 		self.restaurant.refresh_from_db()
 		self.assertFalse(self.restaurant.is_active)
+
+
+class MerchantSettingsTests(TestCase):
+	def setUp(self):
+		self.restaurant = Restaurant.objects.create(
+			name="設定餐廳",
+			address="舊地址",
+			price_range=Restaurant.PriceRange.MEDIUM,
+		)
+		self.merchant = MerchantAccount.objects.create(
+			restaurant=self.restaurant,
+			display_name="設定達人",
+			email="settings-owner@example.com",
+			password_hash=make_password("SettingsPass!77"),
+		)
+
+	def _login(self):
+		session = self.client.session
+		session[SESSION_MERCHANT_KEY] = self.merchant.pk
+		session.save()
+
+	def test_settings_requires_authentication(self):
+		response = self.client.get(reverse("merchantsideapp:settings"))
+		self.assertEqual(response.status_code, 302)
+		self.assertTrue(response.url.startswith(reverse("merchantsideapp:login")))
+
+	def test_settings_page_renders_forms(self):
+		self._login()
+		response = self.client.get(reverse("merchantsideapp:settings"))
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, self.merchant.display_name)
+		self.assertContains(response, self.merchant.email)
+		self.assertContains(response, self.restaurant.name)
+
+	def test_account_form_updates_profile(self):
+		self._login()
+		response = self.client.post(
+			reverse("merchantsideapp:settings"),
+			{
+				"form_type": "account",
+				"display_name": "全新設定達人",
+				"email": "updated-owner@example.com",
+			},
+		)
+		self.assertEqual(response.status_code, 302)
+		self.merchant.refresh_from_db()
+		self.assertEqual(self.merchant.email, "updated-owner@example.com")
+		self.assertEqual(self.merchant.display_name, "全新設定達人")
+
+	def test_password_form_updates_hash(self):
+		self._login()
+		response = self.client.post(
+			reverse("merchantsideapp:settings"),
+			{
+				"form_type": "password",
+				"current_password": "SettingsPass!77",
+				"new_password1": "SuperNewPass!88",
+				"new_password2": "SuperNewPass!88",
+			},
+		)
+		self.assertEqual(response.status_code, 302)
+		self.merchant.refresh_from_db()
+		self.assertTrue(check_password("SuperNewPass!88", self.merchant.password_hash))
+
+	def test_restaurant_form_updates_profile(self):
+		self._login()
+		response = self.client.post(
+			reverse("merchantsideapp:settings"),
+			{
+				"form_type": "restaurant",
+				"name": "新設定餐廳",
+				"address": "台北市信義路",
+				"city": "台北市",
+				"district": "大安區",
+				"phone": "02-1234-5678",
+				"cuisine_type": "早午餐",
+				"price_range": Restaurant.PriceRange.HIGH,
+				"latitude": "25.03396",
+				"longitude": "121.56447",
+			},
+		)
+		self.assertEqual(response.status_code, 302)
+		self.restaurant.refresh_from_db()
+		self.assertEqual(self.restaurant.name, "新設定餐廳")
+		self.assertEqual(self.restaurant.address, "台北市信義路")
+		self.assertEqual(self.restaurant.city, "台北市")
+		self.assertEqual(self.restaurant.district, "大安區")
+		self.assertEqual(self.restaurant.phone, "02-1234-5678")
+		self.assertEqual(self.restaurant.cuisine_type, "早午餐")
+		self.assertEqual(self.restaurant.price_range, Restaurant.PriceRange.HIGH)
+		self.assertEqual(float(self.restaurant.latitude), 25.03396)
+		self.assertEqual(float(self.restaurant.longitude), 121.56447)
+
+	def test_restaurant_form_rejects_invalid_coordinates(self):
+		self._login()
+		response = self.client.post(
+			reverse("merchantsideapp:settings"),
+			{
+				"form_type": "restaurant",
+				"name": "設定餐廳",
+				"price_range": Restaurant.PriceRange.MEDIUM,
+				"latitude": "95.0",
+				"longitude": "200.0",
+			},
+		)
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, "緯度應介於 -90 到 90 之間。")
+		self.assertContains(response, "經度應介於 -180 到 180 之間。")
+		self.restaurant.refresh_from_db()
+		self.assertIsNone(self.restaurant.latitude)
+		self.assertIsNone(self.restaurant.longitude)

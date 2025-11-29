@@ -7,7 +7,12 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from ..auth_utils import get_current_merchant, merchant_login_required
-from ..forms import MealCreateForm
+from ..forms import (
+    MealCreateForm,
+    MerchantAccountForm,
+    MerchantPasswordChangeForm,
+    RestaurantProfileForm,
+)
 from UserSideApp.models import MealComponent
 
 
@@ -54,12 +59,17 @@ def dashboard(request):
     recent_meals = []
     today_count = 0
     last_updated_meal = None
+    merchant_display_name = (merchant.display_name or "").strip() if merchant else ""
     if restaurant is not None:
         meals_qs = restaurant.meals.order_by("-updated_at", "-id")
         recent_meals = list(meals_qs[:3])
         today = timezone.now().date()
         today_count = restaurant.meals.filter(updated_at__date=today).count()
         last_updated_meal = meals_qs.first()
+        if not merchant_display_name:
+            merchant_display_name = restaurant.name or ""
+
+    merchant_display_name = merchant_display_name or "老闆"
 
     return render(
         request,
@@ -71,6 +81,7 @@ def dashboard(request):
             "today_count": today_count,
             "last_updated_meal": last_updated_meal,
             "status_slug": "open" if getattr(restaurant, "is_active", False) else "closed",
+            "merchant_display_name": merchant_display_name,
         },
     )
 
@@ -223,6 +234,54 @@ def delete_meal(request, meal_id):
         f"已將「{meal.name}」移至已下架清單，可於需要時再次編輯上架。",
     )
     return redirect("merchantsideapp:manage_meals")
+
+
+@merchant_login_required
+def settings(request):
+    merchant = get_current_merchant(request)
+    restaurant = getattr(merchant, "restaurant", None)
+    account_form = MerchantAccountForm(instance=merchant)
+    password_form = MerchantPasswordChangeForm(merchant=merchant)
+    restaurant_form = RestaurantProfileForm(instance=restaurant)
+
+    if request.method == "POST":
+        target = request.POST.get("form_type", "restaurant")
+        if target == "account":
+            account_form = MerchantAccountForm(request.POST, instance=merchant)
+            if account_form.is_valid():
+                account_form.save()
+                messages.success(request, "帳戶資訊已更新。")
+                return redirect("merchantsideapp:settings")
+            messages.error(request, "帳戶資訊更新失敗，請檢查欄位。")
+        elif target == "password":
+            password_form = MerchantPasswordChangeForm(merchant=merchant, data=request.POST)
+            if password_form.is_valid():
+                password_form.save()
+                messages.success(request, "密碼已更新，請使用新密碼重新登入。")
+                return redirect("merchantsideapp:settings")
+            messages.error(request, "密碼更新失敗，請檢查欄位。")
+        else:
+            if restaurant is None:
+                messages.error(request, "找不到對應的餐廳資訊。")
+            else:
+                restaurant_form = RestaurantProfileForm(request.POST, instance=restaurant)
+                if restaurant_form.is_valid():
+                    restaurant_form.save()
+                    messages.success(request, "餐廳資訊已更新。")
+                    return redirect("merchantsideapp:settings")
+                messages.error(request, "餐廳資訊更新失敗，請檢查欄位。")
+
+    return render(
+        request,
+        "merchantsideapp/settings.html",
+        {
+            "merchant": merchant,
+            "restaurant": restaurant,
+            "account_form": account_form,
+            "password_form": password_form,
+            "restaurant_form": restaurant_form,
+        },
+    )
 
 
 @merchant_login_required

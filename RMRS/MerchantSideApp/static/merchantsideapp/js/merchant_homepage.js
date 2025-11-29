@@ -29,6 +29,7 @@
             "menu-dashboard": "dashboard",
             "menu-add": "addMeal",
             "menu-manage": "manageMeals",
+            "menu-settings": "settings",
             "menu-logout": "logout",
         };
 

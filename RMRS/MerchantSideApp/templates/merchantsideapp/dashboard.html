@@ -28,6 +28,10 @@
                 <span class="icon">📋</span>
                 <span class="item-text">管理餐點</span>
             </li>
+            <li id="menu-settings">
+                <span class="icon">⚙️</span>
+                <span class="item-text">設定</span>
+            </li>
             <li class="logout" id="menu-logout">
                 <span class="icon">🚪</span>
                 <span class="item-text">登出</span>
@@ -46,13 +50,13 @@
             {% endif %}
             <div class="welcome-box merchant-header">
                 <div class="merchant-left">
-                    <h1>歡迎回來，{{ restaurant.name|default:"老闆" }}！</h1>
+                    <h1>歡迎回來，{{ merchant_display_name }}！</h1>
                     <p>你可以在這裡新增餐點、編輯或下架既有餐點，方便管理菜單。</p>
                 </div>
                 <div class="merchant-right">
                     <div class="stat-pill">目前狀態：
                         <span class="{% if restaurant and restaurant.is_active %}stat-ok{% else %}stat-off{% endif %}">
-                            {% if restaurant and restaurant.is_active %}可接單{% else %}暫停接單{% endif %}
+                            {% if restaurant and restaurant.is_active %}營業{% else %}沒有營業{% endif %}
                         </span>
                     </div>
                     {% if restaurant %}
@@ -61,8 +65,8 @@
                             <label class="status-label" for="status-select">快速調整</label>
                             <div class="status-control">
                                 <select id="status-select" name="status" class="status-select">
-                                    <option value="open" {% if status_slug == 'open' %}selected{% endif %}>可接單</option>
-                                    <option value="closed" {% if status_slug == 'closed' %}selected{% endif %}>暫停接單</option>
+                                    <option value="open" {% if status_slug == 'open' %}selected{% endif %}>營業</option>
+                                    <option value="closed" {% if status_slug == 'closed' %}selected{% endif %}>沒有營業</option>
                                 </select>
                                 <button type="submit" class="status-apply">更新</button>
                             </div>
@@ -132,6 +136,7 @@
             dashboard: "{% url 'merchantsideapp:dashboard' %}",
             addMeal: "{% url 'merchantsideapp:add_meal' %}",
             manageMeals: "{% url 'merchantsideapp:manage_meals' %}",
+            settings: "{% url 'merchantsideapp:settings' %}",
             login: "{% url 'merchantsideapp:login' %}",
             logout: "{% url 'merchantsideapp:logout' %}"
         };
