@@ -1,8 +1,11 @@
+import json
+from decimal import Decimal, InvalidOperation
+
 from django import forms
 from django.contrib.auth.hashers import check_password, make_password
 from django.db import transaction
 
-from .models import MerchantAccount, Restaurant
+from .models import Meal, MerchantAccount, Restaurant
 
 
 class MerchantRegistrationForm(forms.Form):
@@ -133,3 +136,117 @@ class MerchantLoginForm(forms.Form):
 
     def get_merchant(self):
         return getattr(self, "merchant", None)
+
+
+class MealCreateForm(forms.ModelForm):
+    nutrition_payload = forms.CharField(required=False, widget=forms.HiddenInput())
+
+    class Meta:
+        model = Meal
+        fields = [
+            "name",
+            "description",
+            "category",
+            "price",
+            "is_vegetarian",
+            "is_spicy",
+            "image_url",
+        ]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={"placeholder": "例如：招牌紅燒牛肉麵", "class": "field-input"}
+            ),
+            "description": forms.Textarea(
+                attrs={
+                    "placeholder": "新增餐點特色或套餐內容，提升消費者點餐意願！",
+                    "class": "field-input textarea",
+                }
+            ),
+            "category": forms.TextInput(
+                attrs={"placeholder": "主食 / 湯品 / 點心...", "class": "field-input"}
+            ),
+            "price": forms.NumberInput(
+                attrs={"min": 0, "step": "1", "class": "field-input"}
+            ),
+            "image_url": forms.URLInput(
+                attrs={
+                    "placeholder": "可選：餐點照片 URL",
+                    "class": "field-input",
+                }
+            ),
+        }
+
+    def __init__(self, restaurant: Restaurant, *args, **kwargs):
+        self.restaurant = restaurant
+        super().__init__(*args, **kwargs)
+        self.fields["category"].required = True
+        for toggle in ("is_vegetarian", "is_spicy"):
+            self.fields[toggle].widget.attrs.setdefault("class", "toggle-input")
+        self.nutrition_entries: list[dict] = []
+
+    def clean_name(self):
+        name = self.cleaned_data["name"].strip()
+        if not name:
+            raise forms.ValidationError("餐點名稱不可空白。")
+        return name
+
+    def clean_price(self):
+        price = self.cleaned_data.get("price")
+        if price is None or price <= 0:
+            raise forms.ValidationError("請輸入大於 0 的售價。")
+        return price
+
+    def _parse_decimal(self, value):
+        if value in (None, ""):
+            return None
+        try:
+            number = Decimal(str(value))
+        except (InvalidOperation, TypeError) as exc:
+            raise forms.ValidationError("請輸入有效的營養數值。") from exc
+        if number < 0:
+            raise forms.ValidationError("營養數值不可小於 0。")
+        return number
+
+    def clean_nutrition_payload(self):
+        payload = self.cleaned_data.get("nutrition_payload", "").strip()
+        if not payload:
+            self.nutrition_entries = []
+            return ""
+        try:
+            data = json.loads(payload)
+        except json.JSONDecodeError as exc:
+            raise forms.ValidationError("營養成分格式錯誤，請重新嘗試。") from exc
+
+        cleaned_entries = []
+        for raw in data:
+            name = str(raw.get("name", "")).strip()
+            if not name:
+                continue
+            quantity = str(raw.get("quantity", "")).strip() or None
+            calories_value = raw.get("calories")
+            calories_decimal = self._parse_decimal(calories_value) or Decimal("0")
+            metadata = {}
+            for key in ("protein", "carb", "fat"):
+                parsed = self._parse_decimal(raw.get(key))
+                if parsed is not None:
+                    metadata[key] = float(parsed)
+            if raw.get("notes"):
+                metadata["notes"] = str(raw["notes"]).strip()
+            cleaned_entries.append(
+                {
+                    "name": name,
+                    "quantity": quantity,
+                    "calories": calories_decimal,
+                    "metadata": metadata or None,
+                }
+            )
+
+        self.nutrition_entries = cleaned_entries
+        return payload
+
+    def save(self, commit: bool = True) -> Meal:
+        meal = super().save(commit=False)
+        meal.restaurant = self.restaurant
+        if commit:
+            meal.save()
+        return meal
