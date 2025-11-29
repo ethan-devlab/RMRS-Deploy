@@ -419,6 +419,18 @@
     gap: 12px;
     border: 1px solid rgba(251,146,60,0.35);
     box-shadow:0 12px 30px rgba(251,146,60,0.18);
+    transition:border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.nutrition-item:hover{
+    border-color:#fb923c;
+    box-shadow:0 14px 34px rgba(251,146,60,0.28);
+    transform:translateY(-1px);
+}
+
+.nutrition-item.is-editing{
+    border-color:#fb7185;
+    box-shadow:0 16px 36px rgba(251,113,133,0.35);
 }
 
 .nutrition-item strong {
@@ -438,6 +450,64 @@
 
 .nutrition-card.preview-card .nutrition-remove{
     color:#b91c1c;
+}
+
+.nutrition-item-actions{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+}
+
+.nutrition-action{
+    position:relative;
+    border-radius:12px;
+    padding:6px 18px;
+    font-size:12px;
+    font-weight:600;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    border:1px solid transparent;
+    transition:transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.nutrition-action::before{
+    font-size:13px;
+}
+
+.nutrition-edit{
+    background:rgba(250, 204, 21, 0.15);
+    color:#78350f;
+    border-color:rgba(250, 204, 21, 0.6);
+    box-shadow:0 8px 16px rgba(249, 115, 22, 0.25);
+}
+
+.nutrition-edit::before{
+    content:"✏";
+}
+
+.nutrition-edit:hover{
+    transform:translateY(-1px);
+    box-shadow:0 12px 24px rgba(249, 115, 22, 0.35);
+    border-color:rgba(250, 204, 21, 0.9);
+}
+
+.nutrition-remove{
+    background:rgba(251, 113, 133, 0.12);
+    color:#7f1d1d;
+    border-color:rgba(251, 113, 133, 0.55);
+    box-shadow:0 8px 16px rgba(251, 113, 133, 0.25);
+}
+
+.nutrition-remove::before{
+    content:"✕";
+}
+
+.nutrition-remove:hover{
+    transform:translateY(-1px);
+    box-shadow:0 12px 24px rgba(251, 113, 133, 0.35);
+    border-color:rgba(251, 113, 133, 0.9);
 }
 
 @media (max-width: 1024px){

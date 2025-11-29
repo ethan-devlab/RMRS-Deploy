@@ -28,6 +28,10 @@
                 <span class="icon">📋</span>
                 <span class="item-text">管理餐點</span>
             </li>
+            <li id="menu-settings">
+                <span class="icon">⚙️</span>
+                <span class="item-text">設定</span>
+            </li>
             <li class="logout" id="menu-logout">
                 <span class="icon">🚪</span>
                 <span class="item-text">登出</span>
@@ -210,6 +214,7 @@
             dashboard: "{% url 'merchantsideapp:dashboard' %}",
             addMeal: "{% url 'merchantsideapp:add_meal' %}",
             manageMeals: "{% url 'merchantsideapp:manage_meals' %}",
+            settings: "{% url 'merchantsideapp:settings' %}",
             login: "{% url 'merchantsideapp:login' %}",
             logout: "{% url 'merchantsideapp:logout' %}"
         };

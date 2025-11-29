@@ -5,6 +5,7 @@ from .dashboard import (
 	delete_meal,
 	edit_meal,
 	manage_meals,
+	settings,
 	update_restaurant_status,
 )
 
@@ -17,5 +18,6 @@ __all__ = [
 	"edit_meal",
 	"delete_meal",
 	"manage_meals",
+	"settings",
 	"update_restaurant_status",
 ]

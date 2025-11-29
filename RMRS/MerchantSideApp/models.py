@@ -121,6 +121,7 @@ class MerchantAccount(models.Model):
         related_name="merchant_account",
         on_delete=models.CASCADE,
     )
+    display_name = models.CharField(max_length=60, blank=True, default="")
     email = models.EmailField(max_length=255, unique=True)
     password_hash = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True, db_default=Now())
@@ -133,4 +134,4 @@ class MerchantAccount(models.Model):
         ]
 
     def __str__(self) -> str:
-        return f"{self.email} -> {self.restaurant_id}"
+        return f"{self.display_name or self.email} -> {self.restaurant_id}"

@@ -28,6 +28,12 @@
             </div>
         {% endif %}
         <div class="form-field">
+            {{ form.merchant_name }}
+            {% if form.merchant_name.errors %}
+                <div class="field-errors">{% for error in form.merchant_name.errors %}<p>{{ error }}</p>{% endfor %}</div>
+            {% endif %}
+        </div>
+        <div class="form-field">
             {{ form.restaurant_name }}
             {% if form.restaurant_name.errors %}
                 <div class="field-errors">{% for error in form.restaurant_name.errors %}<p>{{ error }}</p>{% endfor %}</div>
