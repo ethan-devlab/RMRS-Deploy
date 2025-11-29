@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models.functions import Now
@@ -183,12 +184,21 @@ class DailyMealRecord(models.Model):
 
 
 class MealComponent(models.Model):
-	"""Breaks a meal record into named components for UI display."""
+	"""Breaks a meal record or merchant meal into named components for UI display."""
 
 	meal_record = models.ForeignKey(
 		DailyMealRecord,
 		related_name="components",
 		on_delete=models.CASCADE,
+		blank=True,
+		null=True,
+	)
+	meal = models.ForeignKey(
+		"MerchantSideApp.Meal",
+		related_name="nutrition_components",
+		on_delete=models.CASCADE,
+		blank=True,
+		null=True,
 	)
 	name = models.CharField(max_length=100)
 	quantity = models.CharField(max_length=50, blank=True, null=True)
@@ -198,10 +208,19 @@ class MealComponent(models.Model):
 
 	class Meta:
 		db_table = "meal_components"
-		indexes = [models.Index(fields=["meal_record"], name="idx_component_record")]
+		indexes = [
+			models.Index(fields=["meal_record"], name="idx_component_record"),
+			models.Index(fields=["meal"], name="idx_component_meal"),
+		]
+
+	def clean(self):
+		if not self.meal_record_id and not self.meal_id:
+			raise ValidationError("必須指定飲食紀錄或餐點之一。")
+		super().clean()
 
 	def __str__(self) -> str:
-		return f"Component {self.name}"
+		target = self.meal_record_id or self.meal_id
+		return f"Component {self.name} -> {target}"
 
 
 class WeeklyIntakeSummary(models.Model):
