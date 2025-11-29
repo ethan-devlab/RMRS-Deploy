@@ -1,0 +1,155 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foodie · 餐點資訊</title>
+    <link rel="stylesheet" href="{% static 'merchantsideapp/css/meal_detail.css' %}">
+</head>
+
+<body class="merchant-meal-detail">
+    <div class="page-wrapper">
+        <div class="meal-card">
+            <div class="meal-header">
+                <div>
+                    <h1 class="meal-title">{{ meal.name|default:"未命名餐點" }}</h1>
+                    <div class="meal-meta">
+                        <span>餐廳：{{ restaurant.name|default:"未指定餐廳" }}</span>
+                        <span>建立時間：{{ meal.created_at|date:"Y/m/d H:i"|default:"--" }}</span>
+                        <span>最後更新：{{ meal.updated_at|date:"Y/m/d H:i"|default:"--" }}</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="status-pill {% if meal.is_available %}status-on{% else %}status-off{% endif %}">
+                        {% if meal.is_available %}上架中{% else %}已下架{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="meal-media">
+                {% if meal.image_url %}
+                <img src="{{ meal.image_url }}" alt="{{ meal.name }} 圖片" class="meal-image">
+                {% else %}
+                <div class="meal-image meal-image--placeholder">尚未上傳餐點照片</div>
+                {% endif %}
+            </div>
+
+            <div class="info-grid">
+                <div class="info-box">
+                    <div class="info-label">售價</div>
+                    <div class="info-value">
+                        {% if meal.price %}
+                        ${{ meal.price|floatformat:0 }}
+                        {% else %}
+                        --
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">餐點分類</div>
+                    <div class="info-value">{{ meal.category|default:"未設定" }}</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">熱量 (kcal)</div>
+                    <div class="info-value">
+                        {% if nutrition and nutrition.calories %}
+                        {{ nutrition.calories|floatformat:0 }}
+                        {% else %}
+                        --
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">庫存狀態</div>
+                    <div class="info-value">{{ meal.stock_status|default:"--" }}</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">餐點說明</div>
+                <div class="description-box">
+                    {{ meal.description|default:"尚未填寫餐點描述"|linebreaksbr }}
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">營養資訊</div>
+                {% if nutrition %}
+                <table class="nutrition">
+                    <thead>
+                        <tr>
+                            <th>項目</th>
+                            <th>數值</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>蛋白質</td>
+                            <td>{{ nutrition.protein|default:"--" }} g</td>
+                        </tr>
+                        <tr>
+                            <td>脂肪</td>
+                            <td>{{ nutrition.fat|default:"--" }} g</td>
+                        </tr>
+                        <tr>
+                            <td>碳水化合物</td>
+                            <td>{{ nutrition.carbs|default:"--" }} g</td>
+                        </tr>
+                        <tr>
+                            <td>鈉</td>
+                            <td>{{ nutrition.sodium|default:"--" }} mg</td>
+                        </tr>
+                        <tr>
+                            <td>纖維</td>
+                            <td>{{ nutrition.fiber|default:"--" }} g</td>
+                        </tr>
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="description-box">尚未登錄營養資訊。</div>
+                {% endif %}
+            </div>
+
+            <div class="section">
+                <div class="section-title">主要食材</div>
+                {% if ingredients %}
+                <div class="list-chip-group">
+                    {% for ingredient in ingredients %}
+                    <span class="chip">{{ ingredient }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="description-box">尚未提供食材列表。</div>
+                {% endif %}
+            </div>
+
+            <div class="section">
+                <div class="section-title">過敏原提醒</div>
+                {% if allergens %}
+                <div class="list-chip-group">
+                    {% for item in allergens %}
+                    <span class="chip alert">{{ item }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="description-box">未標示特別過敏原。</div>
+                {% endif %}
+            </div>
+
+            <div class="actions">
+                <a href="{% url 'merchantsideapp:restaurant_detail' restaurant.id %}" class="back-link">
+                    ← 返回 {{ restaurant.name|default:"餐廳" }} 菜單
+                </a>
+                {% if can_edit %}
+                <form action="{% url 'merchantsideapp:edit_meal' meal.id %}" method="get">
+                    <button type="submit" class="primary-btn">編輯餐點</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

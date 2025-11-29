@@ -14,6 +14,7 @@ ViewFunc = TypeVar("ViewFunc", bound=Callable[..., HttpResponse])
 def login_merchant(request: HttpRequest, merchant: MerchantAccount) -> None:
     request.session[SESSION_MERCHANT_KEY] = merchant.pk
     request.session.modified = True
+    request.session.set_expiry(0)  # Session expires on browser close
 
 
 def logout_merchant(request: HttpRequest) -> None:

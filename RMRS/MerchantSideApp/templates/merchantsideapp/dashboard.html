@@ -42,11 +42,11 @@
     <div class="main">
         <div class="main-inner">
             {% if messages %}
-                <ul class="messages">
-                    {% for message in messages %}
-                        <li class="{{ message.tags }}">{{ message }}</li>
-                    {% endfor %}
-                </ul>
+            <ul class="messages">
+                {% for message in messages %}
+                <li class="{{ message.tags }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
             {% endif %}
             <div class="welcome-box merchant-header">
                 <div class="merchant-left">
@@ -76,9 +76,9 @@
                         <span>今天已建立餐點：{{ today_count }} 筆</span>
                         <span>最後更新時間：
                             {% if last_updated_meal %}
-                                {{ last_updated_meal.updated_at|date:"n/d H:i" }}
+                            {{ last_updated_meal.updated_at|date:"n/d H:i" }}
                             {% else %}
-                                --
+                            --
                             {% endif %}
                         </span>
                     </div>
@@ -99,33 +99,41 @@
                     <div class="action-desc">編輯已建立的餐點，可調整價格、修改內容，或將餐點上架 / 下架。</div>
                     <button class="action-btn secondary" id="btn-go-manage">前往管理餐點</button>
                 </div>
+                {% if restaurant %}
+                <div class="card action-card">
+                    <div class="action-icon">🏨</div>
+                    <div class="action-title">餐廳資訊</div>
+                    <div class="action-desc">快速查看餐廳詳細資訊、位置與目前菜單，以便分享給消費者。</div>
+                    <button class="action-btn ghost" id="btn-go-restaurant">查看餐廳頁面</button>
+                </div>
+                {% endif %}
             </div>
 
             <div class="section-title">最近編輯的餐點</div>
             <div class="card-long recent-list">
                 {% if recent_meals %}
-                    {% for meal in recent_meals %}
-                        <div class="recent-row">
-                            <div class="recent-main">
-                                <div class="recent-name">{{ meal.name }}</div>
-                                <div class="recent-sub">
-                                    最後編輯：{{ meal.updated_at|date:"n/d H:i" }} · 價格
-                                    {% if meal.price %}
-                                        ${{ meal.price|floatformat:0 }}
-                                    {% else %}
-                                        —
-                                    {% endif %}
-                                    · 狀態：
-                                    <span class="{% if meal.is_available %}on{% else %}off{% endif %}">
-                                        {{ meal.is_available|yesno:"上架中,已下架" }}
-                                    </span>
-                                </div>
-                            </div>
-                            <a class="recent-btn" href="{% url 'merchantsideapp:edit_meal' meal.id %}">編輯餐點</a>
+                {% for meal in recent_meals %}
+                <div class="recent-row">
+                    <div class="recent-main">
+                        <div class="recent-name">{{ meal.name }}</div>
+                        <div class="recent-sub">
+                            最後編輯：{{ meal.updated_at|date:"n/d H:i" }} · 價格
+                            {% if meal.price %}
+                            ${{ meal.price|floatformat:0 }}
+                            {% else %}
+                            —
+                            {% endif %}
+                            · 狀態：
+                            <span class="{% if meal.is_available %}on{% else %}off{% endif %}">
+                                {{ meal.is_available|yesno:"上架中,已下架" }}
+                            </span>
                         </div>
-                    {% endfor %}
+                    </div>
+                    <a class="recent-btn" href="{% url 'merchantsideapp:edit_meal' meal.id %}">編輯餐點</a>
+                </div>
+                {% endfor %}
                 {% else %}
-                    <div class="recent-empty">目前尚無餐點紀錄，前往「新增餐點」即可建立第一道菜色。</div>
+                <div class="recent-empty">目前尚無餐點紀錄，前往「新增餐點」即可建立第一道菜色。</div>
                 {% endif %}
             </div>
         </div>
@@ -138,7 +146,9 @@
             manageMeals: "{% url 'merchantsideapp:manage_meals' %}",
             settings: "{% url 'merchantsideapp:settings' %}",
             login: "{% url 'merchantsideapp:login' %}",
-            logout: "{% url 'merchantsideapp:logout' %}"
+            logout: "{% url 'merchantsideapp:logout' %}"{% if restaurant %},
+        restaurantDetail: "{% url 'merchantsideapp:restaurant_detail' restaurant.id %}"
+        {% endif %}
         };
     </script>
     <script src="{% static 'merchantsideapp/js/merchant_homepage.js' %}"></script>

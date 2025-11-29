@@ -1,3 +1,4 @@
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models.functions import Now
 
@@ -80,6 +81,52 @@ class Meal(models.Model):
         return f"{self.name} ({self.restaurant.name})"
 
 
+class NutritionInfo(models.Model):
+    """Per-meal nutrition metrics to power health-focused flows."""
+
+    meal = models.OneToOneField(
+        Meal,
+        related_name="nutrition",
+        on_delete=models.CASCADE,
+    )
+    calories = models.DecimalField(
+        max_digits=7,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+    )
+    protein = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+    )
+    fat = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+    )
+    carbohydrate = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+    )
+    sodium = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+    )
+    created_at = models.DateTimeField(auto_now_add=True, db_default=Now())
+    updated_at = models.DateTimeField(auto_now=True, db_default=Now())
+
+    class Meta:
+        db_table = "nutrition_info"
+        indexes = [
+            models.Index(fields=["calories"], name="idx_nutrition_calories"),
+        ]
+
+    def __str__(self) -> str:
+        return f"NutritionInfo<{self.meal_id}>"
+
+
 class Tag(models.Model):
     """Tag taxonomy used to enrich meals."""
 
@@ -121,8 +168,15 @@ class MerchantAccount(models.Model):
         related_name="merchant_account",
         on_delete=models.CASCADE,
     )
-    display_name = models.CharField(max_length=60, blank=True, default="")
+    merchant_name = models.CharField(
+        max_length=50,
+        unique=True,
+        blank=True,
+        null=True,
+        help_text="Human-friendly merchant handle used during login.",
+    )
     email = models.EmailField(max_length=255, unique=True)
+    phone = models.CharField(max_length=20, unique=True, blank=True, null=True)
     password_hash = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True, db_default=Now())
     updated_at = models.DateTimeField(auto_now=True, db_default=Now())
@@ -134,4 +188,4 @@ class MerchantAccount(models.Model):
         ]
 
     def __str__(self) -> str:
-        return f"{self.display_name or self.email} -> {self.restaurant_id}"
+        return f"{self.merchant_name or self.email} -> {self.restaurant_id}"

@@ -16,8 +16,13 @@
                     </div>
                     <div class="result-count">
                         <span>{{ result_count }} 家餐廳</span>
+                        <span class="result-separator">·</span>
+                        <span>{{ meal_result_count }} 道餐點</span>
                         {% if limit_reached %}
                         <small>僅顯示前 {{ restaurants|length }} 筆，請縮小條件以顯示更多</small>
+                        {% endif %}
+                        {% if meal_limit_reached %}
+                        <small>餐點僅顯示前 {{ meals|length }} 筆</small>
                         {% endif %}
                     </div>
                 </div>
@@ -39,6 +44,10 @@
                         <label class="filter-field">
                             <span>{{ form.cuisine_type.label }}</span>
                             {{ form.cuisine_type }}
+                        </label>
+                        <label class="filter-field">
+                            <span>{{ form.category.label }}</span>
+                            {{ form.category }}
                         </label>
                         <label class="filter-field">
                             <span>{{ form.price_range.label }}</span>
@@ -105,15 +114,61 @@
         </div>
     </div>
 
+    <section class="meal-results">
+        <div class="results-header">
+            <h2>餐點搜尋結果</h2>
+        </div>
+        <div class="result-list">
+            {% for meal in meals %}
+            <article class="result-card">
+                <div class="result-card-header">
+                    <h3>
+                        <a href="{% url 'merchantsideapp:meal_detail' meal.id %}" class="result-link">
+                            {{ meal.name }}</a>
+                    </h3>
+                </div>
+                <p class="result-meta">
+                    由 <a href="{% url 'merchantsideapp:restaurant_detail' meal.restaurant.id %}" class="result-link">{{ meal.restaurant.name }}</a>
+                    {% if meal.category %} · {{ meal.category }}{% endif %}
+                </p>
+                {% if meal.description %}
+                <p class="result-address">{{ meal.description|truncatechars:120 }}</p>
+                {% endif %}
+                <div class="result-tags">
+                    {% if meal.price %}
+                    <span class="tag">${{ meal.price }}</span>
+                    {% endif %}
+                    {% if meal.is_vegetarian %}
+                    <span class="tag tag--success">素食</span>
+                    {% endif %}
+                    {% if meal.is_spicy %}
+                    <span class="tag tag--warn">辛辣</span>
+                    {% else %}
+                    <span class="tag tag--muted">不辣</span>
+                    {% endif %}
+                </div>
+            </article>
+            {% empty %}
+            <div class="result-empty">
+                <p>目前沒有符合條件的餐點，請調整篩選條件後再試一次。</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
     <section class="search-results">
         <div class="results-header">
-            <h2>搜尋結果</h2>
+            <h2>餐廳搜尋結果</h2>
         </div>
         <div class="result-list">
             {% for restaurant in restaurants %}
             <article class="result-card">
                 <div class="result-card-header">
-                    <h3>{{ restaurant.name }}</h3>
+                    <h3>
+                        <a href="{% url 'merchantsideapp:restaurant_detail' restaurant.id %}" class="result-link">
+                            {{ restaurant.name }}
+                        </a>
+                    </h3>
                     {% if restaurant.rating %}
                     <span class="rating-badge">★ {{ restaurant.rating }}</span>
                     {% endif %}
@@ -137,17 +192,14 @@
                     {% else %}
                     <span class="tag tag--muted">未提供座標</span>
                     {% endif %}
-                {% if restaurant.latitude and restaurant.longitude %}
-                <div class="result-actions">
-                    <button type="button"
-                            class="result-action-btn"
-                            data-nav-btn
-                            data-dest-lat="{{ restaurant.latitude }}"
-                            data-dest-lon="{{ restaurant.longitude }}">
-                        開始導航
-                    </button>
-                </div>
-                {% endif %}
+                    {% if restaurant.latitude and restaurant.longitude %}
+                    <div class="result-actions">
+                        <button type="button" class="result-action-btn" data-nav-btn
+                            data-dest-lat="{{ restaurant.latitude }}" data-dest-lon="{{ restaurant.longitude }}">
+                            開始導航
+                        </button>
+                    </div>
+                    {% endif %}
                 </div>
             </article>
             {% empty %}
@@ -313,4 +365,3 @@
     });
 </script>
 {% endblock %}
-

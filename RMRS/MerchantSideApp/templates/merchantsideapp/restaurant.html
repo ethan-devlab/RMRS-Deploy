@@ -1,0 +1,111 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foodie · 餐廳資訊</title>
+    <link rel="stylesheet" href="{% static 'merchantsideapp/css/restaurant_detail.css' %}">
+</head>
+
+<body class="merchant-restaurant-detail">
+    <div class="page-wrapper">
+        <div class="restaurant-card">
+            <div class="header-flex">
+                <div class="header-main">
+                    <h1>{{ restaurant.name|default:"未命名餐廳" }}</h1>
+                    <div class="header-meta">
+                        <span>位置：{{ restaurant.city|default:"--" }} {{ restaurant.district|default:"" }}
+                            {{ restaurant.address|default:"" }}</span>
+                        <span>料理類型：{{ restaurant.cuisine_type|default:"尚未設定" }}</span>
+                        <span>價格區間：{{ restaurant.get_price_range_display|default:"--" }}</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="status-chip {% if restaurant.is_active %}on{% else %}off{% endif %}">
+                        {% if restaurant.is_active %}營業中{% else %}暫停營業{% endif %}
+                    </div>
+                    <div class="header-meta">
+                        <span>評分：{{ restaurant.rating|default:"--" }}</span>
+                        <span>建立日期：{{ restaurant.created_at|date:"Y/m/d"|default:"--" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <div class="info-label">總餐點數</div>
+                    <div class="info-value">{{ stats.total_meals }}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">上架餐點</div>
+                    <div class="info-value">{{ stats.available_meals }}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">下架餐點</div>
+                    <div class="info-value">{{ stats.unavailable_meals }}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">最後更新</div>
+                    <div class="info-value">{{ stats.last_updated|date:"Y/m/d H:i"|default:"--" }}</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">所有餐點</div>
+                {% if meals %}
+                <div class="meal-list">
+                    {% for meal in meals %}
+                    <div class="meal-card-small" role="button" tabindex="0"
+                        data-meal-url="{% url 'merchantsideapp:meal_detail' meal.id %}">
+                        <h3>{{ meal.name }}</h3>
+                        <div class="meal-meta-line">分類：{{ meal.category|default:"未分類" }}</div>
+                        <div class="meal-meta-line">
+                            售價：
+                            {% if meal.price %}
+                            ${{ meal.price|floatformat:0 }}
+                            {% else %}
+                            --
+                            {% endif %}
+                        </div>
+                        <div class="meal-meta-line">狀態：{{ meal.is_available|yesno:"上架中,已下架" }}</div>
+                        <div class="meal-actions">
+                            <a class="view-link" href="{% url 'merchantsideapp:meal_detail' meal.id %}">查看餐點</a>
+                            {% if can_edit %}
+                            <a class="secondary" href="{% url 'merchantsideapp:edit_meal' meal.id %}">編輯</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">尚未建立任何餐點，前往「新增餐點」即可快速建立。</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll(".meal-card-small[data-meal-url]").forEach(function (card) {
+                var url = card.getAttribute("data-meal-url");
+                if (!url) {
+                    return;
+                }
+                card.addEventListener("click", function (event) {
+                    if (event.target.closest(".meal-actions")) {
+                        return;
+                    }
+                    window.location.href = url;
+                });
+                card.addEventListener("keypress", function (event) {
+                    if (event.key === "Enter") {
+                        window.location.href = url;
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

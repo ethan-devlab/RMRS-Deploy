@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.utils.html import escape
 from django.views.decorators.http import require_POST
 
-from MerchantSideApp.models import Restaurant
+from MerchantSideApp.models import Meal, Restaurant
 
 from ..auth_utils import get_current_user, user_login_required
 from ..forms import (
@@ -46,6 +46,7 @@ from ..services import (
 
 DEFAULT_MAP_CENTER = (23.6978, 120.9605)
 MAX_MAP_RESULTS = 50
+MAX_MEAL_RESULTS = 40
 
 
 def _serialize_components(record: DailyMealRecord) -> str:
@@ -210,6 +211,8 @@ def _build_random_context(user, data=None):
         parts = []
         if preference.cuisine_type:
             parts.append(preference.cuisine_type)
+        if preference.category:
+            parts.append(f"品項 {preference.category}")
         if preference.price_range:
             parts.append(f"價格 {preference.price_range}")
         if preference.is_vegetarian:
@@ -267,6 +270,10 @@ def search_restaurants(request):
         cleaned_filters = form.cleaned_data
 
     restaurants_qs = Restaurant.objects.filter(is_active=True)
+    meals_qs = (
+        Meal.objects.filter(is_available=True, restaurant__is_active=True)
+        .select_related("restaurant")
+    )
     keyword = cleaned_filters.get("keyword")
     if keyword:
         restaurants_qs = restaurants_qs.filter(
@@ -276,23 +283,41 @@ def search_restaurants(request):
             | Q(meals__name__icontains=keyword)
             | Q(meals__description__icontains=keyword)
         ).distinct()
+        meals_qs = meals_qs.filter(
+            Q(name__icontains=keyword)
+            | Q(description__icontains=keyword)
+            | Q(restaurant__name__icontains=keyword)
+        )
     city = cleaned_filters.get("city")
     if city:
         restaurants_qs = restaurants_qs.filter(city__icontains=city)
+        meals_qs = meals_qs.filter(restaurant__city__icontains=city)
     district = cleaned_filters.get("district")
     if district:
         restaurants_qs = restaurants_qs.filter(district__icontains=district)
+        meals_qs = meals_qs.filter(restaurant__district__icontains=district)
     cuisine_type = cleaned_filters.get("cuisine_type")
     if cuisine_type:
         restaurants_qs = restaurants_qs.filter(cuisine_type__icontains=cuisine_type)
+        meals_qs = meals_qs.filter(restaurant__cuisine_type__icontains=cuisine_type)
+    category = cleaned_filters.get("category")
+    if category:
+        restaurants_qs = restaurants_qs.filter(meals__category__iexact=category).distinct()
+        meals_qs = meals_qs.filter(category__iexact=category)
     price_range = cleaned_filters.get("price_range")
     if price_range:
         restaurants_qs = restaurants_qs.filter(price_range=price_range)
+        meals_qs = meals_qs.filter(restaurant__price_range=price_range)
 
     restaurants_qs = restaurants_qs.order_by("-rating", "name")
     total_results = restaurants_qs.count()
     restaurants = list(restaurants_qs[:MAX_MAP_RESULTS])
     limited = total_results > len(restaurants)
+
+    meals_qs = meals_qs.order_by("name")
+    meal_total_results = meals_qs.count()
+    meals = list(meals_qs[:MAX_MEAL_RESULTS])
+    meal_limited = meal_total_results > len(meals)
 
     user_location = None
     latitude = cleaned_filters.get("latitude")
@@ -398,10 +423,13 @@ def search_restaurants(request):
             "restaurants": restaurants,
             "result_count": total_results,
             "limit_reached": limited,
+            "meals": meals,
+            "meal_result_count": meal_total_results,
+            "meal_limit_reached": meal_limited,
             "folium_map": folium_map_html,
             "map_has_markers": bool(markers),
-             "has_user_location": bool(user_location),
-             "map_hint": map_hint,
+         	"has_user_location": bool(user_location),
+         	"map_hint": map_hint,
         },
     )
 
@@ -542,17 +570,35 @@ def record_meal(request):
         meal_form = MealRecordForm(user=user, initial={"date": today})
 
     day_range = request.GET.get("range", "7")
-    day_mapping = {"7": 7, "30": 30, "month": 30}
     range_filters = [
         ("7", "最近 7 天"),
         ("30", "最近 30 天"),
         ("month", "本月"),
     ]
-    selected_days = day_mapping.get(day_range, 7)
-    start_date = today - timedelta(days=selected_days - 1)
+    filter_lookup = {value: label for value, label in range_filters}
+    selected_range_value = day_range if day_range in filter_lookup else "7"
+
+    if selected_range_value == "month":
+        start_date = today.replace(day=1)
+        logic_hint = "本月資料，自 1 日起累計"
+        rolling_days = (today - start_date).days + 1
+    else:
+        rolling_days = int(selected_range_value)
+        start_date = today - timedelta(days=rolling_days - 1)
+        logic_hint = "包含今日的滾動區間"
+
+    date_window_label = f"{start_date:%Y/%m/%d} – {today:%Y/%m/%d}"
+    selected_range_meta = {
+        "value": selected_range_value,
+        "label": filter_lookup.get(selected_range_value, filter_lookup["7"]),
+        "date_window": date_window_label,
+        "days": rolling_days,
+        "logic_hint": logic_hint,
+    }
     history = (
         DailyMealRecord.objects.filter(user=user, date__gte=start_date)
         .prefetch_related("components")
+        .select_related("source_meal__restaurant")
         .order_by("-date", "meal_type")
     )
     aggregate_raw = history.aggregate(
@@ -564,6 +610,18 @@ def record_meal(request):
     aggregate = {key: value or 0 for key, value in aggregate_raw.items()}
     if editing_record and request.method != "POST":
         components_seed = _serialize_components(editing_record)
+
+    initial_restaurant_id = meal_form.initial.get("restaurant") or ""
+    initial_meal_id = meal_form.initial.get("source_meal") or ""
+    if editing_record and editing_record.source_meal_id:
+        initial_meal_id = initial_meal_id or editing_record.source_meal_id
+        if editing_record.source_meal:
+            initial_restaurant_id = (
+                initial_restaurant_id or editing_record.source_meal.restaurant_id
+            )
+    if meal_form and not meal_form.is_bound:
+        meal_form.initial["components_payload"] = components_seed
+
     return _render(
         request,
         "usersideapp/record_meal.html",
@@ -572,12 +630,51 @@ def record_meal(request):
             "meal_form": meal_form,
             "history_records": history,
             "history_totals": aggregate,
-            "selected_range": day_range,
+            "selected_range": selected_range_value,
             "range_filters": range_filters,
+            "selected_range_meta": selected_range_meta,
             "components_seed": components_seed,
             "editing_record": editing_record,
+            "initial_restaurant_id": initial_restaurant_id or "",
+            "initial_meal_id": initial_meal_id or "",
         }
     )
+
+
+@user_login_required
+def restaurant_meals_api(request):
+    restaurant_id = request.GET.get("restaurant_id")
+    try:
+        restaurant_id = int(restaurant_id)
+    except (TypeError, ValueError):
+        return JsonResponse({"meals": []})
+
+    meals = (
+        Meal.objects.filter(restaurant_id=restaurant_id, is_available=True)
+        .select_related("nutrition")
+        .order_by("name")
+    )
+
+    payload = []
+    for meal in meals:
+        nutrition = getattr(meal, "nutrition", None)
+        nutrition_data = None
+        if nutrition:
+            nutrition_data = {
+                "calories": str(nutrition.calories),
+                "protein": str(nutrition.protein),
+                "carbohydrate": str(nutrition.carbohydrate),
+                "fat": str(nutrition.fat),
+            }
+        payload.append(
+            {
+                "id": meal.id,
+                "name": meal.name,
+                "nutrition": nutrition_data,
+            }
+        )
+
+    return JsonResponse({"meals": payload})
 
 
 @user_login_required

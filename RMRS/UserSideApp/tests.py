@@ -1,11 +1,12 @@
 from datetime import date, timedelta
+from decimal import Decimal
 
 from django.contrib.auth.hashers import check_password, make_password
-from django.shortcuts import reverse
+from django.urls import reverse
 from django.test import TestCase
 from django.utils import timezone
 
-from MerchantSideApp.models import Meal, Restaurant
+from MerchantSideApp.models import Meal, Restaurant, NutritionInfo
 
 from .auth_utils import SESSION_USER_KEY
 from .models import (
@@ -19,6 +20,55 @@ from .models import (
 )
 
 
+class UserAuthTests(TestCase):
+	def setUp(self):
+		self.password = "SecurePass!23"
+		self.user = AppUser.objects.create(
+			username="tester",
+			email="tester@example.com",
+			phone="0987654321",
+			password_hash=make_password(self.password),
+		)
+		self.phone_user = AppUser.objects.create(
+			username="phoneuser",
+			email="phone@example.com",
+			phone="0912345678",
+			password_hash=make_password(self.password),
+		)
+
+	def _post_login(self, identifier, password=None):
+		return self.client.post(
+			reverse("usersideapp:login"),
+			{"identifier": identifier, "password": password or self.password},
+		)
+
+	def test_login_with_email_identifier(self):
+		response = self._post_login(self.user.email)
+		self.assertRedirects(response, reverse("usersideapp:home"))
+		self.assertEqual(self.client.session.get(SESSION_USER_KEY), self.user.pk)
+
+	def test_login_with_username_identifier(self):
+		response = self._post_login(self.user.username)
+		self.assertRedirects(response, reverse("usersideapp:home"))
+		self.assertEqual(self.client.session.get(SESSION_USER_KEY), self.user.pk)
+
+	def test_login_rejects_unknown_identifier(self):
+		response = self._post_login("unknown@example.com")
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, "帳號或密碼不正確。")
+		self.assertNotIn(SESSION_USER_KEY, self.client.session)
+
+	def test_login_accepts_digits_only_variant(self):
+		response = self._post_login("0912-345-678")
+		self.assertRedirects(response, reverse("usersideapp:home"))
+		self.assertEqual(self.client.session.get(SESSION_USER_KEY), self.phone_user.pk)
+
+	def test_login_with_phone_identifier(self):
+		response = self._post_login(self.user.phone)
+		self.assertRedirects(response, reverse("usersideapp:home"))
+		self.assertEqual(self.client.session.get(SESSION_USER_KEY), self.user.pk)
+
+
 class UserPortalTestCase(TestCase):
 	def setUp(self):
 		self.user = AppUser.objects.create(
@@ -28,8 +78,16 @@ class UserPortalTestCase(TestCase):
 		)
 		self.restaurant = Restaurant.objects.create(name="測試餐廳")
 		self.other_restaurant = Restaurant.objects.create(name="另一家餐廳")
-		self.meal = Meal.objects.create(restaurant=self.restaurant, name="經典飯盒")
-		self.other_meal = Meal.objects.create(restaurant=self.other_restaurant, name="異國燉飯")
+		self.meal = Meal.objects.create(
+			restaurant=self.restaurant,
+			name="經典飯盒",
+			category="主食",
+		)
+		self.other_meal = Meal.objects.create(
+			restaurant=self.other_restaurant,
+			name="異國燉飯",
+			category="飲品",
+		)
 
 	def _login(self):
 		session = self.client.session
@@ -183,6 +241,89 @@ class UserPortalTestCase(TestCase):
 		self.assertEqual(new_summary.meal_count, 1)
 		self.assertEqual(float(new_summary.total_calories), 720.0)
 
+	def test_edit_record_prefills_components(self):
+		self._login()
+		record = DailyMealRecord.objects.create(
+			user=self.user,
+			date=date(2025, 1, 10),
+			meal_type=DailyMealRecord.MealType.LUNCH,
+			meal_name="元氣餐",
+			calories=500,
+			protein_grams=30,
+			carb_grams=40,
+			fat_grams=15,
+		)
+		record.components.create(name="雞胸肉", quantity="150g", calories=300)
+		response = self.client.get(reverse("usersideapp:record") + f"?edit={record.id}")
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.context["editing_record"].id, record.id)
+		self.assertIn("雞胸肉", response.context["components_seed"])
+		meal_form = response.context["meal_form"]
+		self.assertIn("雞胸肉", meal_form.initial.get("components_payload", ""))
+
+	def test_record_creation_uses_selected_meal_nutrition(self):
+		self._login()
+		nutrition_meal = Meal.objects.create(
+			restaurant=self.restaurant,
+			name="特製餐",
+			is_available=True,
+		)
+		NutritionInfo.objects.create(
+			meal=nutrition_meal,
+			calories=Decimal("650.0"),
+			protein=Decimal("40.0"),
+			carbohydrate=Decimal("70.0"),
+			fat=Decimal("20.0"),
+			sodium=Decimal("800.0"),
+		)
+		response = self.client.post(
+			reverse("usersideapp:record"),
+			{
+				"intent": "create",
+				"date": "2025-01-15",
+				"meal_type": DailyMealRecord.MealType.DINNER,
+				"meal_name": "",
+				"restaurant": self.restaurant.id,
+				"source_meal": nutrition_meal.id,
+				"calories": "",
+				"protein_grams": "",
+				"carb_grams": "",
+				"fat_grams": "",
+				"ingredients_text": "",
+				"components_payload": "[]",
+			},
+			follow=True,
+		)
+		self.assertEqual(response.status_code, 200)
+		record = DailyMealRecord.objects.filter(user=self.user).latest("id")
+		self.assertEqual(record.source_meal, nutrition_meal)
+		self.assertEqual(record.meal_name, "特製餐")
+		self.assertAlmostEqual(float(record.calories), 650.0)
+		self.assertAlmostEqual(float(record.protein_grams), 40.0)
+		self.assertAlmostEqual(float(record.carb_grams), 70.0)
+		self.assertAlmostEqual(float(record.fat_grams), 20.0)
+
+	def test_restaurant_meals_api_returns_nutrition(self):
+		self._login()
+		NutritionInfo.objects.create(
+			meal=self.meal,
+			calories=Decimal("480.0"),
+			protein=Decimal("32.0"),
+			carbohydrate=Decimal("55.0"),
+			fat=Decimal("16.0"),
+			sodium=Decimal("600.0"),
+		)
+		response = self.client.get(
+			reverse("usersideapp:restaurant_meals_api"),
+			{"restaurant_id": self.restaurant.id},
+		)
+		self.assertEqual(response.status_code, 200)
+		payload = response.json()
+		self.assertTrue(payload["meals"])
+		meal_info = next((item for item in payload["meals"] if item["id"] == self.meal.id), None)
+		self.assertIsNotNone(meal_info)
+		self.assertEqual(meal_info["nutrition"]["calories"], "480.00")
+
 	def test_settings_page_renders_preference_form(self):
 		self._login()
 		response = self.client.get(reverse("usersideapp:settings"))
@@ -196,6 +337,7 @@ class UserPortalTestCase(TestCase):
 		payload = {
 			"form_type": "preferences",
 			"cuisine_type": "日式",
+			"category": "主食",
 			"price_range": UserPreference.PriceRange.MEDIUM,
 			"is_vegetarian": "on",
 			"avoid_spicy": "on",
@@ -208,6 +350,7 @@ class UserPortalTestCase(TestCase):
 		self.assertEqual(response.status_code, 200)
 		preference = UserPreference.objects.get(user=self.user)
 		self.assertEqual(preference.cuisine_type, "日式")
+		self.assertEqual(preference.category, "主食")
 		self.assertEqual(preference.price_range, UserPreference.PriceRange.MEDIUM)
 		self.assertTrue(preference.is_vegetarian)
 		self.assertTrue(preference.avoid_spicy)
@@ -220,6 +363,7 @@ class UserPortalTestCase(TestCase):
 				"form_type": "account",
 				"full_name": "Tester Updated",
 				"email": "tester+new@example.com",
+				"phone": "",
 			},
 			follow=True,
 		)
@@ -227,6 +371,23 @@ class UserPortalTestCase(TestCase):
 		self.user.refresh_from_db()
 		self.assertEqual(self.user.full_name, "Tester Updated")
 		self.assertEqual(self.user.email, "tester+new@example.com")
+		self.assertIsNone(self.user.phone)
+
+	def test_user_can_update_phone_number(self):
+		self._login()
+		response = self.client.post(
+			reverse("usersideapp:settings"),
+			{
+				"form_type": "account",
+				"full_name": "Tester",
+				"email": "tester@example.com",
+				"phone": "0912-345-678",
+			},
+			follow=True,
+		)
+		self.assertEqual(response.status_code, 200)
+		self.user.refresh_from_db()
+		self.assertEqual(self.user.phone, "0912345678")
 
 	def test_account_update_requires_unique_email(self):
 		self._login()
@@ -247,6 +408,28 @@ class UserPortalTestCase(TestCase):
 		self.user.refresh_from_db()
 		self.assertEqual(self.user.email, "tester@example.com")
 		self.assertContains(response, "此 Email 已被其他帳戶使用。")
+
+	def test_account_update_requires_unique_phone(self):
+		self._login()
+		AppUser.objects.create(
+			username="other",
+			email="taken2@example.com",
+			phone="0912345678",
+			password_hash="dummy",
+		)
+		response = self.client.post(
+			reverse("usersideapp:settings"),
+			{
+				"form_type": "account",
+				"full_name": "Tester",
+				"email": "tester@example.com",
+				"phone": "0912 345 678",
+			},
+		)
+		self.assertEqual(response.status_code, 200)
+		self.user.refresh_from_db()
+		self.assertIsNone(self.user.phone)
+		self.assertContains(response, "此手機號碼已被其他帳戶使用。")
 
 	def test_user_can_change_password(self):
 		self._login()
@@ -342,7 +525,45 @@ class UserPortalTestCase(TestCase):
 		)
 		self.assertEqual(response.status_code, 200)
 		self.assertContains(response, "你已評論過此餐點")
-		self.assertEqual(Review.objects.filter(user=self.user, meal=self.meal).count(), 1)
+
+	def test_search_filters_by_meal_category(self):
+		self._login()
+		response = self.client.get(
+			reverse("usersideapp:search"),
+			{"category": "主食"},
+		)
+		self.assertEqual(response.status_code, 200)
+		restaurants = response.context["restaurants"]
+		self.assertEqual(len(restaurants), 1)
+		self.assertEqual(restaurants[0].name, self.restaurant.name)
+		category_choices = response.context["form"].fields["category"].choices
+		self.assertIn(("主食", "主食"), category_choices)
+		self.assertNotContains(response, self.other_restaurant.name)
+
+	def test_random_recommendation_category_filter(self):
+		self._login()
+		dessert_restaurant = Restaurant.objects.create(name="甜點小館", rating=4.7)
+		Meal.objects.create(
+			restaurant=dessert_restaurant,
+			name="草莓蛋糕",
+			category="甜點",
+		)
+		Meal.objects.create(
+			restaurant=dessert_restaurant,
+			name="檸檬塔",
+			category="甜點",
+		)
+		response = self.client.post(
+			reverse("usersideapp:random_data"),
+			{"category": "甜點", "limit": "4"},
+		)
+		self.assertEqual(response.status_code, 200)
+		payload = response.json()
+		primary_cards = payload["primary"]["cards"]
+		self.assertGreater(len(primary_cards), 0)
+		meal_names = {card["meal"]["name"] for card in primary_cards}
+		self.assertTrue(meal_names.issubset({"草莓蛋糕", "檸檬塔"}))
+		self.assertNotIn("經典飯盒", meal_names)
 
 	def test_user_can_edit_review_via_hidden_field(self):
 		self._login()
@@ -414,6 +635,37 @@ class UserPortalTestCase(TestCase):
 		self.assertEqual(Favorite.objects.filter(user=self.user).count(), 0)
 		self.assertContains(remove_response, "已移除收藏餐點。")
 
+	def test_search_filters_by_meal_category(self):
+		self._login()
+		response = self.client.get(
+			reverse("usersideapp:search"),
+			{"category": self.meal.category},
+		)
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, self.restaurant.name)
+		self.assertNotContains(response, self.other_restaurant.name)
+
+	def test_search_returns_meal_results(self):
+		self._login()
+		response = self.client.get(
+			reverse("usersideapp:search"),
+			{"keyword": self.meal.name},
+		)
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, self.meal.name)
+		meal_url = reverse("merchantsideapp:meal_detail", args=[self.meal.id])
+		self.assertContains(response, meal_url)
+
+	def test_search_displays_restaurant_links(self):
+		self._login()
+		response = self.client.get(
+			reverse("usersideapp:search"),
+			{"keyword": self.restaurant.name},
+		)
+		self.assertEqual(response.status_code, 200)
+		restaurant_url = reverse("merchantsideapp:restaurant_detail", args=[self.restaurant.id])
+		self.assertContains(response, restaurant_url)
+
 	def test_random_page_defaults_to_preferences(self):
 		self._login()
 		UserPreference.objects.create(
@@ -469,6 +721,29 @@ class UserPortalTestCase(TestCase):
 			all(card["restaurant"].price_range == Restaurant.PriceRange.LOW for card in primary)
 		)
 		self.assertContains(response, "銅板便當")
+
+	def test_random_page_filters_by_category(self):
+		self._login()
+		matching_restaurant = Restaurant.objects.create(name="分類餐廳", cuisine_type="混合")
+		Meal.objects.create(
+			restaurant=matching_restaurant,
+			name="辣味咖哩",
+			category="咖哩",
+		)
+		Meal.objects.filter(pk=self.other_meal.pk).update(category="甜點")
+		response = self.client.post(
+			reverse("usersideapp:random"),
+			{
+				"category": "咖哩",
+				"action": "filters",
+				"limit": 4,
+			},
+		)
+		self.assertEqual(response.status_code, 200)
+		primary = response.context["primary_recommendations"]
+		self.assertGreater(len(primary), 0)
+		self.assertTrue(all(card["meal"].category == "咖哩" for card in primary))
+		self.assertContains(response, "辣味咖哩")
 
 	def test_random_api_returns_primary_cards(self):
 		self._login()

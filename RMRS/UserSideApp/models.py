@@ -10,6 +10,7 @@ class AppUser(models.Model):
 
 	username = models.CharField(max_length=50, unique=True)
 	email = models.EmailField(max_length=100, unique=True)
+	phone = models.CharField(max_length=20, unique=True, blank=True, null=True)
 	password_hash = models.CharField(max_length=255)
 	full_name = models.CharField(max_length=100, blank=True, null=True)
 	created_at = models.DateTimeField(auto_now_add=True, db_default=Now())
@@ -40,6 +41,7 @@ class UserPreference(models.Model):
 		on_delete=models.CASCADE,
 	)
 	cuisine_type = models.CharField(max_length=50, blank=True, null=True)
+	category = models.CharField(max_length=50, blank=True, null=True)
 	price_range = models.CharField(
 		max_length=1,
 		choices=PriceRange.choices,

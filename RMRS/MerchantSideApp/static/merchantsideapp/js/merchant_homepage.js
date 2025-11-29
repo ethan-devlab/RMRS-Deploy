@@ -45,11 +45,15 @@
     function setupQuickActions() {
         const goAdd = document.getElementById("btn-go-add");
         const goManage = document.getElementById("btn-go-manage");
+        const goRestaurant = document.getElementById("btn-go-restaurant");
         if (goAdd) {
             goAdd.addEventListener("click", () => go("addMeal"));
         }
         if (goManage) {
             goManage.addEventListener("click", () => go("manageMeals"));
+        }
+        if (goRestaurant) {
+            goRestaurant.addEventListener("click", () => go("restaurantDetail"));
         }
     }
 

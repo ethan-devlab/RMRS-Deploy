@@ -3,30 +3,32 @@ from decimal import Decimal, InvalidOperation
 
 from django import forms
 from django.contrib.auth.hashers import check_password, make_password
+from django.core.exceptions import FieldDoesNotExist
 from django.db import transaction
+from django.db.models import Q
 
 from .models import Meal, MerchantAccount, Restaurant
 
 
 class MerchantRegistrationForm(forms.Form):
-    merchant_name = forms.CharField(
-        label="使用者名稱",
-        max_length=60,
-        widget=forms.TextInput(
-            attrs={
-                "placeholder": "使用者名稱",
-                "autocomplete": "nickname",
-                "class": "form-input",
-            }
-        ),
-    )
     restaurant_name = forms.CharField(
         label="餐廳名稱",
         max_length=100,
         widget=forms.TextInput(
             attrs={
-                "placeholder": "商家名稱",
+                "placeholder": "餐廳名稱",
                 "autocomplete": "organization",
+                "class": "form-input",
+            }
+        ),
+    )
+    merchant_name = forms.CharField(
+        label="商家名稱",
+        max_length=50,
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": "設定登入時使用的名稱",
+                "autocomplete": "username",
                 "class": "form-input",
             }
         ),
@@ -65,6 +67,7 @@ class MerchantRegistrationForm(forms.Form):
     error_messages = {
         "password_mismatch": "兩次輸入的密碼不一致。",
         "email_in_use": "此 Email 已被註冊。",
+        "merchant_name_in_use": "此商家名稱已被使用。",
     }
 
     def clean_restaurant_name(self):
@@ -74,10 +77,12 @@ class MerchantRegistrationForm(forms.Form):
         return name
 
     def clean_merchant_name(self):
-        name = self.cleaned_data["merchant_name"].strip()
-        if not name:
-            raise forms.ValidationError("使用者名稱不可空白。")
-        return name
+        merchant_name = self.cleaned_data["merchant_name"].strip()
+        if not merchant_name:
+            raise forms.ValidationError("商家名稱不可空白。")
+        if MerchantAccount.objects.filter(merchant_name__iexact=merchant_name).exists():
+            raise forms.ValidationError(self.error_messages["merchant_name_in_use"])
+        return merchant_name
 
     def clean_email(self):
         email = self.cleaned_data["email"].strip().lower()
@@ -99,7 +104,7 @@ class MerchantRegistrationForm(forms.Form):
             restaurant = Restaurant.objects.create(name=restaurant_name)
             merchant = MerchantAccount.objects.create(
                 restaurant=restaurant,
-                display_name=self.cleaned_data["merchant_name"],
+                merchant_name=self.cleaned_data["merchant_name"],
                 email=self.cleaned_data["email"],
                 password_hash=make_password(self.cleaned_data["password1"]),
             )
@@ -107,12 +112,12 @@ class MerchantRegistrationForm(forms.Form):
 
 
 class MerchantLoginForm(forms.Form):
-    email = forms.EmailField(
-        label="商家 Email",
-        widget=forms.EmailInput(
+    identifier = forms.CharField(
+        label="商家帳號 (Email / 手機 / 商家名稱)",
+        widget=forms.TextInput(
             attrs={
-                "placeholder": "商家 Email",
-                "autocomplete": "email",
+                "placeholder": "Email / 手機 / 商家名稱",
+                "autocomplete": "username",
                 "class": "form-input",
             }
         ),
@@ -129,24 +134,75 @@ class MerchantLoginForm(forms.Form):
     )
 
     error_messages = {
-        "invalid_login": "Email 或密碼不正確。",
+        "invalid_login": "帳號或密碼不正確。",
     }
+
+    identifier_fields = ("merchant_name", "email", "phone", "phone_number")
+
+    @classmethod
+    def _has_field(cls, field_name: str) -> bool:
+        try:
+            MerchantAccount._meta.get_field(field_name)
+            return True
+        except FieldDoesNotExist:
+            return False
+
+    @staticmethod
+    def _restaurant_has_field(field_name: str) -> bool:
+        try:
+            Restaurant._meta.get_field(field_name)
+            return True
+        except FieldDoesNotExist:
+            return False
+
+    def _identifier_variants(self, identifier: str) -> list[str]:
+        base = identifier.strip()
+        variants: list[str] = [base]
+        digits_only = "".join(ch for ch in base if ch.isdigit())
+        if digits_only and digits_only != base:
+            variants.append(digits_only)
+        seen = set()
+        deduped = []
+        for value in variants:
+            key = value.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            deduped.append(value)
+        return deduped
+
+    def _build_identifier_query(self, identifier: str) -> Q:
+        query = Q()
+        for field_name in self.identifier_fields:
+            if self._has_field(field_name):
+                query |= Q(**{f"{field_name}__iexact": identifier})
+        query |= Q(restaurant__name__iexact=identifier)
+        if self._restaurant_has_field("phone"):
+            query |= Q(restaurant__phone__iexact=identifier)
+        if self._restaurant_has_field("phone_number"):
+            query |= Q(restaurant__phone_number__iexact=identifier)
+        if not query:
+            query = Q(email__iexact=identifier)
+        return query
 
     def clean(self):
         cleaned = super().clean()
-        email = cleaned.get("email")
+        identifier = (cleaned.get("identifier") or "").strip()
         password = cleaned.get("password")
-        if not email or not password:
+        if not identifier or not password:
             return cleaned
 
-        try:
-            merchant = MerchantAccount.objects.select_related("restaurant").get(
-                email__iexact=email.strip().lower()
+        merchant = None
+        for variant in self._identifier_variants(identifier):
+            merchant = (
+                MerchantAccount.objects.select_related("restaurant")
+                .filter(self._build_identifier_query(variant))
+                .first()
             )
-        except MerchantAccount.DoesNotExist:
-            raise forms.ValidationError(self.error_messages["invalid_login"])
+            if merchant:
+                break
 
-        if not check_password(password, merchant.password_hash):
+        if not merchant or not check_password(password, merchant.password_hash):
             raise forms.ValidationError(self.error_messages["invalid_login"])
 
         self.merchant = merchant

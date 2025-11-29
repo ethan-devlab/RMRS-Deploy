@@ -1,68 +1,73 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="zh-Hant">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Foodie · 商家註冊</title>
     <link rel="stylesheet" href="{% static 'merchantsideapp/css/merchant_register.css' %}">
 </head>
-<body>
-<div class="register-container">
-    <h2>Create Merchant Account</h2>
-    <p>建立您的商家帳號</p>
 
-    {% if messages %}
+<body>
+    <div class="register-container">
+        <h2>Create Merchant Account</h2>
+        <p>建立您的商家帳號</p>
+
+        {% if messages %}
         <ul class="messages">
             {% for message in messages %}
-                <li class="{{ message.tags }}">{{ message }}</li>
+            <li class="{{ message.tags }}">{{ message }}</li>
             {% endfor %}
         </ul>
-    {% endif %}
+        {% endif %}
 
-    <form method="post" novalidate>
-        {% csrf_token %}
-        {% if form.non_field_errors %}
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {% if form.non_field_errors %}
             <div class="form-errors">
                 {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
             </div>
-        {% endif %}
-        <div class="form-field">
-            {{ form.merchant_name }}
-            {% if form.merchant_name.errors %}
-                <div class="field-errors">{% for error in form.merchant_name.errors %}<p>{{ error }}</p>{% endfor %}</div>
             {% endif %}
-        </div>
-        <div class="form-field">
-            {{ form.restaurant_name }}
-            {% if form.restaurant_name.errors %}
-                <div class="field-errors">{% for error in form.restaurant_name.errors %}<p>{{ error }}</p>{% endfor %}</div>
-            {% endif %}
-        </div>
-        <div class="form-field">
-            {{ form.email }}
-            {% if form.email.errors %}
+            <div class="form-field">
+                {{ form.restaurant_name }}
+                {% if form.restaurant_name.errors %}
+                <div class="field-errors">{% for error in form.restaurant_name.errors %}<p>{{ error }}</p>{% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="form-field">
+                {{ form.merchant_name }}
+                {% if form.merchant_name.errors %}
+                <div class="field-errors">{% for error in form.merchant_name.errors %}<p>{{ error }}</p>{% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="form-field">
+                {{ form.email }}
+                {% if form.email.errors %}
                 <div class="field-errors">{% for error in form.email.errors %}<p>{{ error }}</p>{% endfor %}</div>
-            {% endif %}
-        </div>
-        <div class="form-field">
-            {{ form.password1 }}
-            {% if form.password1.errors %}
+                {% endif %}
+            </div>
+            <div class="form-field">
+                {{ form.password1 }}
+                {% if form.password1.errors %}
                 <div class="field-errors">{% for error in form.password1.errors %}<p>{{ error }}</p>{% endfor %}</div>
-            {% endif %}
-        </div>
-        <div class="form-field">
-            {{ form.password2 }}
-            {% if form.password2.errors %}
+                {% endif %}
+            </div>
+            <div class="form-field">
+                {{ form.password2 }}
+                {% if form.password2.errors %}
                 <div class="field-errors">{% for error in form.password2.errors %}<p>{{ error }}</p>{% endfor %}</div>
-            {% endif %}
-        </div>
-        <button type="submit" class="register-btn">註冊</button>
-    </form>
+                {% endif %}
+            </div>
+            <button type="submit" class="register-btn">註冊</button>
+        </form>
 
-    <div class="signin">
-        <p>已經有商家帳號？ <a href="{% url 'merchantsideapp:login' %}">返回商家登入</a></p>
+        <div class="signin">
+            <p>已經有商家帳號？ <a href="{% url 'merchantsideapp:login' %}">返回商家登入</a></p>
+        </div>
     </div>
-</div>
 </body>
+
 </html>

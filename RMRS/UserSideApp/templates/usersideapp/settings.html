@@ -22,6 +22,11 @@
                 {{ account_form.email }}
                 {{ account_form.email.errors }}
             </div>
+            <div class="form-group">
+                <label for="id_phone">手機號碼</label>
+                {{ account_form.phone }}
+                {{ account_form.phone.errors }}
+            </div>
         </div>
         <p class="label">登入帳號：{{ current_user.username }}</p>
         <button class="primary-btn" type="submit">更新帳戶</button>
@@ -50,7 +55,9 @@
                 {{ password_form.new_password2.errors }}
             </div>
         </div>
+        {% if password_form.non_field_errors %}
         <div class="form-errors">{{ password_form.non_field_errors }}</div>
+        {% endif %}
         <p class="label">建議使用 8 碼以上並混合大小寫與符號。</p>
         <button class="primary-btn" type="submit">更新密碼</button>
     </form>
@@ -71,6 +78,11 @@
                 <label for="id_price_range">預算區間</label>
                 {{ preference_form.price_range }}
                 {{ preference_form.price_range.errors }}
+            </div>
+            <div class="form-group">
+                <label for="id_category">偏好品項類別</label>
+                {{ preference_form.category }}
+                {{ preference_form.category.errors }}
             </div>
         </div>
         <div class="form-grid">

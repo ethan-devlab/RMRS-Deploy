@@ -404,6 +404,7 @@ def log_meal_record_notification(user: AppUser, record: DailyMealRecord) -> Noti
 @dataclass
 class RecommendationFilters:
     cuisine_type: Optional[str] = None
+    category: Optional[str] = None
     price_range: Optional[str] = None
     city: Optional[str] = None
     district: Optional[str] = None
@@ -438,6 +439,7 @@ class RecommendationEngine:
         pref = preference or getattr(self.user, "preferences", None)
         return {
             "cuisine_type": (pref.cuisine_type if pref and pref.cuisine_type else ""),
+            "category": (pref.category if pref and pref.category else ""),
             "price_range": pref.price_range if pref and pref.price_range else "",
             "is_vegetarian": bool(pref.is_vegetarian) if pref else False,
             "avoid_spicy": bool(pref.avoid_spicy) if pref else False,
@@ -449,6 +451,7 @@ class RecommendationEngine:
     def filters_from_data(self, data: Dict[str, object], limit: Optional[int] = None) -> RecommendationFilters:
         return RecommendationFilters(
             cuisine_type=str(data.get("cuisine_type") or "").strip() or None,
+            category=str(data.get("category") or "").strip() or None,
             price_range=data.get("price_range") or None,
             city=str(data.get("city") or "").strip() or None,
             district=str(data.get("district") or "").strip() or None,
@@ -466,6 +469,7 @@ class RecommendationEngine:
             return RecommendationFilters(limit=self._ensure_limit(limit))
         return RecommendationFilters(
             cuisine_type=preference.cuisine_type or None,
+            category=preference.category or None,
             price_range=preference.price_range or None,
             is_vegetarian=preference.is_vegetarian,
             avoid_spicy=preference.avoid_spicy,
@@ -476,6 +480,8 @@ class RecommendationEngine:
         qs = self._base_queryset()
         if filters.cuisine_type:
             qs = qs.filter(restaurant__cuisine_type__icontains=filters.cuisine_type)
+        if filters.category:
+            qs = qs.filter(category__iexact=filters.category)
         if filters.price_range:
             qs = qs.filter(restaurant__price_range=filters.price_range)
         if filters.city:
@@ -551,6 +557,8 @@ class RecommendationEngine:
         if filters.price_range:
             display = dict(Restaurant.PriceRange.choices).get(filters.price_range, filters.price_range)
             parts.append(f"價格：{display}")
+        if filters.category:
+            parts.append(f"品項：{filters.category}")
         if filters.city:
             parts.append(f"城市：{filters.city}")
         if filters.district:

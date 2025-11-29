@@ -2,8 +2,9 @@
 {% load static %}
 {% block page_title %}飲食紀錄{% endblock %}
 {% block extra_js %}
-<script src="{% static 'usersideapp/js/meal_record.js' %}" defer
-    data-component-seed="{{ components_seed|escapejs }}"></script>
+<script src="{% static 'usersideapp/js/meal_record.js' %}" defer data-component-seed="{{ components_seed|escapejs }}"
+    data-meal-api="{% url 'usersideapp:restaurant_meals_api' %}" data-initial-restaurant="{{ initial_restaurant_id }}"
+    data-initial-meal="{{ initial_meal_id }}"></script>
 {% endblock %}
 {% block content %}
 <div class="welcome-box record-header">
@@ -15,33 +16,58 @@
         <div class="record-filter-bar">
             {% for value,label in range_filters %}
             <a class="filter-pill {% if selected_range == value %}active{% endif %}" href="?range={{ value }}">
-                {{ value }}</a>
+                {{ label }}</a>
             {% endfor %}
+        </div>
+        <div class="range-meta">
+            <div class="range-meta__label">{{ selected_range_meta.label }}</div>
+            <div class="range-meta__window">{{ selected_range_meta.date_window }} · {{ selected_range_meta.days }} 天
+            </div>
+            <div class="range-meta__hint">{{ selected_range_meta.logic_hint }}</div>
         </div>
     </div>
 </div>
 
 <div class="card-long stats-card">
-    <div>
-        <h3>期間總覽</h3>
-        <p>統計區間：{{ selected_range|default:"7" }} 天</p>
+    <div class="stats-card__header">
+        <div>
+            <p class="stats-card__eyebrow">期間總覽</p>
+            <h3 class="stats-card__title">{{ selected_range_meta.label }}</h3>
+            <p class="stats-card__subtitle">{{ selected_range_meta.date_window }} · {{ selected_range_meta.days }} 天</p>
+        </div>
+        <div class="stats-card__summary">
+            <span class="meta-label">紀錄數量</span>
+            <strong>{{ history_records|length }}</strong>
+        </div>
     </div>
-    <div class="stats-grid">
-        <div>
-            <span class="label">熱量</span>
-            <strong>{{ history_totals.total_calories|floatformat:0 }} kcal</strong>
+    <div class="stats-card__grid">
+        <div class="stat-tile stat-tile--calorie">
+            <div class="stat-icon" aria-hidden="true">🔥</div>
+            <div>
+                <span class="label">卡路里</span>
+                <strong>{{ history_totals.total_calories|floatformat:0 }} kcal</strong>
+            </div>
         </div>
-        <div>
-            <span class="label">蛋白質</span>
-            <strong>{{ history_totals.total_protein|floatformat:1 }} g</strong>
+        <div class="stat-tile stat-tile--protein">
+            <div class="stat-icon" aria-hidden="true">🥚</div>
+            <div>
+                <span class="label">蛋白質</span>
+                <strong>{{ history_totals.total_protein|floatformat:1 }} g</strong>
+            </div>
         </div>
-        <div>
-            <span class="label">碳水</span>
-            <strong>{{ history_totals.total_carbs|floatformat:1 }} g</strong>
+        <div class="stat-tile stat-tile--carb">
+            <div class="stat-icon" aria-hidden="true">🌾</div>
+            <div>
+                <span class="label">碳水化合物</span>
+                <strong>{{ history_totals.total_carbs|floatformat:1 }} g</strong>
+            </div>
         </div>
-        <div>
-            <span class="label">脂肪</span>
-            <strong>{{ history_totals.total_fat|floatformat:1 }} g</strong>
+        <div class="stat-tile stat-tile--fat">
+            <div class="stat-icon" aria-hidden="true">🥑</div>
+            <div>
+                <span class="label">脂肪</span>
+                <strong>{{ history_totals.total_fat|floatformat:1 }} g</strong>
+            </div>
         </div>
     </div>
 </div>
@@ -81,6 +107,18 @@
                 <label for="id_meal_name">餐點名稱</label>
                 {{ meal_form.meal_name }}
                 {{ meal_form.meal_name.errors }}
+            </div>
+        </div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="id_restaurant">餐廳</label>
+                {{ meal_form.restaurant }}
+                {{ meal_form.restaurant.errors }}
+            </div>
+            <div class="form-group">
+                <label for="id_source_meal">選擇餐點</label>
+                {{ meal_form.source_meal }}
+                {{ meal_form.source_meal.errors }}
             </div>
         </div>
         <div class="form-grid">
@@ -147,19 +185,21 @@
     </form>
 </div>
 
-<div class="section-title">歷史紀錄</div>
+<div class="section-title">飲食紀錄</div>
 {% if history_records %}
-<div class="record-list">
+<div class="record-list timeline-list">
     {% for record in history_records %}
-    <div class="card-long record-item">
-        <div class="record-row">
-            <div class="record-date">
-                <div class="record-date-main">{{ record.date|date:"m/d" }} · {{ record.get_meal_type_display }}</div>
-                <div class="record-date-sub">{{ record.meal_name }}</div>
+    <article class="card-long record-item timeline-card">
+        <header class="timeline-card__header">
+            <div>
+                <p class="record-date-main">{{ record.date|date:"m/d" }} · {{ record.get_meal_type_display }}</p>
+                <p class="record-date-sub">{{ record.meal_name }}</p>
             </div>
-            <div class="record-summary">
-                <div>🍽 {{ record.calories }} kcal</div>
-                <div>🥚 {{ record.protein_grams }} g</div>
+            <div class="record-macro-chips">
+                <span class="macro-chip">🍽 {{ record.calories }} kcal</span>
+                <span class="macro-chip">🥚 {{ record.protein_grams }} g</span>
+                <span class="macro-chip">🌾 {{ record.carb_grams }} g</span>
+                <span class="macro-chip">🥑 {{ record.fat_grams }} g</span>
             </div>
             <div class="record-actions">
                 <a class="text-btn" href="?range={{ selected_range }}&edit={{ record.id }}#record-form-section">編輯</a>
@@ -170,9 +210,18 @@
                     <button type="submit" class="text-btn">刪除</button>
                 </form>
             </div>
-        </div>
-        <div class="record-body">
-            <p>營養：蛋白質 {{ record.protein_grams }} g · 碳水 {{ record.carb_grams }} g · 脂肪 {{ record.fat_grams }} g</p>
+        </header>
+        <div class="timeline-card__body">
+            {% if record.source_meal %}
+            <p class="record-source">
+                來源：
+                <a href="{% url 'merchantsideapp:restaurant_detail' record.source_meal.restaurant.id %}" target="_blank"
+                    rel="noopener">{{ record.source_meal.restaurant.name }}</a>
+                ·
+                <a href="{% url 'merchantsideapp:meal_detail' record.source_meal.id %}" target="_blank" rel="noopener">
+                    {{ record.source_meal.name }}</a>
+            </p>
+            {% endif %}
             {% with component_list=record.components.all %}
             {% if component_list %}
             <ul class="component-list">
@@ -193,7 +242,7 @@
             <p>備註：{{ record.meal_notes }}</p>
             {% endif %}
         </div>
-    </div>
+    </article>
     {% endfor %}
 </div>
 {% else %}

@@ -13,7 +13,47 @@ from ..forms import (
     MerchantPasswordChangeForm,
     RestaurantProfileForm,
 )
+from ..models import Restaurant, Meal
 from UserSideApp.models import MealComponent
+
+
+def _build_display_nutrition(meal):
+    nutrition_info = getattr(meal, "nutrition", None)
+    if not nutrition_info:
+        return None
+    return {
+        "calories": nutrition_info.calories,
+        "protein": nutrition_info.protein,
+        "fat": nutrition_info.fat,
+        "carbs": getattr(nutrition_info, "carbohydrate", None),
+        "sodium": nutrition_info.sodium,
+        "fiber": getattr(nutrition_info, "fiber", None),
+    }
+
+
+def _extract_ingredients(meal_components):
+    ingredients = []
+    allergens = []
+    for component in meal_components:
+        label = component.name
+        if component.quantity:
+            label = f"{label}（{component.quantity}）"
+        ingredients.append(label)
+        metadata = component.metadata or {}
+        allergen_payload = metadata.get("allergens")
+        if isinstance(allergen_payload, (list, tuple)):
+            allergens.extend(str(item) for item in allergen_payload if item)
+        elif allergen_payload:
+            allergens.append(str(allergen_payload))
+    deduped = []
+    seen = set()
+    for item in allergens:
+        key = item.strip()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        deduped.append(key)
+    return ingredients, deduped
 
 
 def _persist_nutrition_components(meal, entries):
@@ -59,7 +99,7 @@ def dashboard(request):
     recent_meals = []
     today_count = 0
     last_updated_meal = None
-    merchant_display_name = (merchant.display_name or "").strip() if merchant else ""
+    merchant_display_name = (merchant.merchant_name or "").strip() if merchant else ""
     if restaurant is not None:
         meals_qs = restaurant.meals.order_by("-updated_at", "-id")
         recent_meals = list(meals_qs[:3])
@@ -160,6 +200,37 @@ def manage_meals(request):
             "selected_category": category_filter,
             "selected_status": status_filter,
             "archived_preview": archived_preview,
+        },
+    )
+
+
+def meal_detail(request, meal_id):
+    merchant = get_current_merchant(request)
+    meal = get_object_or_404(
+        Meal.objects.select_related("restaurant", "nutrition").prefetch_related("nutrition_components"),
+        pk=meal_id,
+    )
+    restaurant = meal.restaurant
+    nutrition = _build_display_nutrition(meal)
+    components = list(meal.nutrition_components.order_by("id"))
+    ingredients, allergens = _extract_ingredients(components)
+    stock_status = "庫存充足" if meal.is_available else "暫停供應"
+    setattr(meal, "stock_status", stock_status)
+    can_edit = bool(
+        merchant
+        and getattr(merchant, "restaurant_id", None) == restaurant.id
+    )
+
+    return render(
+        request,
+        "merchantsideapp/meal.html",
+        {
+            "meal": meal,
+            "restaurant": restaurant,
+            "nutrition": nutrition,
+            "ingredients": ingredients,
+            "allergens": allergens,
+            "can_edit": can_edit,
         },
     )
 
@@ -311,3 +382,37 @@ def update_restaurant_status(request):
     else:
         messages.info(request, "餐廳狀態未變更。")
     return redirect("merchantsideapp:dashboard")
+
+
+def restaurant_detail(request, restaurant_id):
+    merchant = get_current_merchant(request)
+    restaurant = get_object_or_404(
+        Restaurant.objects.prefetch_related("meals"),
+        pk=restaurant_id,
+    )
+
+    meals_qs = restaurant.meals.order_by("-updated_at", "-id")
+    meals = list(meals_qs)
+    total = len(meals)
+    available = sum(1 for meal in meals if meal.is_available)
+    stats = {
+        "total_meals": total,
+        "available_meals": available,
+        "unavailable_meals": total - available,
+        "last_updated": meals[0].updated_at if meals else None,
+    }
+    can_edit = bool(
+        merchant
+        and getattr(merchant, "restaurant_id", None) == restaurant.id
+    )
+
+    return render(
+        request,
+        "merchantsideapp/restaurant.html",
+        {
+            "restaurant": restaurant,
+            "meals": meals,
+            "stats": stats,
+            "can_edit": can_edit,
+        },
+    )
