@@ -14,6 +14,7 @@ ViewFunc = TypeVar("ViewFunc", bound=Callable[..., HttpResponse])
 def login_user(request: HttpRequest, user: AppUser) -> None:
     request.session[SESSION_USER_KEY] = user.pk
     request.session.modified = True
+    request.session.set_expiry(0)  # Session expires on browser close
 
 
 def logout_user(request: HttpRequest) -> None:

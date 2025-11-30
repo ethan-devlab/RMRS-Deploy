@@ -3,30 +3,45 @@ from decimal import Decimal, InvalidOperation
 
 from django import forms
 from django.contrib.auth.hashers import check_password, make_password
+from django.core.exceptions import FieldDoesNotExist
 from django.db import transaction
+from django.db.models import Q
 
 from .models import Meal, MerchantAccount, Restaurant
 
 
+class MerchantImageInput(forms.ClearableFileInput):
+    template_name = "merchantsideapp/widgets/image_input.html"
+    initial_text = ""
+    input_text = ""
+    clear_checkbox_label = "移除目前照片"
+
+    def __init__(self, *args, **kwargs):
+        attrs = kwargs.setdefault("attrs", {})
+        attrs.setdefault("class", "field-input file-upload-input")
+        attrs.setdefault("accept", "image/*")
+        super().__init__(*args, **kwargs)
+
+
 class MerchantRegistrationForm(forms.Form):
-    merchant_name = forms.CharField(
-        label="使用者名稱",
-        max_length=60,
-        widget=forms.TextInput(
-            attrs={
-                "placeholder": "使用者名稱",
-                "autocomplete": "nickname",
-                "class": "form-input",
-            }
-        ),
-    )
     restaurant_name = forms.CharField(
         label="餐廳名稱",
         max_length=100,
         widget=forms.TextInput(
             attrs={
-                "placeholder": "商家名稱",
+                "placeholder": "餐廳名稱",
                 "autocomplete": "organization",
+                "class": "form-input",
+            }
+        ),
+    )
+    merchant_name = forms.CharField(
+        label="商家名稱",
+        max_length=50,
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": "設定登入時使用的名稱",
+                "autocomplete": "username",
                 "class": "form-input",
             }
         ),
@@ -52,7 +67,7 @@ class MerchantRegistrationForm(forms.Form):
         ),
     )
     password2 = forms.CharField(
-        label="再次輸入密碼",
+        label="確認密碼",
         widget=forms.PasswordInput(
             attrs={
                 "placeholder": "再次輸入密碼",
@@ -65,6 +80,7 @@ class MerchantRegistrationForm(forms.Form):
     error_messages = {
         "password_mismatch": "兩次輸入的密碼不一致。",
         "email_in_use": "此 Email 已被註冊。",
+        "merchant_name_in_use": "此商家名稱已被使用。",
     }
 
     def clean_restaurant_name(self):
@@ -74,10 +90,12 @@ class MerchantRegistrationForm(forms.Form):
         return name
 
     def clean_merchant_name(self):
-        name = self.cleaned_data["merchant_name"].strip()
-        if not name:
-            raise forms.ValidationError("使用者名稱不可空白。")
-        return name
+        merchant_name = self.cleaned_data["merchant_name"].strip()
+        if not merchant_name:
+            raise forms.ValidationError("商家名稱不可空白。")
+        if MerchantAccount.objects.filter(merchant_name__iexact=merchant_name).exists():
+            raise forms.ValidationError(self.error_messages["merchant_name_in_use"])
+        return merchant_name
 
     def clean_email(self):
         email = self.cleaned_data["email"].strip().lower()
@@ -99,7 +117,7 @@ class MerchantRegistrationForm(forms.Form):
             restaurant = Restaurant.objects.create(name=restaurant_name)
             merchant = MerchantAccount.objects.create(
                 restaurant=restaurant,
-                display_name=self.cleaned_data["merchant_name"],
+                merchant_name=self.cleaned_data["merchant_name"],
                 email=self.cleaned_data["email"],
                 password_hash=make_password(self.cleaned_data["password1"]),
             )
@@ -107,12 +125,12 @@ class MerchantRegistrationForm(forms.Form):
 
 
 class MerchantLoginForm(forms.Form):
-    email = forms.EmailField(
-        label="商家 Email",
-        widget=forms.EmailInput(
+    identifier = forms.CharField(
+        label="商家帳號 (商家名稱 / Email / 手機)",
+        widget=forms.TextInput(
             attrs={
-                "placeholder": "商家 Email",
-                "autocomplete": "email",
+                "placeholder": "商家名稱 / Email / 手機",
+                "autocomplete": "username",
                 "class": "form-input",
             }
         ),
@@ -129,24 +147,62 @@ class MerchantLoginForm(forms.Form):
     )
 
     error_messages = {
-        "invalid_login": "Email 或密碼不正確。",
+        "invalid_login": "帳號或密碼不正確。",
     }
+
+    identifier_fields = ("merchant_name", "email", "phone", "phone_number")
+
+    @classmethod
+    def _has_field(cls, field_name: str) -> bool:
+        try:
+            MerchantAccount._meta.get_field(field_name)
+            return True
+        except FieldDoesNotExist:
+            return False
+
+    def _identifier_variants(self, identifier: str) -> list[str]:
+        base = identifier.strip()
+        variants: list[str] = [base]
+        digits_only = "".join(ch for ch in base if ch.isdigit())
+        if digits_only and digits_only != base:
+            variants.append(digits_only)
+        seen = set()
+        deduped = []
+        for value in variants:
+            key = value.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            deduped.append(value)
+        return deduped
+
+    def _build_identifier_query(self, identifier: str) -> Q:
+        query = Q()
+        for field_name in self.identifier_fields:
+            if self._has_field(field_name):
+                query |= Q(**{f"{field_name}__iexact": identifier})
+        if not query:
+            query = Q(email__iexact=identifier)
+        return query
 
     def clean(self):
         cleaned = super().clean()
-        email = cleaned.get("email")
+        identifier = (cleaned.get("identifier") or "").strip()
         password = cleaned.get("password")
-        if not email or not password:
+        if not identifier or not password:
             return cleaned
 
-        try:
-            merchant = MerchantAccount.objects.select_related("restaurant").get(
-                email__iexact=email.strip().lower()
+        merchant = None
+        for variant in self._identifier_variants(identifier):
+            merchant = (
+                MerchantAccount.objects.select_related("restaurant")
+                .filter(self._build_identifier_query(variant))
+                .first()
             )
-        except MerchantAccount.DoesNotExist:
-            raise forms.ValidationError(self.error_messages["invalid_login"])
+            if merchant:
+                break
 
-        if not check_password(password, merchant.password_hash):
+        if not merchant or not check_password(password, merchant.password_hash):
             raise forms.ValidationError(self.error_messages["invalid_login"])
 
         self.merchant = merchant
@@ -169,6 +225,7 @@ class MealCreateForm(forms.ModelForm):
             "is_vegetarian",
             "is_spicy",
             "image_url",
+            "image_file",
         ]
         widgets = {
             "name": forms.TextInput(
@@ -192,6 +249,7 @@ class MealCreateForm(forms.ModelForm):
                     "class": "field-input",
                 }
             ),
+            "image_file": MerchantImageInput(),
         }
 
     def __init__(self, restaurant: Restaurant, *args, **kwargs):
@@ -243,19 +301,23 @@ class MealCreateForm(forms.ModelForm):
             quantity = str(raw.get("quantity", "")).strip() or None
             calories_value = raw.get("calories")
             calories_decimal = self._parse_decimal(calories_value) or Decimal("0")
-            metadata = {}
+            macro_values: dict[str, Decimal] = {}
             for key in ("protein", "carb", "fat"):
                 parsed = self._parse_decimal(raw.get(key))
                 if parsed is not None:
-                    metadata[key] = float(parsed)
-            if raw.get("notes"):
-                metadata["notes"] = str(raw["notes"]).strip()
+                    macro_values[key] = parsed
+            notes = str(raw.get("notes", "")).strip() or None
+            metadata = {"notes": notes} if notes else None
             cleaned_entries.append(
                 {
                     "name": name,
                     "quantity": quantity,
                     "calories": calories_decimal,
-                    "metadata": metadata or None,
+                    "protein": macro_values.get("protein"),
+                    "carb": macro_values.get("carb"),
+                    "fat": macro_values.get("fat"),
+                    "notes": notes,
+                    "metadata": metadata,
                 }
             )
 
@@ -273,22 +335,22 @@ class MealCreateForm(forms.ModelForm):
 class MerchantAccountForm(forms.ModelForm):
     class Meta:
         model = MerchantAccount
-        fields = ["display_name", "email"]
+        fields = ["email", "phone"]
         widgets = {
-            "display_name": forms.TextInput(
-                attrs={
-                    "class": "field-input",
-                    "placeholder": "使用者名稱",
-                    "autocomplete": "nickname",
-                }
-            ),
             "email": forms.EmailInput(
                 attrs={
                     "class": "field-input",
-                    "placeholder": "商家登入 Email",
+                    "placeholder": "商家 Email",
                     "autocomplete": "email",
                 }
-            )
+            ),
+            "phone": forms.TextInput(
+                attrs={
+                    "class": "field-input",
+                    "placeholder": "商家聯絡電話",
+                    "autocomplete": "tel",
+                }
+            ),
         }
 
     def clean_email(self):
@@ -300,11 +362,26 @@ class MerchantAccountForm(forms.ModelForm):
             raise forms.ValidationError("此 Email 已被其他帳號使用。")
         return email
 
-    def clean_display_name(self):
-        name = (self.cleaned_data.get("display_name") or "").strip()
-        if not name:
-            raise forms.ValidationError("使用者名稱不可空白。")
-        return name
+    def clean_phone(self):
+        phone = (self.cleaned_data.get("phone") or "").strip()
+        if not phone:
+            return phone
+        qs = MerchantAccount.objects.filter(phone__iexact=phone)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError("此電話已被其他帳號使用。")
+        return phone
+
+    def save(self, commit: bool = True):
+        merchant = super().save(commit=False)
+        merchant.email = self.cleaned_data["email"].strip().lower()
+        phone = self.cleaned_data.get("phone") or None
+        merchant.phone = phone
+        if commit:
+            merchant.save()
+        self.save_m2m()
+        return merchant
 
 
 class MerchantPasswordChangeForm(forms.Form):
@@ -367,6 +444,28 @@ class MerchantPasswordChangeForm(forms.Form):
         return self.merchant
 
 
+class RestaurantNameForm(forms.ModelForm):
+    class Meta:
+        model = Restaurant
+        fields = ["name"]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": "field-input",
+                    "placeholder": "餐廳名稱",
+                    "autocomplete": "organization",
+                    "id": "merchant-restaurant-name",
+                }
+            )
+        }
+
+    def clean_name(self):
+        name = (self.cleaned_data.get("name") or "").strip()
+        if not name:
+            raise forms.ValidationError("餐廳名稱不可空白。")
+        return name
+
+
 class RestaurantProfileForm(forms.ModelForm):
     class Meta:
         model = Restaurant
@@ -425,15 +524,15 @@ class RestaurantProfileForm(forms.ModelForm):
             "latitude": forms.NumberInput(
                 attrs={
                     "class": "field-input",
-                    "placeholder": "緯度 (例如 25.03396)",
-                    "step": "0.000001",
+                    "placeholder": "緯度 (例如 25.0339654)",
+                    "step": "0.0000001",
                 }
             ),
             "longitude": forms.NumberInput(
                 attrs={
                     "class": "field-input",
-                    "placeholder": "經度 (例如 121.56447)",
-                    "step": "0.000001",
+                    "placeholder": "經度 (例如 121.5644733)",
+                    "step": "0.0000001",
                 }
             ),
         }

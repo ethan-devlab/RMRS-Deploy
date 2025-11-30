@@ -287,6 +287,17 @@
     background: #fee2e2;
 }
 
+.row-btn.action-up {
+    border-color: rgba(16, 185, 129, 0.35);
+    color: #047857;
+    background: #ecfdf5;
+    box-shadow: 0 6px 16px rgba(5, 150, 105, 0.18);
+}
+
+.row-btn.action-up:hover {
+    background: #bbf7d0;
+}
+
 .menu-empty {
     padding: 18px 14px;
     font-size: 13px;

@@ -32,6 +32,7 @@ Purpose: give AI coding agents the minimal, high-value context to be productive 
 - Services layer: look for `services.py` (e.g., `UserSideApp/services.py`) for business logic separated from views.
 - Auth helpers: `UserSideApp/auth_utils.py` contains authentication-related utilities used across views.
 - Migrations are tracked in each app under `*/migrations/` — apply and include migrations in PRs when changing models.
+- Front-end assets stay separated: HTML templates go under the app’s `templates/`, CSS/JS belongs in `static/<appname>/` (see `all_templates/` for reference layouts) — avoid mixing inline CSS/JS unless needed for Django templating.
 
 **Integration & external dependencies**
 - MySQL is the primary DB; local development can point to `localhost` or containerized MySQL. DB credentials come from `env/.env`.
@@ -41,7 +42,8 @@ Purpose: give AI coding agents the minimal, high-value context to be productive 
 **Testing notes & how to run targeted checks**
 - Run full Django test suite: `python RMRS/manage.py test`.
 - There is a DB-related script `database/test_database.py` you can run directly for DB helpers: `python database/test_database.py` (or `pytest database/test_database.py` if `pytest` is installed).
-- When making model changes, run `makemigrations` then `migrate`: `python RMRS/manage.py makemigrations` then `python RMRS/manage.py migrate`.
+- Model edits must be followed by `python RMRS/manage.py makemigrations` and `python RMRS/manage.py migrate` before pushing or testing other features.
+- Any new method or function needs corresponding tests (e.g., update the relevant `tests.py` under each app or add a focused test module) so CI coverage stays meaningful.
 
 **When editing code, watch for**
 - Timezone handling — `USE_TZ = False` means code assumes local datetimes.
@@ -55,7 +57,7 @@ Purpose: give AI coding agents the minimal, high-value context to be productive 
 - DB helpers: `database/db_manager.py`, `database/cli.py`
 
 **PR & agent behaviour guidance**
-- Keep changes minimal and focused: update migrations and tests when models or DB behavior change.
+- Keep changes minimal and focused: update migrations (`makemigrations` + `migrate`) and tests alongside any model or DB behavior change.
 - If altering env keys or new config is needed, describe the change and required `env/.env` keys in the PR description.
 - Prefer modifying service-layer functions (`services.py`) over embedding complex logic in views.
 

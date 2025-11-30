@@ -31,8 +31,8 @@ class RestaurantAdmin(admin.ModelAdmin):
 
 @admin.register(MerchantAccount)
 class MerchantAccountAdmin(admin.ModelAdmin):
-	list_display = ("display_name", "email", "restaurant", "created_at", "updated_at")
-	search_fields = ("display_name", "email", "restaurant__name")
+	list_display = ("merchant_name", "email", "restaurant", "created_at", "updated_at")
+	search_fields = ("merchant_name", "email", "restaurant__name")
 	list_select_related = ("restaurant",)
 	autocomplete_fields = ("restaurant",)
 	readonly_fields = ("created_at", "updated_at")

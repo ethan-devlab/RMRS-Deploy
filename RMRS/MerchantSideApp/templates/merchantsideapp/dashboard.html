@@ -1,147 +1,128 @@
+{% extends 'merchantsideapp/base_sidebar.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="zh-Hant">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Foodie · 商家主頁</title>
-    <link rel="stylesheet" href="{% static 'merchantsideapp/css/merchant_homepage.css' %}">
-</head>
+{% block page_title %}Foodie · 商家主頁{% endblock %}
 
-<body>
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <button class="toggle-btn" id="toggleBtn">☰</button>
-            <h2 class="logo"><span class="logo-text">Foodie 商家端</span></h2>
+{% block content %}
+<!-- Welcome Hero -->
+<div class="welcome-box mb-6">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 mb-1">歡迎回來，{{ merchant_display_name }}！</h1>
+            <p class="text-gray-600">你可以在這裡新增餐點、編輯或下架既有餐點，方便管理菜單。</p>
         </div>
-        <ul>
-            <li class="active" id="menu-dashboard">
-                <span class="icon">🏠</span>
-                <span class="item-text">主頁總覽</span>
-            </li>
-            <li id="menu-add">
-                <span class="icon">➕</span>
-                <span class="item-text">新增餐點</span>
-            </li>
-            <li id="menu-manage">
-                <span class="icon">📋</span>
-                <span class="item-text">管理餐點</span>
-            </li>
-            <li id="menu-settings">
-                <span class="icon">⚙️</span>
-                <span class="item-text">設定</span>
-            </li>
-            <li class="logout" id="menu-logout">
-                <span class="icon">🚪</span>
-                <span class="item-text">登出</span>
-            </li>
-        </ul>
-    </div>
-
-    <div class="main">
-        <div class="main-inner">
-            {% if messages %}
-                <ul class="messages">
-                    {% for message in messages %}
-                        <li class="{{ message.tags }}">{{ message }}</li>
-                    {% endfor %}
-                </ul>
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <span class="pill-{{ restaurant.is_active|yesno:'success,danger' }}">
+                目前狀態：{% if restaurant and restaurant.is_active %}營業{% else %}沒有營業{% endif %}
+            </span>
+            {% if restaurant %}
+            <form method="post" action="{% url 'merchantsideapp:restaurant_status' %}"
+                class="flex items-center gap-3 text-sm">
+                {% csrf_token %}
+                <label class="text-gray-600" for="status-select">快速調整</label>
+                <select id="status-select" name="status" class="form-input py-2">
+                    <option value="open" {% if status_slug == 'open' %}selected{% endif %}>營業</option>
+                    <option value="closed" {% if status_slug == 'closed' %}selected{% endif %}>沒有營業</option>
+                </select>
+                <button type="submit" class="btn-primary px-4 py-2 text-sm">更新</button>
+            </form>
             {% endif %}
-            <div class="welcome-box merchant-header">
-                <div class="merchant-left">
-                    <h1>歡迎回來，{{ merchant_display_name }}！</h1>
-                    <p>你可以在這裡新增餐點、編輯或下架既有餐點，方便管理菜單。</p>
-                </div>
-                <div class="merchant-right">
-                    <div class="stat-pill">目前狀態：
-                        <span class="{% if restaurant and restaurant.is_active %}stat-ok{% else %}stat-off{% endif %}">
-                            {% if restaurant and restaurant.is_active %}營業{% else %}沒有營業{% endif %}
-                        </span>
-                    </div>
-                    {% if restaurant %}
-                        <form method="post" action="{% url 'merchantsideapp:restaurant_status' %}" class="status-form">
-                            {% csrf_token %}
-                            <label class="status-label" for="status-select">快速調整</label>
-                            <div class="status-control">
-                                <select id="status-select" name="status" class="status-select">
-                                    <option value="open" {% if status_slug == 'open' %}selected{% endif %}>營業</option>
-                                    <option value="closed" {% if status_slug == 'closed' %}selected{% endif %}>沒有營業</option>
-                                </select>
-                                <button type="submit" class="status-apply">更新</button>
-                            </div>
-                        </form>
-                    {% endif %}
-                    <div class="stat-small">
-                        <span>今天已建立餐點：{{ today_count }} 筆</span>
-                        <span>最後更新時間：
-                            {% if last_updated_meal %}
-                                {{ last_updated_meal.updated_at|date:"n/d H:i" }}
-                            {% else %}
-                                --
-                            {% endif %}
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="section-title">快速操作</div>
-            <div class="card-row quick-actions">
-                <div class="card action-card">
-                    <div class="action-icon">➕</div>
-                    <div class="action-title">新增餐點</div>
-                    <div class="action-desc">建立新的餐點品項，包含名稱、分類、價格、描述與上傳照片。</div>
-                    <button class="action-btn" id="btn-go-add">前往新增餐點</button>
-                </div>
-                <div class="card action-card">
-                    <div class="action-icon">📋</div>
-                    <div class="action-title">管理餐點</div>
-                    <div class="action-desc">編輯已建立的餐點，可調整價格、修改內容，或將餐點上架 / 下架。</div>
-                    <button class="action-btn secondary" id="btn-go-manage">前往管理餐點</button>
-                </div>
-            </div>
-
-            <div class="section-title">最近編輯的餐點</div>
-            <div class="card-long recent-list">
-                {% if recent_meals %}
-                    {% for meal in recent_meals %}
-                        <div class="recent-row">
-                            <div class="recent-main">
-                                <div class="recent-name">{{ meal.name }}</div>
-                                <div class="recent-sub">
-                                    最後編輯：{{ meal.updated_at|date:"n/d H:i" }} · 價格
-                                    {% if meal.price %}
-                                        ${{ meal.price|floatformat:0 }}
-                                    {% else %}
-                                        —
-                                    {% endif %}
-                                    · 狀態：
-                                    <span class="{% if meal.is_available %}on{% else %}off{% endif %}">
-                                        {{ meal.is_available|yesno:"上架中,已下架" }}
-                                    </span>
-                                </div>
-                            </div>
-                            <a class="recent-btn" href="{% url 'merchantsideapp:edit_meal' meal.id %}">編輯餐點</a>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="recent-empty">目前尚無餐點紀錄，前往「新增餐點」即可建立第一道菜色。</div>
-                {% endif %}
-            </div>
         </div>
     </div>
+    <div class="mt-4 flex flex-wrap gap-6 text-sm text-gray-500">
+        <span>今天已建立餐點：<strong class="text-gray-900">{{ today_count }}</strong> 筆</span>
+        <span>最後更新時間：
+            {% if last_updated_meal %}
+            <strong class="text-gray-900">{{ last_updated_meal.updated_at|date:"n/d H:i" }}</strong>
+            {% else %}
+            --
+            {% endif %}
+        </span>
+    </div>
+</div>
 
-    <script>
-        window.merchantRoutes = {
-            dashboard: "{% url 'merchantsideapp:dashboard' %}",
-            addMeal: "{% url 'merchantsideapp:add_meal' %}",
-            manageMeals: "{% url 'merchantsideapp:manage_meals' %}",
-            settings: "{% url 'merchantsideapp:settings' %}",
-            login: "{% url 'merchantsideapp:login' %}",
-            logout: "{% url 'merchantsideapp:logout' %}"
-        };
-    </script>
-    <script src="{% static 'merchantsideapp/js/merchant_homepage.js' %}"></script>
-</body>
+<!-- Ops Summary -->
+<h2 class="text-lg font-semibold text-gray-900 mb-4">營運概況</h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+    <div class="card text-center">
+        <div class="text-sm text-gray-500 mb-1">餐廳狀態</div>
+        <div class="text-2xl font-bold text-primary-600">
+            {% if restaurant %}
+            {{ restaurant.is_active|yesno:"營業中,暫停營業" }}
+            {% else %}
+            尚未建立餐廳
+            {% endif %}
+        </div>
+        <p class="text-xs text-gray-400 mt-1">可隨時在此更新營業狀態</p>
+    </div>
+    <div class="card text-center">
+        <div class="text-sm text-gray-500 mb-1">今日新增餐點</div>
+        <div class="text-2xl font-bold text-primary-600">{{ today_count }} 道</div>
+        <p class="text-xs text-gray-400 mt-1">每日 00:00 重新計算</p>
+    </div>
+    <div class="card text-center">
+        <div class="text-sm text-gray-500 mb-1">最後編輯時間</div>
+        <div class="text-xl font-bold text-primary-600">
+            {% if last_updated_meal %}
+            {{ last_updated_meal.updated_at|date:"n/d H:i" }}
+            {% else %}
+            尚未建立餐點
+            {% endif %}
+        </div>
+        <p class="text-xs text-gray-400 mt-1">掌握菜單最新動態</p>
+    </div>
+</div>
 
-</html>
+<!-- Quick Actions -->
+<h2 class="text-lg font-semibold text-gray-900 mb-4">快速操作</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+    <div class="card text-center">
+        <div class="text-4xl mb-3">➕</div>
+        <h3 class="font-semibold text-gray-900 mb-2">新增餐點</h3>
+        <p class="text-sm text-gray-500 mb-4">建立新的餐點品項，包含名稱、分類、價格、描述與上傳照片。</p>
+        <a class="btn-primary btn-block" id="btn-go-add" href="{% url 'merchantsideapp:add_meal' %}">前往新增餐點</a>
+    </div>
+    <div class="card text-center">
+        <div class="text-4xl mb-3">📋</div>
+        <h3 class="font-semibold text-gray-900 mb-2">管理餐點</h3>
+        <p class="text-sm text-gray-500 mb-4">編輯已建立的餐點，可調整價格、修改內容，或將餐點上架 / 下架。</p>
+        <a class="btn-secondary btn-block" id="btn-go-manage" href="{% url 'merchantsideapp:manage_meals' %}">前往管理餐點</a>
+    </div>
+    {% if restaurant %}
+    <div class="card text-center">
+        <div class="text-4xl mb-3">🏨</div>
+        <h3 class="font-semibold text-gray-900 mb-2">餐廳資訊</h3>
+        <p class="text-sm text-gray-500 mb-4">快速查看餐廳詳細資訊、位置與目前菜單，以便分享給消費者。</p>
+        <a class="btn-outline btn-block" id="btn-go-restaurant"
+            href="{% url 'merchantsideapp:restaurant_detail' restaurant.id %}">查看餐廳頁面</a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Recent Meals -->
+<h2 class="text-lg font-semibold text-gray-900 mb-4">最近編輯的餐點</h2>
+<div class="card">
+    {% if recent_meals %}
+    <div class="divide-y divide-gray-100">
+        {% for meal in recent_meals %}
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between py-4 gap-3">
+            <div>
+                <div class="font-medium text-gray-900">{{ meal.name }}</div>
+                <div class="text-sm text-gray-500 space-x-2">
+                    <span>最後編輯：{{ meal.updated_at|date:"n/d H:i" }}</span>
+                    <span>價格 {% if meal.price %}${{ meal.price|floatformat:0 }}{% else %}—{% endif %}</span>
+                    <span>狀態：<span class="pill-{{ meal.is_available|yesno:'success,gray' }} text-xs">
+                            {{ meal.is_available|yesno:"上架中,已下架" }}</span></span>
+                </div>
+            </div>
+            <a class="btn-secondary text-sm px-4 py-2" href="{% url 'merchantsideapp:edit_meal' meal.id %}">編輯餐點</a>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center text-gray-500 py-8">
+        目前尚無餐點紀錄，前往「新增餐點」即可建立第一道菜色。
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

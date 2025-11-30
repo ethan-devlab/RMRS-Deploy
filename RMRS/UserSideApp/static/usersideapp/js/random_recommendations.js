@@ -46,6 +46,7 @@
                 updateSecondary(data.secondary || []);
                 updateAlert(data.alert);
                 updateErrors(data.formErrors || {});
+                updateCooldownHint(data.cooldownDays);
             })
             .catch((error) => {
                 console.error("Recommendation refresh failed:", error);
@@ -137,6 +138,19 @@
         errorBox.hidden = false;
     }
 
+    function updateCooldownHint(days) {
+        const hintEl = document.getElementById("recommendation-cooldown-hint");
+        if (!hintEl || days === undefined || days === null) {
+            return;
+        }
+        const numericDays = Number(days);
+        if (!Number.isFinite(numericDays) || numericDays <= 0) {
+            return;
+        }
+        const template = hintEl.dataset.template || "系統會避免推薦過去 {days} 天內你選過的餐點。";
+        hintEl.textContent = template.replace("{days}", numericDays);
+    }
+
     function createSectionElement(section) {
         const cardCount = Array.isArray(section.cards) ? section.cards.length : 0;
         const sectionEl = document.createElement("div");
@@ -175,10 +189,23 @@
 
         const left = document.createElement("div");
         const title = document.createElement("h4");
-        title.textContent = (card.meal && card.meal.name) || "餐點";
+        const mealLink = document.createElement("a");
+        mealLink.className = "recommendation-link";
+        mealLink.textContent = (card.meal && card.meal.name) || "餐點";
+        if (card.meal && card.meal.url) {
+            mealLink.href = card.meal.url;
+        }
+        title.appendChild(mealLink);
+
         const restaurantName = document.createElement("p");
         restaurantName.className = "muted";
-        restaurantName.textContent = (card.restaurant && card.restaurant.name) || "";
+        const restaurantLink = document.createElement("a");
+        restaurantLink.className = "recommendation-link recommendation-link--muted";
+        restaurantLink.textContent = (card.restaurant && card.restaurant.name) || "";
+        if (card.restaurant && card.restaurant.url) {
+            restaurantLink.href = card.restaurant.url;
+        }
+        restaurantName.appendChild(restaurantLink);
         left.appendChild(title);
         left.appendChild(restaurantName);
         titleRow.appendChild(left);

@@ -1,5 +1,5 @@
-const container = document.querySelector(".login-container");
-const inputs = document.querySelectorAll("input");
+const container = document.querySelector(".auth-card");
+const inputs = container ? container.querySelectorAll("input") : document.querySelectorAll("input");
 
 inputs.forEach((input) => {
     input.addEventListener("focus", () => {
@@ -14,8 +14,8 @@ inputs.forEach((input) => {
     });
 });
 
-const btn = document.querySelector(".login-btn");
-const form = document.querySelector(".login-container form");
+const form = container ? container.querySelector("form") : null;
+const btn = form ? form.querySelector("button[type='submit']") : null;
 
 if (btn && form) {
     form.addEventListener("submit", () => {

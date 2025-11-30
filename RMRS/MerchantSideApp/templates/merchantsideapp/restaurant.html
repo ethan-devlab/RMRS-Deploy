@@ -1,0 +1,115 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foodie · 餐廳資訊</title>
+    <link rel="stylesheet" href="{% static 'shared/css/output.css' %}">
+</head>
+
+<body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
+    <div class="max-w-5xl mx-auto px-4 py-8">
+        <div class="card">
+            <!-- Header -->
+            <div
+                class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 pb-6 border-b border-slate-200">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-800">{{ restaurant.name|default:"未命名餐廳" }}</h1>
+                    <div class="flex flex-wrap gap-3 text-sm text-slate-500 mt-2">
+                        <span>位置：{{ restaurant.city|default:"--" }} {{ restaurant.district|default:"" }} 
+                            {{ restaurant.address|default:"" }}</span>
+                        <span>料理類型：{{ restaurant.cuisine_type|default:"尚未設定" }}</span>
+                        <span>價格區間：{{ restaurant.get_price_range_display|default:"--" }}</span>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <span
+                        class="inline-block px-4 py-2 rounded-full text-sm font-medium {% if restaurant.is_active %}bg-emerald-100 text-emerald-700{% else %}bg-slate-200 text-slate-600{% endif %}">
+                        {% if restaurant.is_active %}營業中{% else %}暫停營業{% endif %}
+                    </span>
+                    <div class="flex flex-wrap gap-3 text-sm text-slate-500 mt-2 justify-end">
+                        <span>評分：{{ restaurant.rating|default:"--" }}</span>
+                        <span>建立日期：{{ restaurant.created_at|date:"Y/m/d"|default:"--" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 py-6 border-b border-slate-200">
+                <div class="text-center p-4 bg-slate-50 rounded-xl">
+                    <div class="text-xs text-slate-500 uppercase tracking-wider">總餐點數</div>
+                    <div class="text-2xl font-bold text-slate-800 mt-1">{{ stats.total_meals }}</div>
+                </div>
+                <div class="text-center p-4 bg-emerald-50 rounded-xl">
+                    <div class="text-xs text-emerald-600 uppercase tracking-wider">上架餐點</div>
+                    <div class="text-2xl font-bold text-emerald-700 mt-1">{{ stats.available_meals }}</div>
+                </div>
+                <div class="text-center p-4 bg-slate-50 rounded-xl">
+                    <div class="text-xs text-slate-500 uppercase tracking-wider">下架餐點</div>
+                    <div class="text-2xl font-bold text-slate-600 mt-1">{{ stats.unavailable_meals }}</div>
+                </div>
+                <div class="text-center p-4 bg-slate-50 rounded-xl">
+                    <div class="text-xs text-slate-500 uppercase tracking-wider">最後更新</div>
+                    <div class="text-lg font-bold text-slate-800 mt-1">
+                        {{ stats.last_updated|date:"Y/m/d H:i"|default:"--" }}</div>
+                </div>
+            </div>
+
+            <!-- Meals Section -->
+            <div class="pt-6">
+                <h3 class="font-bold text-lg text-slate-800 mb-4">所有餐點</h3>
+                {% if meals %}
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {% for meal in meals %}
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-primary/50 hover:shadow-md transition-all cursor-pointer"
+                        role="button" tabindex="0" data-meal-url="{% url 'merchantsideapp:meal_detail' meal.id %}">
+                        <h4 class="font-bold text-slate-800 mb-2">{{ meal.name }}</h4>
+                        <div class="text-sm text-slate-500 space-y-1">
+                            <p>分類：{{ meal.category|default:"未分類" }}</p>
+                            <p>售價：{% if meal.price %}${{ meal.price|floatformat:0 }}{% else %}--{% endif %}</p>
+                            <p>狀態：
+                                <span
+                                    class="{% if meal.is_available %}text-emerald-600{% else %}text-slate-400{% endif %}">
+                                    {{ meal.is_available|yesno:"上架中,已下架" }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-3 mt-4 pt-3 border-t border-slate-200">
+                            <a class="text-sm font-medium text-primary hover:text-primary-dark hover:underline"
+                                href="{% url 'merchantsideapp:meal_detail' meal.id %}">查看餐點</a>
+                            {% if can_edit %}
+                            <a class="text-sm font-medium text-slate-500 hover:text-slate-700 hover:underline"
+                                href="{% url 'merchantsideapp:edit_meal' meal.id %}">編輯</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-12 bg-slate-50 rounded-xl">
+                    <p class="text-slate-500">尚未建立任何餐點，前往「新增餐點」即可快速建立。</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll("[data-meal-url]").forEach(function (card) {
+                var url = card.getAttribute("data-meal-url");
+                if (!url) return;
+                card.addEventListener("click", function (event) {
+                    if (event.target.closest("a")) return;
+                    window.location.href = url;
+                });
+                card.addEventListener("keypress", function (event) {
+                    if (event.key === "Enter") window.location.href = url;
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

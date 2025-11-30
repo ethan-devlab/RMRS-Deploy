@@ -1,57 +1,71 @@
 {% extends 'usersideapp/base_sidebar.html' %}
+{% load static %}
 {% block page_title %}今日飲食{% endblock %}
+
 {% block content %}
-<div class="welcome-box today-header">
-    <div class="today-left">
-        <h1>今日飲食</h1>
-        <p>📅 {{ today_date|date:"Y-m-d" }} · 累積 {{ today_stats.total_calories|floatformat:0 }} kcal</p>
-    </div>
-    <div class="today-right">
-        <div class="today-summary">
-            <span>蛋白質：<strong>{{ today_stats.total_protein|floatformat:1 }} g</strong></span>
-            <span>碳水：<strong>{{ today_stats.total_carbs|floatformat:1 }} g</strong></span>
-            <span>脂肪：<strong>{{ today_stats.total_fat|floatformat:1 }} g</strong></span>
+<!-- Header -->
+<div class="welcome-box mb-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 mb-1">今日飲食</h1>
+            <p class="text-gray-600">📅 {{ today_date|date:"Y-m-d" }} · 累積 <strong class="text-primary-600">
+                {{ today_stats.total_calories|floatformat:0 }}</strong> kcal</p>
         </div>
-        <a class="outline-btn" href="{% url 'usersideapp:record' %}">＋ 新增飲食紀錄</a>
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div class="flex gap-4 text-sm">
+                <span class="text-gray-600">蛋白質：<strong class="text-gray-900">
+                    {{ today_stats.total_protein|floatformat:1 }} g</strong></span>
+                <span class="text-gray-600">碳水：<strong class="text-gray-900">
+                    {{ today_stats.total_carbs|floatformat:1 }} g</strong></span>
+                <span class="text-gray-600">脂肪：<strong class="text-gray-900">
+                    {{ today_stats.total_fat|floatformat:1 }} g</strong></span>
+            </div>
+            <a class="btn-secondary text-sm px-4 py-2" href="{% url 'usersideapp:record' %}">＋ 新增飲食紀錄</a>
+        </div>
     </div>
 </div>
 
-<div class="section-title">今日概況</div>
-<div class="card-row today-stats-row">
+<!-- Summary Stats -->
+<h2 class="text-lg font-semibold text-gray-900 mb-4">今日概況</h2>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
     {% for block in meal_blocks %}
-    <div class="card mini-card">
-        <div class="mini-title">{{ block.label }}</div>
+    <div class="card text-center">
+        <div class="text-sm text-gray-500 mb-1">{{ block.label }}</div>
         {% if block.record %}
-        <div class="mini-value">{{ block.record.calories }} kcal</div>
-        <div class="mini-note">{{ block.record.meal_name }}</div>
+        <div class="text-xl font-bold text-primary-600">{{ block.record.calories }} kcal</div>
+        <div class="text-xs text-gray-400 mt-1">{{ block.record.meal_name }}</div>
         {% else %}
-        <div class="mini-value">—</div>
-        <div class="mini-note">尚未記錄</div>
+        <div class="text-xl font-bold text-gray-300">—</div>
+        <div class="text-xs text-gray-400 mt-1">尚未記錄</div>
         {% endif %}
     </div>
     {% endfor %}
 </div>
 
-<div class="section-title">餐次詳細</div>
-<div class="meal-grid">
+<!-- Meal Details -->
+<h2 class="text-lg font-semibold text-gray-900 mb-4">餐次詳細</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
     {% for block in meal_blocks %}
-    <div class="card meal-card">
-        <div class="meal-header">
-            <span class="meal-tag {{ block.value }}">{{ block.label }}</span>
-            <span class="meal-kcal">{% if block.record %}{{ block.record.calories }} kcal{% else %}—{% endif %}</span>
+    <div class="card">
+        <div class="flex items-center justify-between mb-3">
+            <span
+                class="pill-{% if block.value == 'breakfast' %}info{% elif block.value == 'lunch' %}warning{% elif block.value == 'dinner' %}success{% else %}neutral{% endif %}">
+                {{ block.label }}</span>
+            <span class="text-sm font-semibold text-gray-700">
+                {% if block.record %}{{ block.record.calories }} kcal{% else %}—{% endif %}</span>
         </div>
         {% if block.record %}
-        <div class="meal-detail">
-            <p class="meal-title">{{ block.record.meal_name }}</p>
-            <p class="meal-macros">蛋白質 {{ block.record.protein_grams }} g · 碳水 {{ block.record.carb_grams }} g · 脂肪 {{
-                block.record.fat_grams }} g</p>
+        <div class="space-y-2">
+            <p class="font-medium text-gray-900">{{ block.record.meal_name }}</p>
+            <p class="text-sm text-gray-500">
+                蛋白質 {{ block.record.protein_grams }} g · 碳水 {{ block.record.carb_grams }} g
+                · 脂肪 {{ block.record.fat_grams }} g</p>
             {% with component_list=block.record.components.all %}
             {% if component_list %}
-            <ul class="component-list">
+            <ul class="mt-3 space-y-1 text-sm">
                 {% for component in component_list %}
-                <li>
-                    <strong>{{ component.name }}</strong>
-                    <span>{{ component.quantity|default:"" }}</span>
+                <li class="flex justify-between text-gray-600 py-1 border-b border-gray-100 last:border-0">
+                    <span><strong>{{ component.name }}</strong> {{ component.quantity|default:"" }}</span>
                     <span>{{ component.calories }} kcal</span>
                 </li>
                 {% endfor %}
@@ -59,15 +73,15 @@
             {% endif %}
             {% endwith %}
             {% if block.record.ingredients %}
-            <p class="meal-ingredients">食材：{{ block.record.ingredients|join:", " }}</p>
+            <p class="text-sm text-gray-500">食材：{{ block.record.ingredients|join:", " }}</p>
             {% endif %}
             {% if block.record.meal_notes %}
-            <p class="meal-notes">備註：{{ block.record.meal_notes }}</p>
+            <p class="text-sm text-gray-400 italic">備註：{{ block.record.meal_notes }}</p>
             {% endif %}
         </div>
         {% else %}
-        <p class="meal-empty">還沒有新增{{ block.label }}紀錄</p>
-        <a class="meal-add-btn" href="{% url 'usersideapp:record' %}">＋ 記錄 {{ block.label }}</a>
+        <p class="text-gray-400 text-center py-4">還沒有新增{{ block.label }}紀錄</p>
+        <a class="btn-primary btn-block text-sm" href="{% url 'usersideapp:record' %}">＋ 記錄 {{ block.label }}</a>
         {% endif %}
     </div>
     {% endfor %}

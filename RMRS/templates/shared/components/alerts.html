@@ -1,0 +1,17 @@
+{% comment %}
+Usage: {% include 'shared/components/alerts.html' %}
+Displays flash messages/alerts from Django messages framework
+{% endcomment %}
+{% if messages %}
+<div class="space-y-2 mb-4">
+    {% for message in messages %}
+    <div class="alert-{{ message.tags }}">
+        {% if message.tags == 'success' %}<span>✓</span>{% endif %}
+        {% if message.tags == 'error' or message.tags == 'danger' %}<span>✕</span>{% endif %}
+        {% if message.tags == 'warning' %}<span>⚠</span>{% endif %}
+        {% if message.tags == 'info' %}<span>ℹ</span>{% endif %}
+        <span>{{ message }}</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}

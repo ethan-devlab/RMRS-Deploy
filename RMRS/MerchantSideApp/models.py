@@ -1,3 +1,4 @@
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models.functions import Now
 
@@ -57,6 +58,11 @@ class Meal(models.Model):
     is_vegetarian = models.BooleanField(default=False)
     is_spicy = models.BooleanField(default=False)
     image_url = models.CharField(max_length=255, blank=True, null=True)
+    image_file = models.ImageField(
+        upload_to="meals/photos/",
+        blank=True,
+        null=True,
+    )
     is_available = models.BooleanField(default=True, db_default=True)
     created_at = models.DateTimeField(auto_now_add=True, db_default=Now())
     updated_at = models.DateTimeField(auto_now=True, db_default=Now())
@@ -78,6 +84,62 @@ class Meal(models.Model):
 
     def __str__(self) -> str:
         return f"{self.name} ({self.restaurant.name})"
+
+    def get_image_source(self) -> str:
+        """Prefer uploaded files over remote URLs when rendering."""
+        if self.image_file:
+            try:
+                return self.image_file.url
+            except ValueError:
+                return ""
+        return self.image_url or ""
+
+
+class NutritionInfo(models.Model):
+    """Per-meal nutrition metrics to power health-focused flows."""
+
+    meal = models.OneToOneField(
+        Meal,
+        related_name="nutrition",
+        on_delete=models.CASCADE,
+    )
+    breakdown = models.JSONField(blank=True, null=True)
+    calories = models.DecimalField(
+        max_digits=7,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+    )
+    protein = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+    )
+    fat = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+    )
+    carbohydrate = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+    )
+    sodium = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+    )
+    created_at = models.DateTimeField(auto_now_add=True, db_default=Now())
+    updated_at = models.DateTimeField(auto_now=True, db_default=Now())
+
+    class Meta:
+        db_table = "nutrition_info"
+        indexes = [
+            models.Index(fields=["calories"], name="idx_nutrition_calories"),
+        ]
+
+    def __str__(self) -> str:
+        return f"NutritionInfo<{self.meal_id}>"
 
 
 class Tag(models.Model):
@@ -121,8 +183,15 @@ class MerchantAccount(models.Model):
         related_name="merchant_account",
         on_delete=models.CASCADE,
     )
-    display_name = models.CharField(max_length=60, blank=True, default="")
+    merchant_name = models.CharField(
+        max_length=50,
+        unique=True,
+        blank=True,
+        null=True,
+        help_text="Human-friendly merchant handle used during login.",
+    )
     email = models.EmailField(max_length=255, unique=True)
+    phone = models.CharField(max_length=20, unique=True, blank=True, null=True)
     password_hash = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True, db_default=Now())
     updated_at = models.DateTimeField(auto_now=True, db_default=Now())
@@ -134,4 +203,4 @@ class MerchantAccount(models.Model):
         ]
 
     def __str__(self) -> str:
-        return f"{self.display_name or self.email} -> {self.restaurant_id}"
+        return f"{self.merchant_name or self.email} -> {self.restaurant_id}"

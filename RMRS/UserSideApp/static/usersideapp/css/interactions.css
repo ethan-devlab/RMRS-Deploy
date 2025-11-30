@@ -1,0 +1,91 @@
+/* =========================================
+   Interactions Page CSS (Reviews & Favorites)
+   Template: interactions.html
+========================================= */
+
+/* Review List */
+.review-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.review-list li {
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.review-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.review-meal {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #e5e7eb;
+    font-size: 12px;
+}
+
+.review-rating {
+    font-weight: 700;
+    color: #f97316;
+}
+
+.review-footer {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.review-list .label {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+/* Favorite List */
+.favorite-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.favorite-list li {
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: center;
+}
+
+.favorite-list .label {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.favorite-form {
+    max-width: 360px;
+}

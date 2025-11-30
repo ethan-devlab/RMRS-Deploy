@@ -1,226 +1,187 @@
+{% extends 'merchantsideapp/base_sidebar.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="zh-Hant">
+{% block page_title %}Foodie · {{ page_title|default:"新增餐點" }}{% endblock %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Foodie · {{ page_title|default:"新增餐點" }}</title>
-    <link rel="stylesheet" href="{% static 'merchantsideapp/css/merchant_add_meal.css' %}">
-</head>
-
-<body>
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <button class="toggle-btn" id="toggleBtn">☰</button>
-            <h2 class="logo"><span class="logo-text">Foodie 商家端</span></h2>
+{% block content %}
+<div class="card">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-4 border-b">
+        <div>
+            <p class="text-sm text-gray-500 mb-1">{{ page_title|default:"新增餐點" }}</p>
+            {% if is_edit and meal %}
+            <h1 class="text-xl font-bold text-gray-900">正在編輯：{{ meal.name }}</h1>
+            {% else %}
+            <h1 class="text-xl font-bold text-gray-900">餐點基本資料</h1>
+            {% endif %}
         </div>
-        <ul>
-            <li id="menu-dashboard">
-                <span class="icon">🏠</span>
-                <span class="item-text">主頁總覽</span>
-            </li>
-            <li class="active" id="menu-add">
-                <span class="icon">➕</span>
-                <span class="item-text">新增餐點</span>
-            </li>
-            <li id="menu-manage">
-                <span class="icon">📋</span>
-                <span class="item-text">管理餐點</span>
-            </li>
-            <li id="menu-settings">
-                <span class="icon">⚙️</span>
-                <span class="item-text">設定</span>
-            </li>
-            <li class="logout" id="menu-logout">
-                <span class="icon">🚪</span>
-                <span class="item-text">登出</span>
-            </li>
-        </ul>
+        {% if is_edit %}
+        <a class="btn-secondary text-sm px-4 py-2" href="{% url 'merchantsideapp:add_meal' %}">＋ 改為新增</a>
+        {% endif %}
     </div>
 
-    <div class="main">
-        <div class="main-inner">
-            {% if messages %}
-                <ul class="messages">
-                    {% for message in messages %}
-                        <li class="{{ message.tags }}">{{ message }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-            <div class="add-card">
-                <div class="add-form-section">
-                    <div class="add-title-row">
-                        <div>
-                            <p class="add-subtitle">{{ page_title|default:"新增餐點" }}</p>
-                            {% if is_edit and meal %}
-                                <h2 class="add-title">正在編輯：{{ meal.name }}</h2>
-                            {% else %}
-                                <h2 class="add-title">餐點基本資料</h2>
-                            {% endif %}
-                        </div>
-                        {% if is_edit %}
-                            <a class="add-btn ghost" href="{% url 'merchantsideapp:add_meal' %}">＋ 改為新增</a>
-                        {% endif %}
-                    </div>
-                    <form method="post" class="add-form" novalidate>
-                        {% csrf_token %}
-                        {% if form.non_field_errors %}
-                            <div class="form-errors">
-                                {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
-                            </div>
-                        {% endif %}
+    <!-- Form -->
+    <form method="post" enctype="multipart/form-data" class="space-y-6" novalidate>
+        {% csrf_token %}
+        {% include 'shared/components/form_errors.html' with form=form %}
 
-                        <div class="field-row two-cols">
-                            <div class="field-group">
-                                <label class="field-label" for="{{ form.name.id_for_label }}">品項名稱 <span class="req">*</span></label>
-                                {{ form.name }}
-                                {% if form.name.errors %}
-                                    <div class="field-errors">{% for error in form.name.errors %}<p>{{ error }}</p>{% endfor %}</div>
-                                {% endif %}
-                            </div>
-                            <div class="field-group">
-                                <label class="field-label" for="{{ form.category.id_for_label }}">品項類別 <span class="req">*</span></label>
-                                {{ form.category }}
-                                {% if form.category.errors %}
-                                    <div class="field-errors">{% for error in form.category.errors %}<p>{{ error }}</p>{% endfor %}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="field-group">
-                            <label class="field-label" for="{{ form.description.id_for_label }}">品項敘述</label>
-                            {{ form.description }}
-                            {% if form.description.errors %}
-                                <div class="field-errors">{% for error in form.description.errors %}<p>{{ error }}</p>{% endfor %}</div>
-                            {% endif %}
-                        </div>
-
-                        <div class="field-row two-cols">
-                            <div class="field-group short">
-                                <label class="field-label" for="{{ form.price.id_for_label }}">價格（元） <span class="req">*</span></label>
-                                {{ form.price }}
-                                {% if form.price.errors %}
-                                    <div class="field-errors">{% for error in form.price.errors %}<p>{{ error }}</p>{% endfor %}</div>
-                                {% endif %}
-                            </div>
-                            <div class="field-group">
-                                <label class="field-label" for="{{ form.image_url.id_for_label }}">餐點照片（URL）</label>
-                                {{ form.image_url }}
-                                {% if form.image_url.errors %}
-                                    <div class="field-errors">{% for error in form.image_url.errors %}<p>{{ error }}</p>{% endfor %}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="toggle-row">
-                            <label class="toggle-label">
-                                {{ form.is_vegetarian }}
-                                <span>提供素食選項</span>
-                            </label>
-                            <label class="toggle-label">
-                                {{ form.is_spicy }}
-                                <span>含辛香/辣味</span>
-                            </label>
-                        </div>
-                        {% if form.is_vegetarian.errors %}
-                            <div class="field-errors">{% for error in form.is_vegetarian.errors %}<p>{{ error }}</p>{% endfor %}</div>
-                        {% endif %}
-                        {% if form.is_spicy.errors %}
-                            <div class="field-errors">{% for error in form.is_spicy.errors %}<p>{{ error }}</p>{% endfor %}</div>
-                        {% endif %}
-
-                        <input type="file" id="meal-photo" accept="image/*" style="display:none;">
-
-                        <div class="nutrition-section">
-                            <div class="nutrition-header">
-                                <h3>餐點營養成分</h3>
-                                <p class="nutrition-hint">新增每份營養數值，將會儲存在 meal_components.metadata 欄位中。</p>
-                                <div class="nutrition-tags">
-                                    <span class="nutrition-chip">每 1 份</span>
-                                    <span class="nutrition-chip subtle">以標準 100g/100ml 計</span>
-                                </div>
-                            </div>
-                            <div class="nutrition-panel">
-                                <div class="nutrition-card form-card">
-                                    <div class="nutrition-form">
-                                        <div class="nutrition-field">
-                                            <label class="nutrition-label" for="nutrition-name">成分名稱</label>
-                                            <input type="text" id="nutrition-name" placeholder="如：蛋白質">
-                                        </div>
-                                        <div class="nutrition-field">
-                                            <label class="nutrition-label" for="nutrition-quantity">份量 / 單位</label>
-                                            <input type="text" id="nutrition-quantity" placeholder="1 份 / 250 ml">
-                                        </div>
-                                        <div class="nutrition-field">
-                                            <label class="nutrition-label" for="nutrition-calories">熱量 (kcal)</label>
-                                            <input type="number" step="0.1" min="0" id="nutrition-calories" placeholder="0">
-                                        </div>
-                                        <div class="nutrition-field">
-                                            <label class="nutrition-label" for="nutrition-protein">蛋白質 (g)</label>
-                                            <input type="number" step="0.1" min="0" id="nutrition-protein" placeholder="0">
-                                        </div>
-                                        <div class="nutrition-field">
-                                            <label class="nutrition-label" for="nutrition-carb">碳水 (g)</label>
-                                            <input type="number" step="0.1" min="0" id="nutrition-carb" placeholder="0">
-                                        </div>
-                                        <div class="nutrition-field">
-                                            <label class="nutrition-label" for="nutrition-fat">脂肪 (g)</label>
-                                            <input type="number" step="0.1" min="0" id="nutrition-fat" placeholder="0">
-                                        </div>
-                                        <div class="nutrition-field full">
-                                            <label class="nutrition-label" for="nutrition-notes">備註 (選填)</label>
-                                            <input type="text" id="nutrition-notes" placeholder="例如：含堅果、孕婦慎用等貼心提醒">
-                                        </div>
-                                        <div class="nutrition-actions">
-                                            <div class="nutrition-meta">輸入完成後點選下方按鈕，將成分加入本次餐點。</div>
-                                            <div class="nutrition-action-buttons">
-                                                <button type="button" class="add-btn secondary" id="nutrition-add-btn">加入營養成分</button>
-                                                <button type="button" class="add-btn ghost" id="nutrition-cancel-btn" hidden>取消編輯</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="nutrition-card preview-card">
-                                    <div class="nutrition-preview-header">
-                                        <div>
-                                            <p class="preview-title">本次新增成分</p>
-                                            <p class="preview-sub">已加入 <span id="nutrition-count">0</span> 項，按住可拖曳重新排序（即將推出）。</p>
-                                        </div>
-                                        <span class="preview-chip">營養資訊預覽</span>
-                                    </div>
-                                    <div class="nutrition-error" id="nutrition-error"></div>
-                                    <div class="nutrition-list" id="nutrition-list"></div>
-                                </div>
-                            </div>
-                            {{ form.nutrition_payload }}
-                            {% if form.nutrition_payload.errors %}
-                                <div class="field-errors">{% for error in form.nutrition_payload.errors %}<p>{{ error }}</p>{% endfor %}</div>
-                            {% endif %}
-                        </div>
-
-                        <div class="add-actions">
-                            <button type="submit" class="add-btn primary">{% if is_edit %}儲存變更{% else %}儲存餐點{% endif %}</button>
-                            <button type="reset" class="add-btn ghost">清除內容</button>
-                        </div>
-                    </form>
-                </div>
+        <!-- Name & Category -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-group">
+                <label class="form-label" for="{{ form.name.id_for_label }}">品項名稱 <span
+                        class="text-red-500">*</span></label>
+                {{ form.name }}
+                {% for error in form.name.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="{{ form.category.id_for_label }}">品項類別 <span
+                        class="text-red-500">*</span></label>
+                {{ form.category }}
+                {% for error in form.category.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
             </div>
         </div>
-    </div>
 
-    <script>
-        window.merchantRoutes = {
-            dashboard: "{% url 'merchantsideapp:dashboard' %}",
-            addMeal: "{% url 'merchantsideapp:add_meal' %}",
-            manageMeals: "{% url 'merchantsideapp:manage_meals' %}",
-            settings: "{% url 'merchantsideapp:settings' %}",
-            login: "{% url 'merchantsideapp:login' %}",
-            logout: "{% url 'merchantsideapp:logout' %}"
-        };
-    </script>
-    <script src="{% static 'merchantsideapp/js/merchant_homepage.js' %}"></script>
-    <script src="{% static 'merchantsideapp/js/merchant_add_meal.js' %}"></script>
-</body>
+        <!-- Description -->
+        <div class="form-group">
+            <label class="form-label" for="{{ form.description.id_for_label }}">品項敘述</label>
+            {{ form.description }}
+            {% for error in form.description.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+        </div>
 
-</html>
+        <!-- Price & Image URL -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-group">
+                <label class="form-label" for="{{ form.price.id_for_label }}">價格（元） <span
+                        class="text-red-500">*</span></label>
+                {{ form.price }}
+                {% for error in form.price.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="{{ form.image_url.id_for_label }}">餐點照片（URL）</label>
+                {{ form.image_url }}
+                {% for error in form.image_url.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+            </div>
+        </div>
+
+        <!-- Image Upload -->
+        <div class="form-group">
+            <label class="form-label" for="{{ form.image_file.id_for_label }}">或上傳餐點照片</label>
+            {{ form.image_file }}
+            <p class="text-xs text-gray-400 mt-1">支援 jpg / png，建議 5MB 以內</p>
+            {% for error in form.image_file.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+            {% if is_edit and meal %}
+            <div class="mt-3">
+                <p class="text-sm text-gray-500 mb-2">目前餐點照片</p>
+                {% with current_image=meal.get_image_source %}
+                {% if current_image %}
+                <img src="{{ current_image }}" alt="{{ meal.name }} 目前圖片"
+                    class="w-32 h-32 object-cover rounded-lg border">
+                {% else %}
+                <div
+                    class="w-32 h-32 bg-gray-100 rounded-lg border flex items-center justify-center text-gray-400 text-sm">
+                    尚未上傳</div>
+                {% endif %}
+                {% endwith %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Toggles -->
+        <div class="flex flex-wrap gap-6">
+            <label class="flex items-center gap-2 cursor-pointer">
+                {{ form.is_vegetarian }}
+                <span class="text-gray-700">提供素食選項</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+                {{ form.is_spicy }}
+                <span class="text-gray-700">含辛香/辣味</span>
+            </label>
+        </div>
+
+        <!-- Nutrition Section -->
+        <div class="border-t pt-6 mt-6">
+            <div class="mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 mb-1">餐點營養成分</h3>
+                <p class="text-sm text-gray-500">新增每份營養數值，將會儲存在 nutrition_info 資料表中。</p>
+                <div class="flex gap-2 mt-2">
+                    <span class="pill-primary text-xs">每 1 份</span>
+                    <span class="pill-gray text-xs">以標準 100g/100ml 計</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <!-- Nutrition Form -->
+                <div class="card bg-gray-50">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="form-group">
+                            <label class="form-label text-xs" for="nutrition-name">成分名稱</label>
+                            <input type="text" id="nutrition-name" placeholder="如：蛋白質" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label text-xs" for="nutrition-quantity">份量 / 單位</label>
+                            <input type="text" id="nutrition-quantity" placeholder="1 份 / 250 ml" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label text-xs" for="nutrition-calories">熱量 (kcal)</label>
+                            <input type="number" step="0.1" min="0" id="nutrition-calories" placeholder="0"
+                                class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label text-xs" for="nutrition-protein">蛋白質 (g)</label>
+                            <input type="number" step="0.1" min="0" id="nutrition-protein" placeholder="0"
+                                class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label text-xs" for="nutrition-carb">碳水 (g)</label>
+                            <input type="number" step="0.1" min="0" id="nutrition-carb" placeholder="0"
+                                class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label text-xs" for="nutrition-fat">脂肪 (g)</label>
+                            <input type="number" step="0.1" min="0" id="nutrition-fat" placeholder="0"
+                                class="form-input">
+                        </div>
+                        <div class="form-group col-span-2">
+                            <label class="form-label text-xs" for="nutrition-notes">備註 (選填)</label>
+                            <input type="text" id="nutrition-notes" placeholder="例如：含堅果、孕婦慎用等貼心提醒" class="form-input">
+                        </div>
+                    </div>
+                    <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <p class="text-xs text-gray-500">輸入完成後點選按鈕，將成分加入本次餐點。</p>
+                        <div class="flex gap-2">
+                            <button type="button" class="btn-secondary text-sm px-4 py-2"
+                                id="nutrition-add-btn">加入營養成分</button>
+                            <button type="button" class="btn-secondary text-sm px-4 py-2 border-gray-300 text-gray-600"
+                                id="nutrition-cancel-btn" hidden>取消編輯</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nutrition Preview -->
+                <div class="card border-2 border-dashed border-gray-200">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <p class="font-medium text-gray-900">本次新增成分</p>
+                            <p class="text-xs text-gray-500">已加入 <span id="nutrition-count">0</span> 項</p>
+                        </div>
+                        <span class="pill-info text-xs">營養資訊預覽</span>
+                    </div>
+                    <div class="text-red-500 text-sm" id="nutrition-error"></div>
+                    <div class="space-y-2" id="nutrition-list"></div>
+                </div>
+            </div>
+            {{ form.nutrition_payload }}
+            {% for error in form.nutrition_payload.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-3 pt-4 border-t">
+            <button type="submit" class="btn-primary px-6">{% if is_edit %}儲存變更{% else %}儲存餐點{% endif %}</button>
+            <button type="reset" class="btn-secondary px-6">清除內容</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'merchantsideapp/js/merchant_add_meal.js' %}"></script>
+{% endblock %}

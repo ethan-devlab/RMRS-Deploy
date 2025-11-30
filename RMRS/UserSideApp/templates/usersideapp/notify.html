@@ -1,77 +1,84 @@
 {% extends 'usersideapp/base_sidebar.html' %}
+{% load static %}
 {% block page_title %}推播通知{% endblock %}
 {% block content %}
-<div class="welcome-box notify-header">
-    <div class="notify-left">
-        <h1>推播通知</h1>
-        <p>設定提醒時間並檢視最近推播，確保不錯過任何餐次。</p>
+<!-- Header -->
+<div class="welcome-box flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+        <h1 class="text-2xl font-bold text-slate-800">推播通知</h1>
+        <p class="text-slate-600 mt-1">設定提醒時間並檢視最近推播，確保不錯過任何餐次。</p>
     </div>
-    <div class="notify-right">
-        <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="send_preview">
-            <button class="outline-btn" type="submit">＋ 建立測試提醒</button>
-        </form>
-    </div>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="send_preview">
+        <button class="btn-secondary" type="submit">＋ 建立測試提醒</button>
+    </form>
 </div>
 
-<div class="section-title">提醒設定</div>
-<form method="post" class="card-long notify-settings">
+<!-- Reminder Settings -->
+<h2 class="text-lg font-bold text-slate-800 mt-8 mb-4">提醒設定</h2>
+<form method="post" class="card space-y-4">
     {% csrf_token %}
     <input type="hidden" name="action" value="update_settings">
     {{ formset.management_form }}
     {% for form in formset %}
-    <div class="notify-row">
-        <div class="notify-info">
-            <div class="notify-title">{{ form.instance.get_reminder_type_display }}</div>
-            <div class="notify-sub">頻道：{{ form.instance.get_channel_display }}</div>
+    <div
+        class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+        <div>
+            <div class="font-semibold text-slate-800">{{ form.instance.get_reminder_type_display }}</div>
+            <div class="text-sm text-slate-500">頻道：{{ form.instance.get_channel_display }}</div>
         </div>
-        <div class="notify-actions">
-            {{ form.scheduled_time }}
-            {{ form.channel }}
-            <label class="switch small">
+        <div class="flex items-center gap-4">
+            <div class="w-32">{{ form.scheduled_time }}</div>
+            <div class="w-28">{{ form.channel }}</div>
+            <label class="relative inline-flex items-center cursor-pointer">
                 {{ form.is_enabled }}
-                <span class="slider"></span>
+                <span class="ml-2 text-sm text-slate-600">啟用</span>
             </label>
         </div>
         {{ form.id }}
     </div>
     {% if form.errors %}
-    <div class="form-errors">{{ form.errors }}</div>
+    <div class="alert-error text-sm">{{ form.errors }}</div>
     {% endif %}
     {% endfor %}
-    <button class="primary-btn" type="submit">儲存提醒設定</button>
+    <div class="pt-2">
+        <button class="btn-primary" type="submit">儲存提醒設定</button>
+    </div>
 </form>
 
-<div class="section-title">近期通知</div>
+<!-- Recent Notifications -->
+<h2 class="text-lg font-bold text-slate-800 mt-8 mb-4">近期通知</h2>
 {% if notification_logs %}
-<div class="record-list">
+<div class="space-y-3">
     {% for log in notification_logs %}
-    <div class="card-long notify-item {% if log.status == 'read' %}is-read{% endif %}">
-        <div class="notify-item-main">
-            <div>
-                <div class="notify-item-title">{{ log.title }}</div>
-                <div class="notify-item-sub">{{ log.body }}</div>
-            </div>
-            <div class="notify-item-meta">
-                <span class="notify-badge">{{ log.notification_type|default:"提醒" }}</span>
-                <span class="notify-time-text">{{ log.sent_at|date:"m/d H:i" }}</span>
-            </div>
+    <div
+        class="card flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 {% if log.status == 'read' %}opacity-60{% endif %}">
+        <div class="flex-1">
+            <div class="font-semibold text-slate-800">{{ log.title }}</div>
+            <div class="text-sm text-slate-600 mt-1">{{ log.body }}</div>
         </div>
-        {% if log.status != 'read' %}
-        <form method="post" class="inline-form">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="mark_read">
-            <input type="hidden" name="log_id" value="{{ log.id }}">
-            <button type="submit" class="text-btn">標記已讀</button>
-        </form>
-        {% else %}
-        <span class="badge muted">已讀</span>
-        {% endif %}
+        <div class="flex items-center gap-3 text-sm">
+            <span class="pill-primary">{{ log.notification_type|default:"提醒" }}</span>
+            <span class="text-slate-400">{{ log.sent_at|date:"m/d H:i" }}</span>
+            {% if log.status != 'read' %}
+            <form method="post" class="inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="mark_read">
+                <input type="hidden" name="log_id" value="{{ log.id }}">
+                <button type="submit"
+                    class="text-primary hover:text-primary-dark font-medium hover:underline">標記已讀</button>
+            </form>
+            {% else %}
+            <span class="px-2 py-0.5 rounded-full bg-slate-200 text-slate-500 text-xs">已讀</span>
+            {% endif %}
+        </div>
     </div>
     {% endfor %}
 </div>
 {% else %}
-<div class="card-long empty-state">尚未收到推播通知。</div>
+<div class="card text-center py-12">
+    <p class="text-slate-500">尚未收到推播通知。</p>
+</div>
 {% endif %}
 {% endblock %}

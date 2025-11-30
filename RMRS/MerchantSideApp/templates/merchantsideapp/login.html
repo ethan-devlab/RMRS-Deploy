@@ -1,60 +1,43 @@
+{% extends 'shared/layouts/auth_base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Foodie · 商家登入</title>
-    <link rel="stylesheet" href="{% static 'merchantsideapp/css/merchant_login.css' %}">
-</head>
-<body>
-<div class="login-container">
-    <h2>Welcome back</h2>
-    <p>使用商家帳號登入系統</p>
 
-    {% if messages %}
-        <ul class="messages">
-            {% for message in messages %}
-                <li class="{{ message.tags }}">{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+{% block page_title %}Foodie · 商家登入{% endblock %}
+{% block auth_title %}Welcome back{% endblock %}
+{% block auth_subtitle %}使用商家帳號登入系統{% endblock %}
 
-    <form method="post" novalidate>
-        {% csrf_token %}
-        {% if form.non_field_errors %}
-            <div class="form-errors">
-                {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
-            </div>
-        {% endif %}
-        <div class="form-field">
-            {{ form.email }}
-            {% if form.email.errors %}
-                <div class="field-errors">{% for error in form.email.errors %}<p>{{ error }}</p>{% endfor %}</div>
-            {% endif %}
-        </div>
-        <div class="form-field">
-            {{ form.password }}
-            {% if form.password.errors %}
-                <div class="field-errors">{% for error in form.password.errors %}<p>{{ error }}</p>{% endfor %}</div>
-            {% endif %}
-        </div>
-        <button type="submit" class="login-btn">登入</button>
-    </form>
+{% block auth_content %}
+<form method="post" class="space-y-4" novalidate>
+    {% csrf_token %}
 
-    <div class="signup">
-        <p>還沒有商家帳號嗎？ <a href="{% url 'merchantsideapp:register' %}">點我註冊</a></p>
-        <p><a href="{% url 'usersideapp:login' %}">點我切換使用者登入</a></p>
+    {% include 'shared/components/form_errors.html' with form=form %}
+
+    <div class="form-group">
+        <label class="form-label" for="id_identifier">{{ form.identifier.label }}</label>
+        {{ form.identifier }}
+        {% for error in form.identifier.errors %}
+        <p class="form-error">{{ error }}</p>
+        {% endfor %}
     </div>
-</div>
 
-<script>
-    window.merchantRoutes = {
-        dashboard: "{% url 'merchantsideapp:dashboard' %}",
-        login: "{% url 'merchantsideapp:login' %}",
-        logout: "{% url 'merchantsideapp:logout' %}",
-    };
-</script>
+    <div class="form-group">
+        <label class="form-label" for="id_password">{{ form.password.label }}</label>
+        {{ form.password }}
+        {% for error in form.password.errors %}
+        <p class="form-error">{{ error }}</p>
+        {% endfor %}
+    </div>
+
+    <button type="submit" class="btn-primary btn-block btn-lg mt-2">登入</button>
+</form>
+{% endblock %}
+
+{% block auth_footer %}
+<div class="space-y-2">
+    <p>還沒有商家帳號嗎？ <a href="{% url 'merchantsideapp:register' %}">點我註冊</a></p>
+    <p><a href="{% url 'usersideapp:login' %}" class="text-gray-400 hover:text-gray-600">點我切換使用者登入</a></p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
 <script src="{% static 'merchantsideapp/js/merchant_login.js' %}"></script>
-</body>
-</html>
+{% endblock %}

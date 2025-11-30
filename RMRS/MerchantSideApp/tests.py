@@ -1,23 +1,31 @@
+import base64
+import io
 import json
+import shutil
+import tempfile
 from datetime import timedelta
+from decimal import Decimal
 
 from django.contrib.auth.hashers import check_password, make_password
-from django.test import TestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
+from PIL import Image
 
 from .auth_utils import SESSION_MERCHANT_KEY
-from .models import Meal, MerchantAccount, Restaurant
+from .models import Meal, MerchantAccount, Restaurant, NutritionInfo
 from UserSideApp.models import MealComponent
 
 
 class MerchantAuthTests(TestCase):
 	def setUp(self):
-		self.restaurant = Restaurant.objects.create(name="測試餐廳")
+		self.restaurant = Restaurant.objects.create(name="測試餐廳", phone="0212345678")
 		self.merchant = MerchantAccount.objects.create(
 			restaurant=self.restaurant,
-			display_name="麻辣一哥",
+			merchant_name="testing-merchant",
 			email="owner@example.com",
+			phone="0900123456",
 			password_hash=make_password("SecurePass!23"),
 		)
 
@@ -25,8 +33,8 @@ class MerchantAuthTests(TestCase):
 		response = self.client.post(
 			reverse("merchantsideapp:register"),
 			{
-				"merchant_name": "新商家",
 				"restaurant_name": "新餐廳",
+				"merchant_name": "new-merchant",
 				"email": "new-owner@example.com",
 				"password1": "AnotherPass#45",
 				"password2": "AnotherPass#45",
@@ -41,14 +49,13 @@ class MerchantAuthTests(TestCase):
 		self.assertIn(SESSION_MERCHANT_KEY, session)
 		new_merchant = MerchantAccount.objects.get(email="new-owner@example.com")
 		self.assertEqual(new_merchant.restaurant.name, "新餐廳")
-		self.assertEqual(new_merchant.display_name, "新商家")
 
 	def test_register_requires_unique_email(self):
 		response = self.client.post(
 			reverse("merchantsideapp:register"),
 			{
-				"merchant_name": "重複商家",
 				"restaurant_name": "重複餐廳",
+				"merchant_name": "duplicate-merchant",
 				"email": "owner@example.com",
 				"password1": "RepeatPass!23",
 				"password2": "RepeatPass!23",
@@ -62,7 +69,7 @@ class MerchantAuthTests(TestCase):
 		response = self.client.post(
 			reverse("merchantsideapp:login"),
 			{
-				"email": "owner@example.com",
+				"identifier": "owner@example.com",
 				"password": "SecurePass!23",
 			},
 		)
@@ -74,26 +81,86 @@ class MerchantAuthTests(TestCase):
 		response = self.client.post(
 			reverse("merchantsideapp:login"),
 			{
-				"email": "owner@example.com",
+				"identifier": "owner@example.com",
 				"password": "WrongPass",
 			},
 		)
 		self.assertEqual(response.status_code, 200)
-		self.assertContains(response, "Email 或密碼不正確。")
+		self.assertContains(response, "帳號或密碼不正確。")
 		self.assertNotIn(SESSION_MERCHANT_KEY, self.client.session)
+
+	def test_login_rejects_restaurant_name_identifier(self):
+		response = self.client.post(
+			reverse("merchantsideapp:login"),
+			{
+				"identifier": "測試餐廳",
+				"password": "SecurePass!23",
+			},
+		)
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, "帳號或密碼不正確。")
+		self.assertNotIn(SESSION_MERCHANT_KEY, self.client.session)
+
+	def test_login_accepts_merchant_phone_with_digit_normalization(self):
+		response = self.client.post(
+			reverse("merchantsideapp:login"),
+			{
+				"identifier": "0900-123-456",
+				"password": "SecurePass!23",
+			},
+		)
+		self.assertEqual(response.status_code, 302)
+		self.assertEqual(self.client.session.get(SESSION_MERCHANT_KEY), self.merchant.pk)
+
+	def test_login_accepts_merchant_phone_identifier(self):
+		response = self.client.post(
+			reverse("merchantsideapp:login"),
+			{
+				"identifier": self.merchant.phone,
+				"password": "SecurePass!23",
+			},
+		)
+		self.assertEqual(response.status_code, 302)
+		self.assertEqual(self.client.session.get(SESSION_MERCHANT_KEY), self.merchant.pk)
+
+	def test_login_accepts_merchant_name_identifier(self):
+		response = self.client.post(
+			reverse("merchantsideapp:login"),
+			{
+				"identifier": "testing-merchant",
+				"password": "SecurePass!23",
+			},
+		)
+		self.assertEqual(response.status_code, 302)
+		self.assertEqual(self.client.session.get(SESSION_MERCHANT_KEY), self.merchant.pk)
+
+	def test_register_requires_unique_merchant_name(self):
+		response = self.client.post(
+			reverse("merchantsideapp:register"),
+			{
+				"restaurant_name": "另一間餐廳",
+				"merchant_name": "testing-merchant",
+				"email": "second@example.com",
+				"password1": "UniquePass!23",
+				"password2": "UniquePass!23",
+			},
+		)
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, "此商家名稱已被使用。")
+		self.assertEqual(MerchantAccount.objects.filter(email="second@example.com").count(), 0)
 
 	def test_dashboard_requires_authentication(self):
 		response = self.client.get(reverse("merchantsideapp:dashboard"))
 		self.assertEqual(response.status_code, 302)
 		self.assertTrue(response.url.startswith(reverse("merchantsideapp:login")))
 
-	def test_dashboard_displays_restaurant_name_for_logged_in_merchant(self):
+	def test_dashboard_displays_merchant_name_for_logged_in_merchant(self):
 		session = self.client.session
 		session[SESSION_MERCHANT_KEY] = self.merchant.pk
 		session.save()
 		response = self.client.get(reverse("merchantsideapp:dashboard"))
 		self.assertEqual(response.status_code, 200)
-		self.assertContains(response, "麻辣一哥")
+		self.assertContains(response, self.merchant.merchant_name)
 
 
 class MerchantMealCreationTests(TestCase):
@@ -101,7 +168,7 @@ class MerchantMealCreationTests(TestCase):
 		self.restaurant = Restaurant.objects.create(name="勇者餐館")
 		self.merchant = MerchantAccount.objects.create(
 			restaurant=self.restaurant,
-			display_name="勇者商家",
+			merchant_name="meal-merchant",
 			email="meal-owner@example.com",
 			password_hash=make_password("SecurePass!23"),
 		)
@@ -148,8 +215,15 @@ class MerchantMealCreationTests(TestCase):
 		self.assertEqual(component.name, "蛋白質")
 		self.assertEqual(component.quantity, "25g")
 		self.assertEqual(float(component.calories), 100.0)
-		self.assertEqual(component.metadata["protein"], 25.0)
-		self.assertEqual(component.metadata["notes"], "雞胸肉")
+		self.assertEqual(component.metadata, {"notes": "雞胸肉"})
+		nutrition = NutritionInfo.objects.get(meal=meal)
+		self.assertEqual(float(nutrition.calories), 100.0)
+		self.assertEqual(float(nutrition.protein), 25.0)
+		self.assertEqual(float(nutrition.carbohydrate), 10.0)
+		self.assertEqual(float(nutrition.fat), 5.0)
+		self.assertEqual(float(nutrition.sodium), 0.0)
+		self.assertTrue(nutrition.breakdown)
+		self.assertEqual(nutrition.breakdown[0]["protein"], 25.0)
 
 	def test_add_meal_requires_authentication(self):
 		response = self.client.get(reverse("merchantsideapp:add_meal"))
@@ -172,16 +246,79 @@ class MerchantMealCreationTests(TestCase):
 		self.assertFalse(Meal.objects.filter(name="錯誤餐點").exists())
 
 
+class MerchantMealImageUploadTests(TestCase):
+	@staticmethod
+	def _build_image_bytes(color=(255, 0, 0)):
+		buffer = io.BytesIO()
+		image = Image.new("RGB", (10, 10), color=color)
+		image.save(buffer, format="PNG")
+		return buffer.getvalue()
+
+
+	def setUp(self):
+		self.temp_media = tempfile.mkdtemp()
+		self.addCleanup(lambda: shutil.rmtree(self.temp_media, ignore_errors=True))
+		self.media_override = override_settings(MEDIA_ROOT=self.temp_media)
+		self.media_override.enable()
+		self.addCleanup(self.media_override.disable)
+		self.restaurant = Restaurant.objects.create(name="上傳食堂")
+		self.merchant = MerchantAccount.objects.create(
+			restaurant=self.restaurant,
+			merchant_name="upload-merchant",
+			email="upload-owner@example.com",
+			password_hash=make_password("UploadPass!45"),
+		)
+		session = self.client.session
+		session[SESSION_MERCHANT_KEY] = self.merchant.pk
+		session.save()
+
+	def test_uploaded_image_saved_and_displayed(self):
+		upload = SimpleUploadedFile(
+			"hero-meal.png",
+			self._build_image_bytes(),
+			content_type="image/png",
+		)
+		response = self.client.post(
+			reverse("merchantsideapp:add_meal"),
+			{
+				"name": "煙燻嫩雞沙拉",
+				"category": "主食",
+				"price": "180",
+				"image_file": upload,
+				"image_url": "https://example.com/fallback.jpg",
+			},
+		)
+		form_errors = None
+		if getattr(response, "context", None):
+			contexts = response.context
+			if isinstance(contexts, list):
+				for ctx in contexts:
+					if ctx and "form" in ctx:
+						form_errors = ctx["form"].errors
+						break
+			elif "form" in contexts:
+				form_errors = contexts["form"].errors
+		self.assertEqual(response.status_code, 302, msg=form_errors)
+		meal = Meal.objects.get(name="煙燻嫩雞沙拉")
+		self.assertTrue(meal.image_file.name.startswith("meals/photos/"))
+		self.assertTrue(meal.image_file.storage.exists(meal.image_file.name))
+		detail = self.client.get(
+			reverse("merchantsideapp:meal_detail", args=[meal.id])
+		)
+		self.assertContains(detail, meal.image_file.url)
+		self.assertNotContains(detail, "https://example.com/fallback.jpg")
+
+
 class MerchantMealManagementTests(TestCase):
 	def setUp(self):
 		self.restaurant = Restaurant.objects.create(name="巧手廚坊")
 		self.merchant = MerchantAccount.objects.create(
 			restaurant=self.restaurant,
-			display_name="巧手廚師",
+			merchant_name="manage-merchant",
 			email="manage-owner@example.com",
 			password_hash=make_password("ManagePass!45"),
 		)
-		Meal.objects.create(
+		self.available_meal = Meal.objects.create(
 			restaurant=self.restaurant,
 			name="暖心番茄燉飯",
 			description="慢火拌炒的番茄燉飯",
@@ -189,13 +326,28 @@ class MerchantMealManagementTests(TestCase):
 			price=280,
 			is_available=True,
 		)
-		Meal.objects.create(
+		self.archived_meal = Meal.objects.create(
 			restaurant=self.restaurant,
 			name="涼拌手作豆腐",
 			description="附芝麻醬的清爽小菜",
 			category="小菜",
 			price=120,
 			is_available=False,
+		)
+		NutritionInfo.objects.create(
+			meal=self.available_meal,
+			calories=520,
+			protein=25,
+			fat=18,
+			carbohydrate=60,
+			sodium=800,
+		)
+		MealComponent.objects.create(
+			meal=self.available_meal,
+			name="雞胸肉",
+			quantity="120g",
+			calories=150,
+			metadata={"allergens": ["花生", "蛋"]},
 		)
 
 	def _login(self):
@@ -233,6 +385,13 @@ class MerchantMealManagementTests(TestCase):
 			name="舊熱量",
 			calories=50,
 		)
+		nutrition_record = meal.nutrition
+		nutrition_record.calories = Decimal("450.0")
+		nutrition_record.protein = Decimal("18.0")
+		nutrition_record.carbohydrate = Decimal("55.0")
+		nutrition_record.fat = Decimal("12.0")
+		nutrition_record.sodium = Decimal("800.0")
+		nutrition_record.save()
 		payload = json.dumps(
 			[
 				{
@@ -261,33 +420,88 @@ class MerchantMealManagementTests(TestCase):
 		components = meal.nutrition_components.all()
 		self.assertEqual(components.count(), 1)
 		self.assertEqual(components.first().name, "蛋白質")
+		nutrition = NutritionInfo.objects.get(meal=meal)
+		self.assertAlmostEqual(float(nutrition.calories), 120.0)
+		self.assertAlmostEqual(float(nutrition.protein), 30.0)
+		self.assertAlmostEqual(float(nutrition.carbohydrate), 0.0)
+		self.assertAlmostEqual(float(nutrition.fat), 0.0)
+		self.assertAlmostEqual(float(nutrition.sodium), 800.0)
+		self.assertEqual(nutrition.breakdown[0]["protein"], 30.0)
 
 	def test_delete_meal_marks_unavailable(self):
 		self._login()
 		meal = self.restaurant.meals.get(name="涼拌手作豆腐")
 		response = self.client.post(
-			reverse("merchantsideapp:delete_meal", args=[meal.id])
+			reverse("merchantsideapp:delete_meal", args=[meal.id]),
+			{"action": "deactivate"},
 		)
 		self.assertEqual(response.status_code, 302)
 		meal.refresh_from_db()
 		self.assertFalse(meal.is_available)
 
-	def test_manage_page_shows_archived_preview(self):
+	def test_reactivate_archived_meal(self):
 		self._login()
 		meal = self.restaurant.meals.get(name="涼拌手作豆腐")
 		meal.is_available = False
-		meal.save(update_fields=["is_available", "updated_at"])
+		meal.save(update_fields=["is_available"])
+		response = self.client.post(
+			reverse("merchantsideapp:delete_meal", args=[meal.id]),
+			{"action": "activate"},
+		)
+		self.assertEqual(response.status_code, 302)
+		meal.refresh_from_db()
+		self.assertTrue(meal.is_available)
+
+	def test_manage_page_shows_archived_preview(self):
+		self._login()
 		response = self.client.get(reverse("merchantsideapp:manage_meals"))
 		self.assertContains(response, "已下架餐點")
 		self.assertContains(response, "涼拌手作豆腐")
 
+	def test_meal_detail_public_access(self):
+		url = reverse("merchantsideapp:meal_detail", args=[self.available_meal.id])
+		response = self.client.get(url)
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, "暖心番茄燉飯")
+		self.assertContains(response, "花生")
+		self.assertContains(response, "雞胸肉")
+		self.assertFalse(response.context["can_edit"])
+		nutrition = response.context["nutrition"]
+		self.assertEqual(float(nutrition["calories"]), 520.0)
+
+	def test_meal_detail_marks_owner_can_edit(self):
+		self._login()
+		url = reverse("merchantsideapp:meal_detail", args=[self.available_meal.id])
+		response = self.client.get(url)
+		self.assertEqual(response.status_code, 200)
+		self.assertTrue(response.context["can_edit"])
+		self.assertContains(response, "編輯餐點")
+
+	def test_meal_detail_shows_image_or_placeholder(self):
+		self.available_meal.image_url = "https://example.com/meal.jpg"
+		self.available_meal.save(update_fields=["image_url"])
+		url = reverse("merchantsideapp:meal_detail", args=[self.available_meal.id])
+		response = self.client.get(url)
+		self.assertContains(response, "https://example.com/meal.jpg")
+		placeholder_url = reverse("merchantsideapp:meal_detail", args=[self.archived_meal.id])
+		response_placeholder = self.client.get(placeholder_url)
+		self.assertContains(response_placeholder, "尚未上傳餐點照片")
+
 
 class MerchantDashboardTests(TestCase):
 	def setUp(self):
-		self.restaurant = Restaurant.objects.create(name="星級餐館", is_active=True)
+		self.restaurant = Restaurant.objects.create(
+			name="星級餐館",
+			is_active=True,
+			city="台北市",
+			district="信義區",
+			address="松壽路9號",
+			rating=4.6,
+			cuisine_type="地中海",
+		)
 		self.merchant = MerchantAccount.objects.create(
 			restaurant=self.restaurant,
-			display_name="星級主廚",
+			merchant_name="dash-merchant",
 			email="dash-owner@example.com",
 			password_hash=make_password("DashPass!12"),
 		)
@@ -319,7 +533,6 @@ class MerchantDashboardTests(TestCase):
 		self.assertContains(response, "奶油海鮮燉飯")
 		self.assertContains(response, "日式炸豬排")
 		self.assertContains(response, "營業")
-		self.assertContains(response, "星級主廚")
 
 	def test_update_restaurant_status(self):
 		self._login()
@@ -331,6 +544,34 @@ class MerchantDashboardTests(TestCase):
 		self.restaurant.refresh_from_db()
 		self.assertFalse(self.restaurant.is_active)
 
+	def test_restaurant_detail_accessible_without_login(self):
+		url = reverse("merchantsideapp:restaurant_detail", args=[self.restaurant.id])
+		response = self.client.get(url)
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, "星級餐館")
+		self.assertFalse(response.context["can_edit"])
+
+	def test_restaurant_detail_displays_stats_and_meals(self):
+		self._login()
+		url = reverse("merchantsideapp:restaurant_detail", args=[self.restaurant.id])
+		response = self.client.get(url)
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, "星級餐館")
+		self.assertContains(response, "台北市")
+		self.assertContains(response, "奶油海鮮燉飯")
+		self.assertContains(response, "日式炸豬排")
+		stats = response.context["stats"]
+		self.assertEqual(stats["total_meals"], 2)
+		self.assertEqual(stats["available_meals"], 1)
+		self.assertTrue(response.context["can_edit"])
+
+	def test_restaurant_detail_contains_meal_links(self):
+		url = reverse("merchantsideapp:restaurant_detail", args=[self.restaurant.id])
+		response = self.client.get(url)
+		meal_url = reverse("merchantsideapp:meal_detail", args=[self.meal_new.id])
+		self.assertContains(response, f'data-meal-url="{meal_url}"')
+		self.assertContains(response, "查看餐點")
+
 
 class MerchantSettingsTests(TestCase):
 	def setUp(self):
@@ -341,7 +582,7 @@ class MerchantSettingsTests(TestCase):
 		)
 		self.merchant = MerchantAccount.objects.create(
 			restaurant=self.restaurant,
-			display_name="設定達人",
+			merchant_name="設定達人",
 			email="settings-owner@example.com",
 			password_hash=make_password("SettingsPass!77"),
 		)
@@ -360,7 +601,7 @@ class MerchantSettingsTests(TestCase):
 		self._login()
 		response = self.client.get(reverse("merchantsideapp:settings"))
 		self.assertEqual(response.status_code, 200)
-		self.assertContains(response, self.merchant.display_name)
+		self.assertContains(response, self.merchant.merchant_name)
 		self.assertContains(response, self.merchant.email)
 		self.assertContains(response, self.restaurant.name)
 
@@ -370,14 +611,14 @@ class MerchantSettingsTests(TestCase):
 			reverse("merchantsideapp:settings"),
 			{
 				"form_type": "account",
-				"display_name": "全新設定達人",
+				"merchant_name": "全新設定達人",
 				"email": "updated-owner@example.com",
 			},
 		)
 		self.assertEqual(response.status_code, 302)
 		self.merchant.refresh_from_db()
 		self.assertEqual(self.merchant.email, "updated-owner@example.com")
-		self.assertEqual(self.merchant.display_name, "全新設定達人")
+		self.assertEqual(self.merchant.merchant_name, "全新設定達人")
 
 	def test_password_form_updates_hash(self):
 		self._login()

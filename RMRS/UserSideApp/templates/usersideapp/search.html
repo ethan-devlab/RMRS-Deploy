@@ -1,158 +1,228 @@
 ﻿{% extends 'usersideapp/base_sidebar.html' %}
 {% load static %}
 {% block page_title %}搜尋餐廳{% endblock %}
+
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'usersideapp/css/Search_rest.css' %}">
+<style>
+    .map-frame {
+        height: 400px;
+        border-radius: 0.75rem;
+        overflow: hidden;
+    }
+
+    .folium-map iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+    }
+    .search-input {
+        padding-left: 2.75rem;
+        width: 100%;
+    }
+</style>
 {% endblock %}
+
 {% block content %}
-<div class="search-page">
-    <div class="map-shell">
-        <div class="map-controls">
-            <div class="search-panel search-panel--docked">
-                <div class="search-header">
-                    <div>
-                        <h1>探索附近餐廳</h1>
-                        <p>使用條件篩選快速找到餐廳，並在地圖上查看實際位置。</p>
-                    </div>
-                    <div class="result-count">
-                        <span>{{ result_count }} 家餐廳</span>
-                        {% if limit_reached %}
-                        <small>僅顯示前 {{ restaurants|length }} 筆，請縮小條件以顯示更多</small>
-                        {% endif %}
-                    </div>
+<div class="space-y-6">
+    <!-- Search Panel -->
+    <div class="card">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+            <div>
+                <h1 class="text-xl font-bold text-gray-900">探索附近餐廳</h1>
+                <p class="text-sm text-gray-500">使用條件篩選快速找到餐廳，並在地圖上查看實際位置。</p>
+            </div>
+            <div class="flex items-center gap-2 text-sm">
+                <span class="pill-primary">{{ result_count }} 家餐廳</span>
+                <span class="text-gray-400">·</span>
+                <span class="pill-success">{{ meal_result_count }} 道餐點</span>
+                {% if limit_reached %}
+                <small class="text-gray-400">僅顯示前 {{ restaurants|length }} 筆</small>
+                {% endif %}
+            </div>
+        </div>
+
+        <form method="get" class="space-y-4 search-form" autocomplete="off">
+            <!-- Primary Search -->
+            <div class="flex gap-2">
+                <div class="flex-1 relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                    {{ form.keyword }}
                 </div>
-                <form method="get" class="search-form" autocomplete="off">
-                    <div class="search-field search-field--primary">
-                        <span class="search-icon">🔍</span>
-                        {{ form.keyword }}
-                        <button type="submit" class="search-submit">搜尋</button>
-                    </div>
-                    <div class="search-filters">
-                        <label class="filter-field">
-                            <span>{{ form.city.label }}</span>
-                            {{ form.city }}
-                        </label>
-                        <label class="filter-field">
-                            <span>{{ form.district.label }}</span>
-                            {{ form.district }}
-                        </label>
-                        <label class="filter-field">
-                            <span>{{ form.cuisine_type.label }}</span>
-                            {{ form.cuisine_type }}
-                        </label>
-                        <label class="filter-field">
-                            <span>{{ form.price_range.label }}</span>
-                            {{ form.price_range }}
-                        </label>
-                    </div>
-                    <div class="search-actions">
-                        <button type="button" class="locate-button" data-locate-btn>使用目前位置</button>
-                        <span class="locate-status" data-location-status>
-                            {% if has_user_location %}已套用目前位置{% else %}自動偵測附近位置中...{% endif %}
-                        </span>
-                    </div>
-                    {% if selected_location_display or nearest_distance_label %}
-                    <div class="location-summary">
-                        {% if selected_location_display %}
-                        <div class="location-summary__item">
-                            <span class="location-summary__label">目前搜尋位置</span>
-                            <span class="location-summary__value">{{ selected_location_display }}</span>
-                        </div>
-                        {% endif %}
-                        {% if nearest_distance_label %}
-                        <div class="location-summary__item">
-                            <span class="location-summary__label">最近餐廳距離</span>
-                            <span class="location-summary__value">{{ nearest_distance_label }}</span>
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% endif %}
-                    {{ form.latitude }}
-                    {{ form.longitude }}
-                </form>
-                {% if form.errors %}
-                <div class="form-errors">
-                    {% for field in form %}
-                    {% for error in field.errors %}
-                    <p>{{ field.label }}：{{ error }}</p>
-                    {% endfor %}
-                    {% endfor %}
-                    {% for error in form.non_field_errors %}
-                    <p>{{ error }}</p>
-                    {% endfor %}
+                <button type="submit" class="btn-primary px-6">搜尋</button>
+            </div>
+
+            <!-- Filters -->
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <div class="form-group">
+                    <label class="form-label text-xs">{{ form.city.label }}</label>
+                    {{ form.city }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label text-xs">{{ form.district.label }}</label>
+                    {{ form.district }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label text-xs">{{ form.cuisine_type.label }}</label>
+                    {{ form.cuisine_type }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label text-xs">{{ form.category.label }}</label>
+                    {{ form.category }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label text-xs">{{ form.price_range.label }}</label>
+                    {{ form.price_range }}
+                </div>
+            </div>
+
+            <!-- Location Actions -->
+            <div class="flex items-center gap-4">
+                <button type="button" class="btn-secondary text-sm px-4 py-2" data-locate-btn>📍 使用目前位置</button>
+                <span class="text-sm text-gray-500" data-location-status>
+                    {% if has_user_location %}已套用目前位置{% else %}自動偵測附近位置中...{% endif %}
+                </span>
+            </div>
+
+            {% if selected_location_display or nearest_distance_label %}
+            <div class="flex gap-6 text-sm bg-gray-50 rounded-lg p-3">
+                {% if selected_location_display %}
+                <div>
+                    <span class="text-gray-500">目前搜尋位置</span>
+                    <span class="font-medium text-gray-900 ml-1">{{ selected_location_display }}</span>
+                </div>
+                {% endif %}
+                {% if nearest_distance_label %}
+                <div>
+                    <span class="text-gray-500">最近餐廳距離</span>
+                    <span class="font-medium text-gray-900 ml-1">{{ nearest_distance_label }}</span>
                 </div>
                 {% endif %}
             </div>
-            {% if map_hint %}
-            <p class="map-hint map-hint--inline">{{ map_hint }}</p>
             {% endif %}
+
+            {{ form.latitude }}
+            {{ form.longitude }}
+        </form>
+
+        {% if form.errors %}
+        <div class="mt-4 alert-error">
+            {% for field in form %}
+            {% for error in field.errors %}
+            <p>{{ field.label }}：{{ error }}</p>
+            {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+            <p>{{ error }}</p>
+            {% endfor %}
         </div>
-        <div class="map-stage">
-            <div class="map-frame">
-                {% if folium_map %}
-                <div class="map-toolbar">
-                    <p>可拖曳、使用當前位置或直接點擊地圖來設定搜尋座標。</p>
-                </div>
-                <div class="folium-map" data-map-id="{{ folium_map_id }}">
-                    {{ folium_map|safe }}
-                </div>
-                {% else %}
-                <div class="map-placeholder">
-                    <p>地圖載入失敗，請重新整理頁面。</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
+        {% endif %}
     </div>
 
-    <section class="search-results">
-        <div class="results-header">
-            <h2>搜尋結果</h2>
+    <!-- Map -->
+    {% if map_hint %}
+    <p class="text-sm text-gray-500 text-center">{{ map_hint }}</p>
+    {% endif %}
+
+    <div class="card p-0 overflow-hidden">
+        {% if folium_map %}
+        <div class="bg-gray-100 px-4 py-2 text-sm text-gray-600 border-b">
+            可拖曳、使用當前位置或直接點擊地圖查找餐廳。
         </div>
-        <div class="result-list">
-            {% for restaurant in restaurants %}
-            <article class="result-card">
-                <div class="result-card-header">
-                    <h3>{{ restaurant.name }}</h3>
-                    {% if restaurant.rating %}
-                    <span class="rating-badge">★ {{ restaurant.rating }}</span>
-                    {% endif %}
-                </div>
-                <p class="result-meta">
-                    {{ restaurant.city|default:"" }}{{ restaurant.district|default:"" }}
-                    {% if restaurant.cuisine_type %}
-                    · {{ restaurant.cuisine_type }}
-                    {% endif %}
+        <div class="map-frame folium-map" data-map-id="{{ folium_map_id }}">
+            {{ folium_map|safe }}
+        </div>
+        {% else %}
+        <div class="text-center text-gray-500 py-12">
+            地圖載入失敗，請重新整理頁面。
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Meal Results -->
+    <section>
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">餐點搜尋結果</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for meal in meals %}
+            <article class="card hover:shadow-lg transition-shadow">
+                <h3 class="font-semibold text-gray-900 mb-1">
+                    <a href="{% url 'merchantsideapp:meal_detail' meal.id %}" class="hover:text-primary-600">
+                        {{ meal.name }}</a>
+                </h3>
+                <p class="text-sm text-gray-500 mb-2">
+                    由 <a href="{% url 'merchantsideapp:restaurant_detail' meal.restaurant.id %}"
+                        class="text-primary-600 hover:underline">{{ meal.restaurant.name }}</a>
+                    {% if meal.category %} · {{ meal.category }}{% endif %}
                 </p>
-                {% if restaurant.address %}
-                <p class="result-address">{{ restaurant.address }}</p>
+                {% if meal.description %}
+                <p class="text-sm text-gray-600 mb-3">{{ meal.description|truncatechars:80 }}</p>
                 {% endif %}
-                {% if restaurant.user_distance_km %}
-                <p class="result-distance">距離目前位置約 {{ restaurant.user_distance_km|floatformat:1 }} 公里</p>
-                {% endif %}
-                <div class="result-tags">
-                    <span class="tag">{{ restaurant.get_price_range_display }}</span>
-                    {% if restaurant.latitude and restaurant.longitude %}
-                    <span class="tag tag--success">已提供座標</span>
-                    {% else %}
-                    <span class="tag tag--muted">未提供座標</span>
+                <div class="flex flex-wrap gap-2">
+                    {% if meal.price %}
+                    <span class="pill-primary">${{ meal.price }}</span>
                     {% endif %}
-                {% if restaurant.latitude and restaurant.longitude %}
-                <div class="result-actions">
-                    <button type="button"
-                            class="result-action-btn"
-                            data-nav-btn
-                            data-dest-lat="{{ restaurant.latitude }}"
-                            data-dest-lon="{{ restaurant.longitude }}">
-                        開始導航
-                    </button>
-                </div>
-                {% endif %}
+                    {% if meal.is_vegetarian %}
+                    <span class="pill-success">素食</span>
+                    {% endif %}
+                    {% if meal.is_spicy %}
+                    <span class="pill-warning">辛辣</span>
+                    {% else %}
+                    <span class="pill-gray">不辣</span>
+                    {% endif %}
                 </div>
             </article>
             {% empty %}
-            <div class="result-empty">
-                <p>目前沒有符合條件的餐廳，請調整篩選條件後再試一次。</p>
+            <div class="col-span-full card text-center text-gray-500 py-8">
+                目前沒有符合條件的餐點，請調整篩選條件後再試一次。
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Restaurant Results -->
+    <section>
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">餐廳搜尋結果</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for restaurant in restaurants %}
+            <article class="card hover:shadow-lg transition-shadow">
+                <div class="flex items-start justify-between mb-2">
+                    <h3 class="font-semibold text-gray-900">
+                        <a href="{% url 'merchantsideapp:restaurant_detail' restaurant.id %}"
+                            class="hover:text-primary-600">{{ restaurant.name }}</a>
+                    </h3>
+                    {% if restaurant.rating %}
+                    <span class="pill-warning">★ {{ restaurant.rating }}</span>
+                    {% endif %}
+                </div>
+                <p class="text-sm text-gray-500 mb-1">
+                    {{ restaurant.city|default:"" }}{{ restaurant.district|default:"" }}
+                    {% if restaurant.cuisine_type %} · {{ restaurant.cuisine_type }}{% endif %}
+                </p>
+                {% if restaurant.address %}
+                <p class="text-sm text-gray-600 mb-2">{{ restaurant.address }}</p>
+                {% endif %}
+                {% if restaurant.user_distance_km %}
+                <p class="text-sm text-primary-600 mb-3">📍 距離約 {{ restaurant.user_distance_km|floatformat:1 }} 公里</p>
+                {% endif %}
+                <div class="flex items-center justify-between">
+                    <div class="flex gap-2">
+                        <span class="pill-gray">{{ restaurant.get_price_range_display }}</span>
+                        {% if restaurant.latitude and restaurant.longitude %}
+                        <span class="pill-success">已提供座標</span>
+                        {% else %}
+                        <span class="pill-gray">未提供座標</span>
+                        {% endif %}
+                    </div>
+                    {% if restaurant.latitude and restaurant.longitude %}
+                    <button type="button" class="btn-primary text-sm px-3 py-1.5 cursor-pointer" data-nav-btn
+                        data-dest-lat="{{ restaurant.latitude }}" data-dest-lon="{{ restaurant.longitude }}">
+                        開始導航
+                    </button>
+                    {% endif %}
+                </div>
+            </article>
+            {% empty %}
+            <div class="col-span-full card text-center text-gray-500 py-8">
+                目前沒有符合條件的餐廳，請調整篩選條件後再試一次。
             </div>
             {% endfor %}
         </div>
@@ -192,8 +262,8 @@
             if (Number.isNaN(latNum) || Number.isNaN(lonNum)) {
                 return false;
             }
-            latInput.value = latNum.toFixed(6);
-            lonInput.value = lonNum.toFixed(6);
+            latInput.value = latNum.toFixed(7);
+            lonInput.value = lonNum.toFixed(7);
             if (statusMessage) {
                 setStatus(statusMessage, "success");
             }
@@ -313,4 +383,3 @@
     });
 </script>
 {% endblock %}
-
