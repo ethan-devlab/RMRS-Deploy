@@ -124,7 +124,11 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 4. Install Node.js Dependencies (for Tailwind CSS)
+### 4. Install Node.js
+If you don't have Node.js installed, download and install it from [nodejs.org](https://nodejs.org/).
+Make sure you have Node.js 18 or higher and the environment variable set up correctly.
+
+### 5. Install Node.js Dependencies (for Tailwind CSS)
 
 ```bash
 cd RMRS
