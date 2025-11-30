@@ -1,0 +1,53 @@
+{# Sidebar Component - Include with menu_items and optional user #}
+{# menu_items: list of {id, icon, label, url, active} #}
+{# user: user object with username, full_name, email #}
+{# app_name: "Foodie" or "Foodie 商家端" #}
+{# logout_url: URL for logout form action #}
+
+<div class="sidebar" id="sidebar">
+    <div class="flex items-center gap-3 p-4 border-b border-gray-200">
+        <button class="text-gray-500 hover:text-gray-900 text-xl" id="toggleBtn">☰</button>
+        <h2 class="font-bold text-lg text-gray-900 sidebar-text">{{ app_name|default:"Foodie" }}</h2>
+    </div>
+
+    <nav class="flex-1 py-4">
+        <ul class="space-y-1">
+            {% for item in menu_items %}
+            <li>
+                <a href="{{ item.url }}" class="sidebar-item {% if item.active %}active{% endif %}"
+                    id="menu-{{ item.id }}" title="{{ item.label }}">
+                    <span class="text-xl">{{ item.icon }}</span>
+                    <span class="sidebar-text">{{ item.label }}</span>
+                </a>
+            </li>
+            {% endfor %}
+
+            <li class="mt-auto pt-4 border-t border-gray-200">
+                <button type="button"
+                    class="sidebar-item w-full text-left text-red-500 hover:text-red-600 hover:bg-red-50"
+                    id="menu-logout" title="登出">
+                    <span class="text-xl">🚪</span>
+                    <span class="sidebar-text">登出</span>
+                </button>
+            </li>
+        </ul>
+    </nav>
+
+    {% if user %}
+    <div class="p-4 border-t border-gray-200">
+        <div class="flex items-center gap-3">
+            <div
+                class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 flex items-center justify-center text-white font-semibold">
+                {{ user.username|first|upper }}</div>
+            <div class="sidebar-text overflow-hidden">
+                <p class="font-medium text-gray-900 truncate">{{ user.full_name|default:user.username }}</p>
+                <p class="text-xs text-gray-500 truncate">{{ user.email }}</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<form id="logout-form" method="post" action="{{ logout_url }}" style="display:none;">
+    {% csrf_token %}
+</form>

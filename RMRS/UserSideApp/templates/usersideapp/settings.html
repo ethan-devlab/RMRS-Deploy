@@ -1,146 +1,166 @@
 {% extends 'usersideapp/base_sidebar.html' %}
 {% block page_title %}設定{% endblock %}
 {% block content %}
+<!-- Header -->
 <div class="welcome-box">
-    <h1>設定</h1>
-    <p>調整你的飲食偏好與提醒呈現，系統會依據這些資訊提供更貼近需求的建議。</p>
+    <h1 class="text-2xl font-bold text-slate-800">設定</h1>
+    <p class="text-slate-600 mt-1">調整你的飲食偏好與提醒呈現，系統會依據這些資訊提供更貼近需求的建議。</p>
 </div>
 
-<div class="card-long">
-    <h3>帳戶資訊</h3>
-    <form method="post" class="meal-form">
+<!-- Account Info -->
+<div class="card mt-6">
+    <h3 class="text-lg font-bold text-slate-800 mb-4">帳戶資訊</h3>
+    <form method="post" class="space-y-4">
         {% csrf_token %}
         <input type="hidden" name="form_type" value="account">
-        <div class="form-grid">
-            <div class="form-group read-only-field">
-                <label for="user-username">登入帳號</label>
-                <input id="user-username" type="text" value="{{ current_user.username }}" class="readonly-input"
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-group">
+                <label class="form-label" for="user-username">登入帳號</label>
+                <input id="user-username" type="text" value="{{ current_user.username }}"
+                    class="w-full px-4 py-2 border border-slate-200 rounded-lg bg-slate-100 text-slate-500 cursor-not-allowed"
                     readonly>
-                <small class="readonly-hint">帳號為系統識別用，無法直接修改。</small>
+                <small class="text-xs text-slate-400 mt-1 block">帳號為系統識別用，無法直接修改。</small>
             </div>
             <div class="form-group">
-                <label for="id_full_name">顯示名稱</label>
+                <label class="form-label" for="id_full_name">顯示名稱</label>
                 {{ account_form.full_name }}
-                {{ account_form.full_name.errors }}
+                {% if account_form.full_name.errors %}<p class="form-error">{{ account_form.full_name.errors.0 }}</p>
+                {% endif %}
             </div>
             <div class="form-group">
-                <label for="id_email">Email</label>
+                <label class="form-label" for="id_email">Email</label>
                 {{ account_form.email }}
-                {{ account_form.email.errors }}
+                {% if account_form.email.errors %}<p class="form-error">{{ account_form.email.errors.0 }}</p>
+                {% endif %}
             </div>
             <div class="form-group">
-                <label for="id_phone">手機號碼</label>
+                <label class="form-label" for="id_phone">手機號碼</label>
                 {{ account_form.phone }}
-                {{ account_form.phone.errors }}
+                {% if account_form.phone.errors %}<p class="form-error">{{ account_form.phone.errors.0 }}</p>
+                {% endif %}
             </div>
         </div>
-        <button class="primary-btn" type="submit">更新帳戶</button>
+        <button class="btn-primary" type="submit">更新帳戶</button>
     </form>
 </div>
 
-<div class="card-long">
-    <h3>變更密碼</h3>
-    <form method="post" class="meal-form">
+<!-- Password Change -->
+<div class="card mt-6">
+    <h3 class="text-lg font-bold text-slate-800 mb-4">變更密碼</h3>
+    <form method="post" class="space-y-4">
         {% csrf_token %}
         <input type="hidden" name="form_type" value="password">
-        <div class="form-grid">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="form-group">
-                <label for="id_current_password">目前密碼</label>
+                <label class="form-label" for="id_current_password">目前密碼</label>
                 {{ password_form.current_password }}
-                {{ password_form.current_password.errors }}
+                {% if password_form.current_password.errors %}<p class="form-error">
+                    {{ password_form.current_password.errors.0 }}</p>{% endif %}
             </div>
             <div class="form-group">
-                <label for="id_new_password1">新密碼</label>
+                <label class="form-label" for="id_new_password1">新密碼</label>
                 {{ password_form.new_password1 }}
-                {{ password_form.new_password1.errors }}
+                {% if password_form.new_password1.errors %}<p class="form-error">
+                    {{ password_form.new_password1.errors.0 }}</p>{% endif %}
             </div>
             <div class="form-group">
-                <label for="id_new_password2">再次輸入新密碼</label>
+                <label class="form-label" for="id_new_password2">再次輸入新密碼</label>
                 {{ password_form.new_password2 }}
-                {{ password_form.new_password2.errors }}
+                {% if password_form.new_password2.errors %}<p class="form-error">
+                    {{ password_form.new_password2.errors.0 }}</p>{% endif %}
             </div>
         </div>
         {% if password_form.non_field_errors %}
-        <div class="form-errors">{{ password_form.non_field_errors }}</div>
+        <div class="alert-error">{{ password_form.non_field_errors }}</div>
         {% endif %}
-        <p class="label">建議使用 8 碼以上並混合大小寫與符號。</p>
-        <button class="primary-btn" type="submit">更新密碼</button>
+        <p class="text-sm text-slate-500">建議使用 8 碼以上並混合大小寫與符號。</p>
+        <button class="btn-primary" type="submit">更新密碼</button>
     </form>
 </div>
 
-<div class="card-long">
-    <h3>飲食偏好</h3>
-    <form method="post" class="meal-form">
+<!-- Dietary Preferences -->
+<div class="card mt-6">
+    <h3 class="text-lg font-bold text-slate-800 mb-4">飲食偏好</h3>
+    <form method="post" class="space-y-4">
         {% csrf_token %}
         <input type="hidden" name="form_type" value="preferences">
-        <div class="form-grid">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="form-group">
-                <label for="id_cuisine_type">常見料理類型</label>
+                <label class="form-label" for="id_cuisine_type">常見料理類型</label>
                 {{ preference_form.cuisine_type }}
-                {{ preference_form.cuisine_type.errors }}
+                {% if preference_form.cuisine_type.errors %}<p class="form-error">
+                    {{ preference_form.cuisine_type.errors.0 }}</p>{% endif %}
             </div>
             <div class="form-group">
-                <label for="id_price_range">預算區間</label>
+                <label class="form-label" for="id_price_range">預算區間</label>
                 {{ preference_form.price_range }}
-                {{ preference_form.price_range.errors }}
+                {% if preference_form.price_range.errors %}<p class="form-error">{{ preference_form.price_range.errors.0 }}</p>{% endif %}
             </div>
             <div class="form-group">
-                <label for="id_category">偏好品項類別</label>
+                <label class="form-label" for="id_category">偏好品項類別</label>
                 {{ preference_form.category }}
-                {{ preference_form.category.errors }}
+                {% if preference_form.category.errors %}<p class="form-error">
+                    {{ preference_form.category.errors.0 }}
+                </p>{% endif %}
             </div>
         </div>
-        <div class="form-grid">
-            <div class="form-group checkbox-group">
-                <label class="checkbox-label">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="form-group">
+                <label class="inline-flex items-center gap-2 cursor-pointer">
                     {{ preference_form.is_vegetarian }}
-                    <span>偏好全素</span>
+                    <span class="text-sm text-slate-700">偏好全素</span>
                 </label>
-                {{ preference_form.is_vegetarian.errors }}
-            </div>
-            <div class="form-group checkbox-group">
-                <label class="checkbox-label">
-                    {{ preference_form.avoid_spicy }}
-                    <span>避免辛辣</span>
-                </label>
-                {{ preference_form.avoid_spicy.errors }}
+                {% if preference_form.is_vegetarian.errors %}<p class="form-error">
+                    {{ preference_form.is_vegetarian.errors.0 }}</p>{% endif %}
             </div>
             <div class="form-group">
-                <label for="id_recommendation_cooldown_days">推薦冷卻天數</label>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                    {{ preference_form.avoid_spicy }}
+                    <span class="text-sm text-slate-700">避免辛辣</span>
+                </label>
+                {% if preference_form.avoid_spicy.errors %}<p class="form-error">
+                    {{ preference_form.avoid_spicy.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="id_recommendation_cooldown_days">推薦冷卻天數</label>
                 {{ preference_form.recommendation_cooldown_days }}
                 {% if preference_form.recommendation_cooldown_days.help_text %}
-                <small class="label muted">{{ preference_form.recommendation_cooldown_days.help_text }}</small>
+                <small class="text-xs text-slate-400 mt-1 block">
+                    {{ preference_form.recommendation_cooldown_days.help_text }}</small>
                 {% endif %}
-                {{ preference_form.recommendation_cooldown_days.errors }}
+                {% if preference_form.recommendation_cooldown_days.errors %}<p class="form-error">
+                    {{ preference_form.recommendation_cooldown_days.errors.0 }}</p>{% endif %}
             </div>
         </div>
-        <button class="primary-btn" type="submit">儲存偏好</button>
+        <button class="btn-primary" type="submit">儲存偏好</button>
     </form>
 </div>
 
-<div class="card-long">
-    <h3>提醒設定概覽</h3>
+<!-- Notification Overview -->
+<div class="card mt-6">
+    <h3 class="text-lg font-bold text-slate-800 mb-4">提醒設定概覽</h3>
     {% if notification_settings %}
-    <ul class="notify-mini-list">
+    <ul class="space-y-3">
         {% for setting in notification_settings %}
-        <li>
+        <li class="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
             <div>
-                <strong>{{ setting.get_reminder_type_display }}</strong>
-                <div class="label">頻道：{{ setting.get_channel_display }}</div>
+                <strong class="font-medium text-slate-800">{{ setting.get_reminder_type_display }}</strong>
+                <div class="text-sm text-slate-500">頻道：{{ setting.get_channel_display }}</div>
             </div>
-            <div class="pill {% if setting.is_enabled %}on{% else %}off{% endif %}">
+            <span
+                class="px-3 py-1 rounded-full text-sm font-medium {% if setting.is_enabled %}bg-emerald-100 text-emerald-700{% else %}bg-slate-200 text-slate-500{% endif %}">
                 {% if setting.is_enabled %}
                 {{ setting.scheduled_time|default:"智慧推送" }}
                 {% else %}
                 已停用
                 {% endif %}
-            </div>
+            </span>
         </li>
         {% endfor %}
     </ul>
-    <p class="label">詳細調整可前往提醒中心。</p>
+    <p class="text-sm text-slate-500 mt-4">詳細調整可前往提醒中心。</p>
     {% else %}
-    <p>尚未建立提醒設定，可前往「推播提醒」頁面建立。</p>
+    <p class="text-slate-500">尚未建立提醒設定，可前往「推播提醒」頁面建立。</p>
     {% endif %}
 </div>
 {% endblock %}

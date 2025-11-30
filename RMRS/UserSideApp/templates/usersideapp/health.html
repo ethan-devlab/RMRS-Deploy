@@ -1,97 +1,112 @@
 {% extends 'usersideapp/base_sidebar.html' %}
+{% load static %}
 {% block page_title %}健康建議{% endblock %}
 {% block content %}
 {% with summary=health_summary %}
-<div class="welcome-box health-header">
-    <div class="health-left">
-        <h1>健康建議</h1>
-        <p>根據你的飲食與生活型態，提供簡單易懂的小建議。</p>
-        {% if summary.has_data %}
-        <div class="health-metrics">
-            <div class="health-metric">
-                <span class="label">平均熱量</span>
-                <strong>{{ summary.averages.calories }} kcal</strong>
+<!-- Header with metrics -->
+<div class="welcome-box">
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+        <div class="flex-1">
+            <h1 class="text-2xl font-bold text-slate-800">健康建議</h1>
+            <p class="text-slate-600 mt-1">根據你的飲食與生活型態，提供簡單易懂的小建議。</p>
+            {% if summary.has_data %}
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+                <div class="text-center p-3 bg-white/60 rounded-xl border border-slate-200/50">
+                    <span class="block text-xs text-slate-500 font-medium">平均熱量</span>
+                    <strong class="text-lg font-bold text-slate-800">{{ summary.averages.calories }} kcal</strong>
+                </div>
+                <div class="text-center p-3 bg-white/60 rounded-xl border border-slate-200/50">
+                    <span class="block text-xs text-slate-500 font-medium">蛋白質</span>
+                    <strong class="text-lg font-bold text-slate-800">{{ summary.averages.protein }} g/日</strong>
+                </div>
+                <div class="text-center p-3 bg-white/60 rounded-xl border border-slate-200/50">
+                    <span class="block text-xs text-slate-500 font-medium">碳水</span>
+                    <strong class="text-lg font-bold text-slate-800">{{ summary.averages.carbs }} g/日</strong>
+                </div>
+                <div class="text-center p-3 bg-white/60 rounded-xl border border-slate-200/50">
+                    <span class="block text-xs text-slate-500 font-medium">脂肪</span>
+                    <strong class="text-lg font-bold text-slate-800">{{ summary.averages.fat }} g/日</strong>
+                </div>
             </div>
-            <div class="health-metric">
-                <span class="label">蛋白質</span>
-                <strong>{{ summary.averages.protein }} g/日</strong>
-            </div>
-            <div class="health-metric">
-                <span class="label">碳水</span>
-                <strong>{{ summary.averages.carbs }} g/日</strong>
-            </div>
-            <div class="health-metric">
-                <span class="label">脂肪</span>
-                <strong>{{ summary.averages.fat }} g/日</strong>
-            </div>
-        </div>
-        {% endif %}
-    </div>
-    <div class="health-right">
-        <div class="health-pill">
-            本週狀態：<span class="health-status-{{ summary.status_tone }}">{{ summary.status_label }}</span>
-        </div>
-        <div class="health-tags">
-            {% if summary.tags %}
-            {% for tag in summary.tags %}
-            <span class="health-tag {{ tag.tone }}">{{ tag.text }}</span>
-            {% endfor %}
-            {% else %}
-            <span class="health-tag neutral">記錄越多，建議越精準</span>
             {% endif %}
         </div>
-        <p class="health-range">{{ summary.range_label }}</p>
+        <div class="text-right space-y-3">
+            <div
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 border border-slate-200 shadow-sm">
+                <span class="text-sm text-slate-600">本週狀態：</span>
+                <span
+                    class="font-semibold {% if summary.status_tone == 'positive' %}text-emerald-600{% elif summary.status_tone == 'warning' %}text-amber-600{% else %}text-slate-600{% endif %}">
+                    {{ summary.status_label }}</span>
+            </div>
+            <div class="flex flex-wrap justify-end gap-2">
+                {% if summary.tags %}
+                {% for tag in summary.tags %}
+                <span
+                    class="px-3 py-1 rounded-full text-xs font-medium {% if tag.tone == 'positive' %}bg-emerald-100 text-emerald-700{% elif tag.tone == 'warning' %}bg-amber-100 text-amber-700{% else %}bg-slate-100 text-slate-600{% endif %}">
+                    {{ tag.text }}</span>
+                {% endfor %}
+                {% else %}
+                <span class="px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">記錄越多，建議越精準</span>
+                {% endif %}
+            </div>
+            <p class="text-xs text-slate-400">{{ summary.range_label }}</p>
+        </div>
     </div>
 </div>
 
-<div class="section-title">今日建議</div>
-<div class="card-long health-today-card">
-    <div class="health-today-main">
-        <div class="health-today-icon">{{ summary.today_tip.icon }}</div>
-        <div>
-            <div class="health-today-title">{{ summary.today_tip.title }}</div>
-            <div class="health-today-desc">
-                {{ summary.today_tip.description }}
-            </div>
+<!-- Today's Tip -->
+<h2 class="text-lg font-bold text-slate-800 mt-8 mb-4">今日建議</h2>
+<div class="card">
+    <div class="flex items-start gap-4">
+        <div class="text-4xl">{{ summary.today_tip.icon }}</div>
+        <div class="flex-1">
+            <div class="font-bold text-lg text-slate-800">{{ summary.today_tip.title }}</div>
+            <div class="text-slate-600 mt-1">{{ summary.today_tip.description }}</div>
         </div>
     </div>
-    <ul class="health-list">
+    <ul class="mt-4 space-y-2 pl-4">
         {% if summary.today_tip.actions %}
         {% for action in summary.today_tip.actions %}
-        <li>{{ action }}</li>
+        <li class="text-sm text-slate-600 before:content-['•'] before:mr-2 before:text-primary">{{ action }}</li>
         {% endfor %}
         {% else %}
-        <li>持續記錄飲食，系統會依據趨勢提供建議。</li>
+        <li class="text-sm text-slate-600 before:content-['•'] before:mr-2 before:text-primary">持續記錄飲食，系統會依據趨勢提供建議。</li>
         {% endif %}
     </ul>
 </div>
 
-<div class="section-title">飲食與營養</div>
-<div class="health-grid">
+<!-- Nutrition Sections -->
+<h2 class="text-lg font-bold text-slate-800 mt-8 mb-4">飲食與營養</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
     {% for section in summary.nutrition_sections %}
-    <div class="card health-card">
-        <div class="health-card-title">{{ section.icon }} {{ section.title }}</div>
-        <p class="health-card-text">
-            {{ section.body }}
-        </p>
-        <ul class="health-list small">
+    <div class="card h-full">
+        <div class="font-bold text-slate-800 mb-2">{{ section.icon }} {{ section.title }}</div>
+        <p class="text-sm text-slate-600 mb-3">{{ section.body }}</p>
+        <ul class="space-y-1">
             {% for tip in section.suggestions %}
-            <li>{{ tip }}</li>
+            <li class="text-xs text-slate-500 before:content-['→'] before:mr-1 before:text-slate-400">{{ tip }}</li>
             {% endfor %}
         </ul>
     </div>
     {% empty %}
-    <p class="muted">目前尚無資料，開始記錄後即可看到營養分析。</p>
+    <p class="text-slate-500 col-span-full">目前尚無資料，開始記錄後即可看到營養分析。</p>
     {% endfor %}
 </div>
 
-<div class="section-title">生活型態小提醒</div>
-<div class="card-long health-lifestyle-card">
-    <ul class="health-list">
+<!-- Lifestyle Tips -->
+<h2 class="text-lg font-bold text-slate-800 mt-8 mb-4">生活型態小提醒</h2>
+<div class="card">
+    <ul class="space-y-2">
         {% for tip in summary.lifestyle_tips %}
-        <li>{{ tip }}</li>
+        <li class="flex items-start gap-2 text-sm text-slate-600">
+            <span class="text-primary mt-0.5">✓</span>
+            <span>{{ tip }}</span>
+        </li>
         {% empty %}
-        <li>保持規律作息與足夠水分，讓身體維持最佳狀態。</li>
+        <li class="flex items-start gap-2 text-sm text-slate-600">
+            <span class="text-primary mt-0.5">✓</span>
+            <span>保持規律作息與足夠水分，讓身體維持最佳狀態。</span>
+        </li>
         {% endfor %}
     </ul>
 </div>

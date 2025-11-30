@@ -1,194 +1,178 @@
+{% extends 'merchantsideapp/base_sidebar.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="zh-Hant">
+{% block page_title %}商家設定{% endblock %}
+{% block content %}
+<!-- Header -->
+<div class="welcome-box">
+    <h1 class="text-2xl font-bold text-slate-800">商家設定中心</h1>
+    <p class="text-slate-600 mt-1">調整帳戶與餐廳資訊，保持營運資料最新，方便消費者找到你。</p>
+</div>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Foodie · 商家設定</title>
-    <link rel="stylesheet" href="{% static 'merchantsideapp/css/merchant_settings.css' %}">
-</head>
-
-<body>
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <button class="toggle-btn" id="toggleBtn">☰</button>
-            <h2 class="logo"><span class="logo-text">Foodie 商家端</span></h2>
-        </div>
-        <ul>
-            <li id="menu-dashboard">
-                <span class="icon">🏠</span>
-                <span class="item-text">主頁總覽</span>
-            </li>
-            <li id="menu-add">
-                <span class="icon">➕</span>
-                <span class="item-text">新增餐點</span>
-            </li>
-            <li id="menu-manage">
-                <span class="icon">📋</span>
-                <span class="item-text">管理餐點</span>
-            </li>
-            <li class="active" id="menu-settings">
-                <span class="icon">⚙️</span>
-                <span class="item-text">設定</span>
-            </li>
-            <li class="logout" id="menu-logout">
-                <span class="icon">🚪</span>
-                <span class="item-text">登出</span>
-            </li>
-        </ul>
-    </div>
-
-    <div class="main">
-        <div class="main-inner">
-            {% if messages %}
-            <ul class="messages">
-                {% for message in messages %}
-                <li class="{{ message.tags }}">{{ message }}</li>
-                {% endfor %}
-            </ul>
-            {% endif %}
-
-            <div class="welcome-box settings-hero">
-                <h1>商家設定中心</h1>
-                <p>調整帳戶與餐廳資訊，保持營運資料最新，方便消費者找到你。</p>
-            </div>
-
-            <div class="settings-card">
-                <div class="settings-card-header">
-                    <div>
-                        <h3>帳戶資訊</h3>
-                        <p class="settings-note">登入 Email 也會拿來接收系統通知。</p>
-                    </div>
-                </div>
-                <form method="post" class="settings-form">
-                    {% csrf_token %}
-                    <input type="hidden" name="form_type" value="account">
-                    <div class="settings-form-grid">
-                        <div class="field-group">
-                            <label class="field-label" for="id_merchant_name">商家名稱</label>
-                            {{ account_form.merchant_name }}
-                            {{ account_form.merchant_name.errors }}
-                            <p class="field-hint">此名稱用於登入與識別，如需調整請聯絡客服協助。</p>
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label" for="id_email">商家 Email</label>
-                            {{ account_form.email }}
-                            {{ account_form.email.errors }}
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label" for="id_phone">聯絡電話</label>
-                            {{ account_form.phone }}
-                            {{ account_form.phone.errors }}
-                        </div>
-                    </div>
-                    <div class="settings-actions">
-                        <button class="primary-btn" type="submit">更新帳戶</button>
-                    </div>
-                </form>
-            </div>
-
-            <div class="settings-card">
-                <h3>變更密碼</h3>
-                <form method="post" class="settings-form">
-                    {% csrf_token %}
-                    <input type="hidden" name="form_type" value="password">
-                    <div class="settings-form-grid">
-                        <div class="field-group">
-                            <label class="field-label" for="id_current_password">目前密碼</label>
-                            {{ password_form.current_password }}
-                            {{ password_form.current_password.errors }}
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label" for="id_new_password1">新密碼</label>
-                            {{ password_form.new_password1 }}
-                            {{ password_form.new_password1.errors }}
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label" for="id_new_password2">再次輸入新密碼</label>
-                            {{ password_form.new_password2 }}
-                            {{ password_form.new_password2.errors }}
-                        </div>
-                    </div>
-                    <div class="field-errors">{{ password_form.non_field_errors }}</div>
-                    <p class="settings-note">建議使用 8 碼以上並混合大小寫及符號。</p>
-                    <div class="settings-actions">
-                        <button class="secondary-btn" type="submit">更新密碼</button>
-                    </div>
-                </form>
-            </div>
-
-            <div class="settings-card">
-                <h3>餐廳資訊</h3>
-                <form method="post" class="settings-form">
-                    {% csrf_token %}
-                    <input type="hidden" name="form_type" value="restaurant">
-                    <div class="settings-form-grid">
-                        <div class="field-group">
-                            <label class="field-label" for="id_name">餐廳名稱</label>
-                            {{ restaurant_form.name }}
-                            {{ restaurant_form.name.errors }}
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label" for="id_address">地址</label>
-                            {{ restaurant_form.address }}
-                            {{ restaurant_form.address.errors }}
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label" for="id_city">城市</label>
-                            {{ restaurant_form.city }}
-                            {{ restaurant_form.city.errors }}
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label" for="id_district">行政區</label>
-                            {{ restaurant_form.district }}
-                            {{ restaurant_form.district.errors }}
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label" for="id_phone">聯絡電話</label>
-                            {{ restaurant_form.phone }}
-                            {{ restaurant_form.phone.errors }}
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label" for="id_cuisine_type">料理風格</label>
-                            {{ restaurant_form.cuisine_type }}
-                            {{ restaurant_form.cuisine_type.errors }}
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label" for="id_price_range">價位區間</label>
-                            {{ restaurant_form.price_range }}
-                            {{ restaurant_form.price_range.errors }}
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label" for="id_latitude">緯度</label>
-                            {{ restaurant_form.latitude }}
-                            {{ restaurant_form.latitude.errors }}
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label" for="id_longitude">經度</label>
-                            {{ restaurant_form.longitude }}
-                            {{ restaurant_form.longitude.errors }}
-                        </div>
-                    </div>
-                    <div class="settings-actions">
-                        <button class="primary-btn" type="submit">更新餐廳資訊</button>
-                    </div>
-                </form>
+{% if restaurant_name_form %}
+<!-- Restaurant Name Quick Edit -->
+<div class="card mt-6">
+    <h3 class="text-lg font-bold text-slate-800 mb-4">餐廳名稱</h3>
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="restaurant_name">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-group">
+                <label class="form-label" for="merchant-restaurant-name">餐廳名稱</label>
+                {{ restaurant_name_form.name }}
+                {% if restaurant_name_form.name.errors %}<p class="form-error">{{ restaurant_name_form.name.errors.0 }}
+                </p>{% endif %}
+                <p class="text-xs text-slate-400 mt-1">此名稱會顯示於使用者端搜尋與推薦之中。</p>
             </div>
         </div>
-    </div>
+        <button class="btn-primary" type="submit">更新餐廳名稱</button>
+    </form>
+</div>
+{% endif %}
 
-    <script>
-        window.merchantRoutes = {
-            dashboard: "{% url 'merchantsideapp:dashboard' %}",
-            addMeal: "{% url 'merchantsideapp:add_meal' %}",
-            manageMeals: "{% url 'merchantsideapp:manage_meals' %}",
-            settings: "{% url 'merchantsideapp:settings' %}",
-            login: "{% url 'merchantsideapp:login' %}",
-            logout: "{% url 'merchantsideapp:logout' %}"
-        };
-    </script>
-    <script src="{% static 'merchantsideapp/js/merchant_homepage.js' %}"></script>
-</body>
+<!-- Account Info -->
+<div class="card mt-6">
+    <h3 class="text-lg font-bold text-slate-800 mb-4">帳戶資訊</h3>
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="account">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-group">
+                <label class="form-label" for="merchant-name-display">商家名稱</label>
+                <input id="merchant-name-display" type="text" value="{{ merchant.merchant_name }}"
+                    class="w-full px-4 py-2 border border-slate-200 rounded-lg bg-slate-100 text-slate-500 cursor-not-allowed"
+                    readonly>
+                <small class="text-xs text-slate-400 mt-1 block">此名稱用於登入與識別，如需調整請聯絡客服協助。</small>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="id_email">商家 Email</label>
+                {{ account_form.email }}
+                {% if account_form.email.errors %}<p class="form-error">{{ account_form.email.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="id_phone">聯絡電話</label>
+                {{ account_form.phone }}
+                {% if account_form.phone.errors %}<p class="form-error">{{ account_form.phone.errors.0 }}</p>{% endif %}
+            </div>
+        </div>
+        <button class="btn-primary" type="submit">更新帳戶</button>
+    </form>
+</div>
 
-</html>
+<!-- Password Change -->
+<div class="card mt-6">
+    <h3 class="text-lg font-bold text-slate-800 mb-4">變更密碼</h3>
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="password">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="form-group">
+                <label class="form-label" for="id_current_password">目前密碼</label>
+                {{ password_form.current_password }}
+                {% if password_form.current_password.errors %}<p class="form-error">{{
+                    password_form.current_password.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="id_new_password1">新密碼</label>
+                {{ password_form.new_password1 }}
+                {% if password_form.new_password1.errors %}<p class="form-error">{{ password_form.new_password1.errors.0
+                    }}</p>{% endif %}
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="id_new_password2">再次輸入新密碼</label>
+                {{ password_form.new_password2 }}
+                {% if password_form.new_password2.errors %}<p class="form-error">{{ password_form.new_password2.errors.0
+                    }}</p>{% endif %}
+            </div>
+        </div>
+        {% if password_form.non_field_errors %}
+        <div class="alert-error">{{ password_form.non_field_errors }}</div>
+        {% endif %}
+        <p class="text-sm text-slate-500">建議使用 8 碼以上並混合大小寫及符號。</p>
+        <button class="btn-primary" type="submit">更新密碼</button>
+    </form>
+</div>
+
+<!-- Restaurant Info -->
+<div class="card mt-6">
+    <h3 class="text-lg font-bold text-slate-800 mb-4">餐廳資訊</h3>
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="restaurant">
+        {{ restaurant_form.name.as_hidden }}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="form-group">
+                <label class="form-label" for="id_address">地址</label>
+                {{ restaurant_form.address }}
+                {% if restaurant_form.address.errors %}<p class="form-error">{{ restaurant_form.address.errors.0 }}</p>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="id_city">城市</label>
+                {{ restaurant_form.city }}
+                {% if restaurant_form.city.errors %}<p class="form-error">{{ restaurant_form.city.errors.0 }}</p>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="id_district">行政區</label>
+                {{ restaurant_form.district }}
+                {% if restaurant_form.district.errors %}<p class="form-error">{{ restaurant_form.district.errors.0 }}
+                </p>{% endif %}
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="id_phone">聯絡電話</label>
+                {{ restaurant_form.phone }}
+                {% if restaurant_form.phone.errors %}<p class="form-error">{{ restaurant_form.phone.errors.0 }}</p>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="id_cuisine_type">料理風格</label>
+                {{ restaurant_form.cuisine_type }}
+                {% if restaurant_form.cuisine_type.errors %}<p class="form-error">
+                    {{ restaurant_form.cuisine_type.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="id_price_range">價位區間</label>
+                {{ restaurant_form.price_range }}
+                {% if restaurant_form.price_range.errors %}<p class="form-error">
+                    {{ restaurant_form.price_range.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="id_latitude">緯度</label>
+                {{ restaurant_form.latitude }}
+                {% if restaurant_form.latitude.errors %}<p class="form-error">
+                    {{ restaurant_form.latitude.errors.0 }}
+                </p>{% endif %}
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="id_longitude">經度</label>
+                {{ restaurant_form.longitude }}
+                {% if restaurant_form.longitude.errors %}<p class="form-error">
+                    {{ restaurant_form.longitude.errors.0 }}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        <button class="btn-primary" type="submit">更新餐廳資訊</button>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('change', function() {
+        var latitudeInput = document.getElementById('id_latitude');
+        var longitudeInput = document.getElementById('id_longitude');
+        if (latitudeInput.value) {
+            var lat = latitudeInput.value.trim();
+            lat = parseFloat(lat).toFixed(7);
+            latitudeInput.value = lat;
+        }
+        if (longitudeInput.value) {
+            var lon = longitudeInput.value.trim();
+            lon = parseFloat(lon).toFixed(7);
+            longitudeInput.value = lon;
+        }
+    })
+</script>
+{% endblock %}

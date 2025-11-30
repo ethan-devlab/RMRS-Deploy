@@ -1,50 +1,103 @@
 {% extends 'usersideapp/base_sidebar.html' %}
+{% load static %}
 {% block page_title %}Foodie · 首頁{% endblock %}
+
 {% block content %}
-<div class="welcome-box home-hero">
-    <div>
-        <h1>哈囉，{{ current_user.full_name|default:current_user.username }}</h1>
-        <p>今天目前累積 <strong>{{ today_stats.total_calories|floatformat:0 }}</strong> kcal，持續保持好習慣！</p>
-    </div>
-    <div class="hero-stats">
-        <div class="hero-stat">
-            <span class="label">蛋白質</span>
-            <span class="value">{{ today_stats.total_protein|floatformat:1 }} g</span>
+<!-- Welcome Hero -->
+<div class="welcome-box mb-6">
+    <div class="flex flex-col xl:flex-row xl:items-center gap-6">
+        <div class="flex-1 space-y-4">
+            <div class="space-y-2">
+                <p class="text-lg font-semibold tracking-widest text-gray-500 uppercase">今日營養摘要</p>
+                <div class="flex flex-col lg:flex-row lg:items-end gap-3">
+                    <h1 class="text-2xl font-bold text-gray-900">哈囉，
+                        {{ current_user.full_name|default:current_user.username }}</h1>
+                    <span
+                        class="inline-flex items-center gap-2 text-sm font-semibold text-primary-700 bg-primary-50 border border-primary-100 rounded-full px-3 py-1">
+                        🔥 今日已攝取 {{ today_stats.total_calories|floatformat:0 }} kcal
+                    </span>
+                </div>
+                <p class="text-gray-600">本週已記錄 <strong class="text-gray-900">{{ weekly_summary.meal_count|default:0 }}</strong> 餐，維持節奏超棒！持續記錄即可獲得更聰明的推薦。</p>
+            </div>
+            <div class="flex flex-wrap gap-3">
+                <a href="{% url 'usersideapp:record' %}" class="btn-primary inline-flex items-center gap-2 px-4 py-2">🍽 記錄今日飲食</a>
+                <a href="{% url 'usersideapp:search' %}"
+                    class="btn-secondary inline-flex items-center gap-2 px-4 py-2">📍 探索附近餐廳</a>
+                <a href="{% url 'usersideapp:random' %}"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:border-primary-200 hover:text-primary-700 transition">
+                    🎲 隨機推薦</a>
+            </div>
         </div>
-        <div class="hero-stat">
-            <span class="label">碳水</span>
-            <span class="value">{{ today_stats.total_carbs|floatformat:1 }} g</span>
-        </div>
-        <div class="hero-stat">
-            <span class="label">脂肪</span>
-            <span class="value">{{ today_stats.total_fat|floatformat:1 }} g</span>
+
+        <div class="flex-1 bg-white/80 rounded-xl p-4 shadow-sm border border-white/70">
+            <div class="grid grid-cols-3 gap-4 text-center">
+                <div class="space-y-1">
+                    <span class="block text-xs text-gray-500 uppercase tracking-wide">蛋白質</span>
+                    <span class="block text-xl font-semibold text-gray-900">
+                        {{ today_stats.total_protein|floatformat:1 }} g</span>
+                    <span class="block text-xs text-gray-400">今日累積</span>
+                </div>
+                <div class="space-y-1">
+                    <span class="block text-xs text-gray-500 uppercase tracking-wide">碳水</span>
+                    <span class="block text-xl font-semibold text-gray-900">
+                        {{ today_stats.total_carbs|floatformat:1 }} g</span>
+                    <span class="block text-xs text-gray-400">今日累積</span>
+                </div>
+                <div class="space-y-1">
+                    <span class="block text-xs text-gray-500 uppercase tracking-wide">脂肪</span>
+                    <span class="block text-xl font-semibold text-gray-900">
+                        {{ today_stats.total_fat|floatformat:1 }} g</span>
+                    <span class="block text-xs text-gray-400">今日累積</span>
+                </div>
+            </div>
+            <div
+                class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-gray-200 pt-4">
+                <div>
+                    <p class="text-xs text-gray-500 uppercase tracking-wide">下一次提醒</p>
+                    <p class="text-sm font-semibold text-gray-900">
+                        {% if next_reminder %}
+                        {{ next_reminder.get_reminder_type_display }} · 
+                        {{ next_reminder.scheduled_time|default:"智慧推送" }}
+                        {% else %}
+                        尚未排程
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="text-sm text-gray-600">
+                    {% if next_reminder %}
+                    ⏰ 推播狀態：{{ next_reminder.is_enabled|yesno:"開啟,關閉" }}
+                    {% else %}
+                    ⏰ 使用提醒維持規律飲食
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<div class="section-title">今日概況</div>
-<div class="card-row home-summary">
-    <div class="card mini-card">
-        <div class="mini-title">當日熱量</div>
-        <div class="mini-value">{{ today_stats.total_calories|floatformat:0 }} kcal</div>
-        <p class="mini-note">{{ today_date|date:"m/d" }}</p>
+<!-- Today Summary -->
+<h2 class="text-lg font-semibold text-gray-900 mb-4">今日概況</h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+    <div class="card text-center">
+        <div class="text-sm text-gray-500 mb-1">當日熱量</div>
+        <div class="text-2xl font-bold text-primary-600">{{ today_stats.total_calories|floatformat:0 }} kcal</div>
+        <p class="text-xs text-gray-400 mt-1">{{ today_date|date:"m/d" }}</p>
     </div>
-    <div class="card mini-card">
-        <div class="mini-title">本週已記錄</div>
-        <div class="mini-value">{{ weekly_summary.meal_count|default:0 }} 餐</div>
-        <p class="mini-note">週起：{{ weekly_summary.week_start|date:"m/d" }}</p>
+    <div class="card text-center">
+        <div class="text-sm text-gray-500 mb-1">本週已記錄</div>
+        <div class="text-2xl font-bold text-primary-600">{{ weekly_summary.meal_count|default:0 }} 餐</div>
+        <p class="text-xs text-gray-400 mt-1">週起：{{ weekly_summary.week_start|date:"m/d" }}</p>
     </div>
-    <div class="card mini-card">
-        <div class="mini-title">下一次提醒</div>
-        <div class="mini-value">
+    <div class="card text-center">
+        <div class="text-sm text-gray-500 mb-1">下一次提醒</div>
+        <div class="text-xl font-bold text-primary-600">
             {% if next_reminder %}
-            {{ next_reminder.get_reminder_type_display }} ·
-            {{ next_reminder.scheduled_time|default:"智慧推送" }}
+            {{ next_reminder.get_reminder_type_display }} · {{ next_reminder.scheduled_time|default:"智慧推送" }}
             {% else %}
             尚未排程
             {% endif %}
         </div>
-        <p class="mini-note">
+        <p class="text-xs text-gray-400 mt-1">
             {% if next_reminder %}
             推播狀態：{{ next_reminder.is_enabled|yesno:"開啟,關閉" }}
             {% else %}
@@ -54,42 +107,40 @@
     </div>
 </div>
 
-<div class="section-title">最近的飲食紀錄</div>
+<!-- Recent Meals -->
+<h2 class="text-lg font-semibold text-gray-900 mb-4">最近的飲食紀錄</h2>
 {% if recent_meals %}
-<div class="record-list">
+<div class="space-y-3 mb-8">
     {% for meal in recent_meals %}
-    <div class="card-long record-item">
-        <div class="record-row">
-            <div>
-                <div class="record-date-main">{{ meal.date|date:"m/d" }} · {{ meal.get_meal_type_display }}</div>
-                <div class="record-date-sub">{{ meal.meal_name }}</div>
-            </div>
-            <div class="record-summary">
-                <div>🍽 {{ meal.calories }} kcal</div>
-                <div>🥚 {{ meal.protein_grams }} g 蛋白質</div>
-            </div>
-            <div class="record-actions">
-                <a href="{% url 'usersideapp:record' %}" class="link-btn">查看</a>
-            </div>
+    <div class="card flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <div class="font-medium text-gray-900">{{ meal.date|date:"m/d" }} · {{ meal.get_meal_type_display }}</div>
+            <div class="text-sm text-gray-500">{{ meal.meal_name }}</div>
         </div>
+        <div class="flex gap-4 text-sm text-gray-600">
+            <span>🍽 {{ meal.calories }} kcal</span>
+            <span>🥚 {{ meal.protein_grams }} g 蛋白質</span>
+        </div>
+        <a href="{% url 'usersideapp:record' %}" class="btn-secondary text-sm px-4 py-2">查看</a>
     </div>
     {% endfor %}
 </div>
 {% else %}
-<div class="card-long empty-state">
+<div class="card text-center text-gray-500 py-8 mb-8">
     目前尚未有飲食紀錄，點擊「今日飲食」開始紀錄吧！
 </div>
 {% endif %}
 
-<div class="section-title">推播提醒與通知</div>
-<div class="card-row notify-overview">
+<!-- Notifications Overview -->
+<h2 class="text-lg font-semibold text-gray-900 mb-4">推播提醒與通知</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
     <div class="card">
-        <h3>提醒設定</h3>
-        <ul class="notify-mini-list">
+        <h3 class="font-semibold text-gray-900 mb-3">提醒設定</h3>
+        <ul class="space-y-2">
             {% for setting in notification_settings %}
-            <li>
-                <span>{{ setting.get_reminder_type_display }}</span>
-                <span class="pill {{ setting.is_enabled|yesno:'on,off' }}">
+            <li class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                <span class="text-gray-700">{{ setting.get_reminder_type_display }}</span>
+                <span class="pill-{{ setting.is_enabled|yesno:'success,gray' }}">
                     {% if setting.is_enabled %}
                     {{ setting.scheduled_time|default:"智慧推送" }}
                     {% else %}
@@ -101,21 +152,21 @@
         </ul>
     </div>
     <div class="card">
-        <h3>最新通知</h3>
+        <h3 class="font-semibold text-gray-900 mb-3">最新通知</h3>
         {% if latest_notifications %}
-        <ul class="notify-mini-list">
+        <ul class="space-y-3">
             {% for item in latest_notifications %}
-            <li>
+            <li class="flex items-start justify-between gap-3">
                 <div>
-                    <strong>{{ item.title }}</strong>
-                    <p>{{ item.body }}</p>
+                    <strong class="text-gray-900">{{ item.title }}</strong>
+                    <p class="text-sm text-gray-500">{{ item.body }}</p>
                 </div>
-                <span class="time">{{ item.sent_at|date:"m/d H:i" }}</span>
+                <span class="text-xs text-gray-400 whitespace-nowrap">{{ item.sent_at|date:"m/d H:i" }}</span>
             </li>
             {% endfor %}
         </ul>
         {% else %}
-        <p class="empty-note">尚未收到通知</p>
+        <p class="text-gray-500 text-center py-4">尚未收到通知</p>
         {% endif %}
     </div>
 </div>

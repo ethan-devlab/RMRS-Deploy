@@ -1,126 +1,138 @@
 {% extends 'usersideapp/base_sidebar.html' %}
+{% load static %}
 {% block page_title %}我的互動{% endblock %}
 {% block content %}
+<!-- Header -->
 <div class="welcome-box">
-    <h1>我的互動</h1>
-    <p>管理餐廳評論與收藏餐點，記錄你的口味偏好。</p>
+    <h1 class="text-2xl font-bold text-slate-800">我的互動</h1>
+    <p class="text-slate-600 mt-1">管理餐廳評論與收藏餐點，記錄你的口味偏好。</p>
 </div>
 
-<div class="card-long">
-    <h3>撰寫評論</h3>
-    <form method="post" class="meal-form">
+<!-- Write Review -->
+<div class="card mt-6">
+    <h3 class="text-lg font-bold text-slate-800 mb-4">撰寫評論</h3>
+    <form method="post" class="space-y-4">
         {% csrf_token %}
         <input type="hidden" name="form_type" value="review">
         {% if editing_review %}
         <input type="hidden" name="review_id" value="{{ editing_review.id }}">
-        <div class="editing-banner">
+        <div
+            class="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800">
             <span>正在編輯：{{ editing_review.meal.name }} 的評論</span>
-            <a class="text-btn" href="{% url 'usersideapp:interactions' %}">取消</a>
+            <a class="text-sm font-medium text-amber-700 hover:text-amber-900 hover:underline"
+                href="{% url 'usersideapp:interactions' %}">取消</a>
         </div>
         {% endif %}
-        <div class="form-grid">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="form-group">
-                <label for="id_restaurant">餐廳</label>
+                <label class="form-label" for="id_restaurant">餐廳</label>
                 {{ review_form.restaurant }}
-                {{ review_form.restaurant.errors }}
+                {% if review_form.restaurant.errors %}<p class="form-error">{{ review_form.restaurant.errors.0 }}</p>{% endif %}
             </div>
             <div class="form-group">
-                <label for="id_meal">餐點</label>
+                <label class="form-label" for="id_meal">餐點</label>
                 {{ review_form.meal }}
-                {{ review_form.meal.errors }}
+                {% if review_form.meal.errors %}<p class="form-error">{{ review_form.meal.errors.0 }}</p>
+                {% endif %}
             </div>
         </div>
-        <div class="form-grid">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="form-group">
-                <label for="id_rating">評分</label>
+                <label class="form-label" for="id_rating">評分</label>
                 {{ review_form.rating }}
-                {{ review_form.rating.errors }}
+                {% if review_form.rating.errors %}<p class="form-error">{{ review_form.rating.errors.0 }}</p>
+                {% endif %}
             </div>
         </div>
         <div class="form-group">
-            <label for="id_comment">心得</label>
+            <label class="form-label" for="id_comment">心得</label>
             {{ review_form.comment }}
-            {{ review_form.comment.errors }}
+            {% if review_form.comment.errors %}<p class="form-error">{{ review_form.comment.errors.0 }}</p>
+            {% endif %}
         </div>
         {% if review_form.non_field_errors %}
-        <div class="form-errors">
-            {% for error in review_form.non_field_errors %}
-            <p>{{ error }}</p>
-            {% endfor %}
+        <div class="alert-error">
+            {% for error in review_form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
         </div>
         {% endif %}
-        <div class="form-actions">
-            <button class="primary-btn" type="submit">{{ editing_review|yesno:"更新評論,送出評論" }}</button>
+        <div class="flex flex-wrap gap-3">
+            <button class="btn-primary" type="submit">{{ editing_review|yesno:"更新評論,送出評論" }}</button>
             {% if editing_review %}
-            <a class="text-btn" href="{% url 'usersideapp:interactions' %}">取消編輯</a>
+            <a class="text-sm font-medium text-slate-600 hover:text-slate-800 hover:underline px-4 py-2"
+                href="{% url 'usersideapp:interactions' %}">取消編輯</a>
             {% endif %}
         </div>
     </form>
 </div>
 
-<div class="card-long">
-    <h3>我的評論</h3>
+<!-- My Reviews -->
+<div class="card mt-6">
+    <h3 class="text-lg font-bold text-slate-800 mb-4">我的評論</h3>
     {% if user_reviews %}
-    <ul class="review-list">
+    <ul class="space-y-4">
         {% for review in user_reviews %}
-        <li>
-            <div class="review-header">
+        <li class="p-4 bg-slate-50 rounded-lg border border-slate-200">
+            <div class="flex items-start justify-between gap-4">
                 <div>
-                    <strong>{{ review.restaurant.name }}</strong>
-                    <span class="review-meal">{{ review.meal.name }}</span>
+                    <strong class="font-semibold text-slate-800">{{ review.restaurant.name }}</strong>
+                    <span class="ml-2 text-sm text-slate-500">{{ review.meal.name }}</span>
                 </div>
-                <span class="review-rating">⭐ {{ review.rating }}</span>
+                <span class="px-2 py-1 rounded-full bg-amber-100 text-amber-700 text-sm font-medium">⭐ 
+                    {{ review.rating }}</span>
             </div>
-            <p>{{ review.comment|default:"無評論內容" }}</p>
-            <div class="review-footer">
-                <p class="label">{{ review.created_at|date:"Y/m/d H:i" }}</p>
-                <a class="text-btn" href="{% url 'usersideapp:interactions' %}?edit_review={{ review.id }}">編輯</a>
+            <p class="mt-2 text-sm text-slate-600">{{ review.comment|default:"無評論內容" }}</p>
+            <div class="flex items-center justify-between mt-3 pt-3 border-t border-slate-200">
+                <p class="text-xs text-slate-400">{{ review.created_at|date:"Y/m/d H:i" }}</p>
+                <a class="text-sm font-medium text-primary hover:text-primary-dark hover:underline"
+                    href="{% url 'usersideapp:interactions' %}?edit_review={{ review.id }}">編輯</a>
             </div>
         </li>
         {% endfor %}
     </ul>
     {% else %}
-    <p>尚未有評論紀錄。</p>
+    <p class="text-slate-500 text-center py-8">尚未有評論紀錄。</p>
     {% endif %}
 </div>
 
-<div class="card-long">
-    <h3>收藏餐點</h3>
-    <form method="post" class="meal-form favorite-form">
+<!-- Add Favorite -->
+<div class="card mt-6">
+    <h3 class="text-lg font-bold text-slate-800 mb-4">收藏餐點</h3>
+    <form method="post" class="flex flex-wrap items-end gap-4">
         {% csrf_token %}
         <input type="hidden" name="form_type" value="favorite_add">
-        <div class="form-grid">
-            <div class="form-group">
-                <label for="id_meal">選擇餐點</label>
-                {{ favorite_form.meal }}
-                {{ favorite_form.meal.errors }}
-            </div>
+        <div class="form-group flex-1 min-w-[200px]">
+            <label class="form-label" for="id_meal">選擇餐點</label>
+            {{ favorite_form.meal }}
+            {% if favorite_form.meal.errors %}<p class="form-error">{{ favorite_form.meal.errors.0 }}</p>
+            {% endif %}
         </div>
-        <button class="primary-btn" type="submit">加入收藏</button>
+        <button class="btn-primary" type="submit">加入收藏</button>
     </form>
 </div>
 
-<div class="card-long">
-    <h3>我的收藏</h3>
+<!-- My Favorites -->
+<div class="card mt-6">
+    <h3 class="text-lg font-bold text-slate-800 mb-4">我的收藏</h3>
     {% if favorites %}
-    <ul class="favorite-list">
+    <ul class="space-y-3">
         {% for favorite in favorites %}
-        <li>
+        <li class="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
             <div>
-                <strong>{{ favorite.meal.name }}</strong>
-                <span class="label">{{ favorite.meal.restaurant.name }}</span>
+                <strong class="font-medium text-slate-800">{{ favorite.meal.name }}</strong>
+                <span class="ml-2 text-sm text-slate-500">{{ favorite.meal.restaurant.name }}</span>
             </div>
-            <form method="post" class="inline-form">
+            <form method="post" class="inline">
                 {% csrf_token %}
                 <input type="hidden" name="form_type" value="favorite_remove">
                 <input type="hidden" name="favorite_id" value="{{ favorite.id }}">
-                <button class="text-btn" type="submit">移除</button>
+                <button type="submit"
+                    class="text-sm font-medium text-red-600 hover:text-red-800 hover:underline">移除</button>
             </form>
         </li>
         {% endfor %}
     </ul>
     {% else %}
-    <p>尚未收藏任何餐點。</p>
+    <p class="text-slate-500 text-center py-8">尚未收藏任何餐點。</p>
     {% endif %}
 </div>
 {% endblock %}

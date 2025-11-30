@@ -1,227 +1,163 @@
+{% extends 'merchantsideapp/base_sidebar.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="zh-Hant">
+{% block page_title %}Foodie · 管理餐點{% endblock %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Foodie · 管理餐點</title>
-    <link rel="stylesheet" href="{% static 'merchantsideapp/css/merchant_manage_meal.css' %}">
-</head>
-
-<body>
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <button class="toggle-btn" id="toggleBtn">☰</button>
-            <h2 class="logo"><span class="logo-text">Foodie 商家端</span></h2>
+{% block content %}
+<!-- Main Card -->
+<div class="card mb-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-xl font-bold text-gray-900">管理餐點</h1>
+            <p class="text-sm text-gray-500">維護現有餐點資訊，可編輯、刪除、調整或控制餐點上架／下架狀態。</p>
         </div>
-        <ul>
-            <li id="menu-dashboard">
-                <span class="icon">🏠</span>
-                <span class="item-text">主頁總覽</span>
-            </li>
-            <li id="menu-add">
-                <span class="icon">➕</span>
-                <span class="item-text">新增餐點</span>
-            </li>
-            <li class="active" id="menu-manage">
-                <span class="icon">📋</span>
-                <span class="item-text">管理餐點</span>
-            </li>
-            <li id="menu-settings">
-                <span class="icon">⚙️</span>
-                <span class="item-text">設定</span>
-            </li>
-            <li class="logout" id="menu-logout">
-                <span class="icon">🚪</span>
-                <span class="item-text">登出</span>
-            </li>
-        </ul>
+        <button class="btn-primary px-4" type="button" id="btn-go-add">＋ 新增餐點</button>
     </div>
 
-    <div class="main">
-        <div class="main-inner">
-            {% if messages %}
-            <ul class="messages">
-                {% for message in messages %}
-                <li class="{{ message.tags }}">{{ message }}</li>
+    <!-- Filters -->
+    <form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6 p-4 bg-gray-50 rounded-lg"
+        id="manage-filter-form">
+        <div class="form-group lg:col-span-2">
+            <label class="form-label text-xs" for="keyword-input">關鍵字搜尋</label>
+            <input class="form-input" id="keyword-input" name="keyword" type="text" placeholder="輸入餐點名稱或敘述片語"
+                value="{{ keyword }}">
+        </div>
+        <div class="form-group">
+            <label class="form-label text-xs" for="category-select">類別</label>
+            <select class="form-select" id="category-select" name="category">
+                <option value="">全部類別</option>
+                {% for category in categories %}
+                <option value="{{ category }}" {% if category == selected_category %}selected{% endif %}>{{ category }}
+                </option>
                 {% endfor %}
-            </ul>
-            {% endif %}
-            <div class="manage-card">
-                <div class="manage-header">
-                    <div>
-                        <h1 class="manage-title">管理餐點</h1>
-                        <p class="manage-sub">維護現有餐點資訊，可編輯、刪除、調整或控制餐點上架／下架狀態。</p>
-                    </div>
-                    <button class="add-btn primary" type="button" id="btn-go-add">＋ 新增餐點</button>
-                </div>
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label text-xs" for="status-select">狀態</label>
+            <select class="form-select" id="status-select" name="status">
+                <option value="">全部狀態</option>
+                <option value="available" {% if selected_status == 'available' %}selected{% endif %}>上架中</option>
+                <option value="unavailable" {% if selected_status == 'unavailable' %}selected{% endif %}>已下架</option>
+            </select>
+        </div>
+        <div class="flex items-end gap-2">
+            <button type="submit" class="btn-secondary flex-1 text-sm py-2">套用篩選</button>
+            <a class="btn-secondary text-sm py-2 px-3 border-gray-300 text-gray-600"
+                href="{% url 'merchantsideapp:manage_meals' %}">清除</a>
+        </div>
+    </form>
 
-                <form method="get" class="manage-filters" id="manage-filter-form">
-                    <div class="filter-group">
-                        <label for="keyword-input">關鍵字搜尋</label>
-                        <input class="field-input" id="keyword-input" name="keyword" type="text"
-                            placeholder="輸入餐點名稱或敘述片語" value="{{ keyword }}">
-                    </div>
-                    <div class="filter-group">
-                        <label for="category-select">類別</label>
-                        <select class="field-input" id="category-select" name="category">
-                            <option value="">全部類別</option>
-                            {% for category in categories %}
-                            <option value="{{ category }}" {% if category==selected_category %}selected{% endif %}>{{
-                                category }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label for="status-select">狀態</label>
-                        <select class="field-input" id="status-select" name="status">
-                            <option value="">全部狀態</option>
-                            <option value="available" {% if selected_status=='available' %}selected{% endif %}>上架中
-                            </option>
-                            <option value="unavailable" {% if selected_status=='unavailable' %}selected{% endif %}>已下架
-                            </option>
-                        </select>
-                    </div>
-                    <div class="filter-actions">
-                        <button type="submit" class="add-btn secondary">套用篩選</button>
-                        <a class="add-btn ghost" href="{% url 'merchantsideapp:manage_meals' %}">清除條件</a>
-                    </div>
-                </form>
-
-                <div class="menu-list">
-                    <div class="menu-row menu-row-header">
-                        <div class="col-name">餐點名稱</div>
-                        <div class="col-cat">類別</div>
-                        <div class="col-price">價格</div>
-                        <div class="col-status">狀態</div>
-                        <div class="col-actions">操作</div>
-                    </div>
-
-                    {% if meals %}
-                    {% for meal in meals %}
-                    <div class="menu-row" data-meal-id="{{ meal.id }}">
-                        <div class="col-name">
-                            <a class="name-line" href="{% url 'merchantsideapp:meal_detail' meal.id %}">
-                                {{ meal.name }}
-                            </a>
-                            <span class="menu-sub">{{ meal.description|default:"尚未提供餐點描述"|truncatechars:60 }}</span>
-                            <div class="menu-tags">
-                                {% if meal.is_vegetarian %}<span class="menu-tag veg">Vegetarian</span>{% endif %}
-                                {% if meal.is_spicy %}<span class="menu-tag spicy">Spicy</span>{% endif %}
-                                {% if meal.nutrition_count %}<span class="menu-tag meta">營養 {{ meal.nutrition_count }}
-                                    項</span>{% endif %}
-                            </div>
+    <!-- Meal List -->
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+                <tr>
+                    <th class="px-4 py-3 text-left font-medium">餐點名稱</th>
+                    <th class="px-4 py-3 text-left font-medium">類別</th>
+                    <th class="px-4 py-3 text-left font-medium">價格</th>
+                    <th class="px-4 py-3 text-left font-medium">狀態</th>
+                    <th class="px-4 py-3 text-right font-medium">操作</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% if meals %}
+                {% for meal in meals %}
+                <tr class="hover:bg-gray-50" data-meal-id="{{ meal.id }}">
+                    <td class="px-4 py-4">
+                        <a class="font-medium text-gray-900 hover:text-primary-600"
+                            href="{% url 'merchantsideapp:meal_detail' meal.id %}">{{ meal.name }}</a>
+                        <p class="text-xs text-gray-400 mt-0.5">
+                            {{ meal.description|default:"尚未提供餐點描述"|truncatechars:40 }}</p>
+                        <div class="flex gap-1 mt-1">
+                            {% if meal.is_vegetarian %}<span class="pill-success text-xs">素食</span>{% endif %}
+                            {% if meal.is_spicy %}<span class="pill-warning text-xs">辛辣</span>{% endif %}
+                            {% if meal.nutrition_count %}<span class="pill-gray text-xs">營養 
+                                {{ meal.nutrition_count }}項</span>{% endif %}
                         </div>
-                        <div class="col-cat">
-                            <span class="menu-chip">{{ meal.category|default:"未分類" }}</span>
-                        </div>
-                        <div class="col-price">
-                            {% if meal.price %}
-                            <span class="price-value">$ {{ meal.price|floatformat:0 }}</span>
-                            {% else %}
-                            <span class="price-empty">—</span>
-                            {% endif %}
-                        </div>
-                        <div class="col-status">
-                            <span class="status-pill {% if meal.is_available %}on{% else %}off{% endif %}">
-                                {{ meal.is_available|yesno:"上架中,已下架" }}
-                            </span>
-                            <span class="status-meta">更新於 {{ meal.updated_at|date:"n/d" }}</span>
-                        </div>
-                        <div class="col-actions">
-                            <a class="row-btn action-view" href="{% url 'merchantsideapp:meal_detail' meal.id %}">
-                                <span class="btn-icon" aria-hidden="true">👁</span>
-                                <span>詳情</span>
-                            </a>
-                            <a class="row-btn action-edit" href="{% url 'merchantsideapp:edit_meal' meal.id %}">
-                                <span class="btn-icon" aria-hidden="true">✎</span>
-                                <span>編輯</span>
-                            </a>
+                    </td>
+                    <td class="px-4 py-4">
+                        <span class="pill-info text-xs">{{ meal.category|default:"未分類" }}</span>
+                    </td>
+                    <td class="px-4 py-4">
+                        {% if meal.price %}
+                        <span class="font-semibold text-gray-900">$ {{ meal.price|floatformat:0 }}</span>
+                        {% else %}
+                        <span class="text-gray-400">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-4">
+                        <span class="pill-{{ meal.is_available|yesno:'success,gray' }} text-xs">
+                            {{ meal.is_available|yesno:"上架中,已下架" }}</span>
+                        <p class="text-xs text-gray-400 mt-0.5">更新於 {{ meal.updated_at|date:"n/d" }}</p>
+                    </td>
+                    <td class="px-4 py-4">
+                        <div class="flex items-center justify-end gap-2">
+                            <a class="text-gray-500 hover:text-primary-600"
+                                href="{% url 'merchantsideapp:meal_detail' meal.id %}" title="詳情">👁</a>
+                            <a class="text-gray-500 hover:text-primary-600"
+                                href="{% url 'merchantsideapp:edit_meal' meal.id %}" title="編輯">✎</a>
                             <form method="post" action="{% url 'merchantsideapp:delete_meal' meal.id %}"
-                                class="status-form" data-meal-name="{{ meal.name }}"
+                                class="inline status-form" data-meal-name="{{ meal.name }}"
                                 data-action-label="{% if meal.is_available %}下架{% else %}重新上架{% endif %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="action"
                                     value="{% if meal.is_available %}deactivate{% else %}activate{% endif %}">
                                 {% if meal.is_available %}
-                                <button class="row-btn action-down" type="submit">
-                                    <span class="btn-icon" aria-hidden="true">⇣</span>
-                                    <span>下架</span>
-                                </button>
+                                <button class="text-gray-500 hover:text-orange-600" type="submit" title="下架">⇣</button>
                                 {% else %}
-                                <button class="row-btn action-up" type="submit">
-                                    <span class="btn-icon" aria-hidden="true">⇡</span>
-                                    <span>重新上架</span>
-                                </button>
+                                <button class="text-gray-500 hover:text-green-600" type="submit" title="重新上架">⇡</button>
                                 {% endif %}
                             </form>
                         </div>
-                    </div>
-                    {% endfor %}
-                    {% else %}
-                    <div class="menu-empty">
-                        <p>目前尚未新增任何餐點，點擊右上角「新增餐點」即可建立第一道餐點。</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <div class="archived-card">
-                <div class="archived-header">
-                    <div>
-                        <h2>已下架餐點</h2>
-                        <p>最多顯示最近 5 筆下架紀錄，可透過上方「狀態」篩選查看更多。</p>
-                    </div>
-                </div>
-                {% if archived_preview %}
-                <div class="archived-list">
-                    {% for meal in archived_preview %}
-                    <div class="archived-row">
-                        <div>
-                            <div class="archived-name">{{ meal.name }}</div>
-                            <div class="archived-meta">
-                                {{ meal.updated_at|date:"n/d H:i" }} · {{ meal.category|default:"未分類" }}
-                            </div>
-                        </div>
-                        <div class="archived-actions">
-                            <span class="archived-status">已下架</span>
-                            <form method="post" action="{% url 'merchantsideapp:delete_meal' meal.id %}"
-                                class="status-form" data-meal-name="{{ meal.name }}" data-action-label="重新上架">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="activate">
-                                <button class="row-btn action-up" type="submit">
-                                    <span class="btn-icon" aria-hidden="true">⇡</span>
-                                    <span>重新上架</span>
-                                </button>
-                            </form>
-                            <a class="row-btn action-edit" href="{% url 'merchantsideapp:edit_meal' meal.id %}">
-                                <span class="btn-icon" aria-hidden="true">✎</span>
-                                <span>編輯</span>
-                            </a>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
+                    </td>
+                </tr>
+                {% endfor %}
                 {% else %}
-                <div class="archived-empty">目前沒有下架紀錄，點選上方「下架」即可在此快速查看。</div>
+                <tr>
+                    <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+                        目前尚未新增任何餐點，點擊右上角「新增餐點」即可建立第一道餐點。
+                    </td>
+                </tr>
                 {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Archived Section -->
+<div class="card">
+    <div class="mb-4">
+        <h2 class="text-lg font-semibold text-gray-900">已下架餐點</h2>
+        <p class="text-sm text-gray-500">最多顯示最近 5 筆下架紀錄，可透過上方「狀態」篩選查看更多。</p>
+    </div>
+    {% if archived_preview %}
+    <div class="space-y-3">
+        {% for meal in archived_preview %}
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div>
+                <div class="font-medium text-gray-900">{{ meal.name }}</div>
+                <div class="text-xs text-gray-500">{{ meal.updated_at|date:"n/d H:i" }} · {{ meal.category|default:"未分類"
+                    }}</div>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="pill-gray text-xs">已下架</span>
+                <form method="post" action="{% url 'merchantsideapp:delete_meal' meal.id %}" class="inline status-form"
+                    data-meal-name="{{ meal.name }}" data-action-label="重新上架">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="activate">
+                    <button class="btn-secondary text-xs px-3 py-1" type="submit">⇡ 重新上架</button>
+                </form>
+                <a class="btn-secondary text-xs px-3 py-1" href="{% url 'merchantsideapp:edit_meal' meal.id %}">✎ 編輯</a>
             </div>
         </div>
+        {% endfor %}
     </div>
+    {% else %}
+    <p class="text-center text-gray-500 py-6">目前沒有下架紀錄，點選上方「下架」即可在此快速查看。</p>
+    {% endif %}
+</div>
+{% endblock %}
 
-    <script>
-        window.merchantRoutes = {
-            dashboard: "{% url 'merchantsideapp:dashboard' %}",
-            addMeal: "{% url 'merchantsideapp:add_meal' %}",
-            manageMeals: "{% url 'merchantsideapp:manage_meals' %}",
-            settings: "{% url 'merchantsideapp:settings' %}",
-            login: "{% url 'merchantsideapp:login' %}",
-            logout: "{% url 'merchantsideapp:logout' %}"
-        };
-    </script>
-    <script src="{% static 'merchantsideapp/js/merchant_homepage.js' %}"></script>
-    <script src="{% static 'merchantsideapp/js/merchant_manage_meals.js' %}"></script>
-</body>
-
-</html>
+{% block extra_js %}
+<script src="{% static 'merchantsideapp/js/merchant_manage_meals.js' %}"></script>
+{% endblock %}

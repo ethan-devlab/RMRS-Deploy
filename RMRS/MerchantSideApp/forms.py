@@ -67,7 +67,7 @@ class MerchantRegistrationForm(forms.Form):
         ),
     )
     password2 = forms.CharField(
-        label="再次輸入密碼",
+        label="確認密碼",
         widget=forms.PasswordInput(
             attrs={
                 "placeholder": "再次輸入密碼",
@@ -335,15 +335,8 @@ class MealCreateForm(forms.ModelForm):
 class MerchantAccountForm(forms.ModelForm):
     class Meta:
         model = MerchantAccount
-        fields = ["merchant_name", "email", "phone"]
+        fields = ["email", "phone"]
         widgets = {
-            "merchant_name": forms.TextInput(
-                attrs={
-                    "class": "field-input",
-                    "placeholder": "設定登入時使用的名稱",
-                    "autocomplete": "username",
-                }
-            ),
             "email": forms.EmailInput(
                 attrs={
                     "class": "field-input",
@@ -369,17 +362,6 @@ class MerchantAccountForm(forms.ModelForm):
             raise forms.ValidationError("此 Email 已被其他帳號使用。")
         return email
 
-    def clean_merchant_name(self):
-        name = (self.cleaned_data.get("merchant_name") or "").strip()
-        if not name:
-            raise forms.ValidationError("商家名稱不可空白。")
-        qs = MerchantAccount.objects.filter(merchant_name__iexact=name)
-        if self.instance.pk:
-            qs = qs.exclude(pk=self.instance.pk)
-        if qs.exists():
-            raise forms.ValidationError("此商家名稱已被其他帳號使用。")
-        return name
-
     def clean_phone(self):
         phone = (self.cleaned_data.get("phone") or "").strip()
         if not phone:
@@ -393,7 +375,6 @@ class MerchantAccountForm(forms.ModelForm):
 
     def save(self, commit: bool = True):
         merchant = super().save(commit=False)
-        merchant.merchant_name = self.cleaned_data["merchant_name"].strip()
         merchant.email = self.cleaned_data["email"].strip().lower()
         phone = self.cleaned_data.get("phone") or None
         merchant.phone = phone
@@ -463,6 +444,28 @@ class MerchantPasswordChangeForm(forms.Form):
         return self.merchant
 
 
+class RestaurantNameForm(forms.ModelForm):
+    class Meta:
+        model = Restaurant
+        fields = ["name"]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": "field-input",
+                    "placeholder": "餐廳名稱",
+                    "autocomplete": "organization",
+                    "id": "merchant-restaurant-name",
+                }
+            )
+        }
+
+    def clean_name(self):
+        name = (self.cleaned_data.get("name") or "").strip()
+        if not name:
+            raise forms.ValidationError("餐廳名稱不可空白。")
+        return name
+
+
 class RestaurantProfileForm(forms.ModelForm):
     class Meta:
         model = Restaurant
@@ -521,15 +524,15 @@ class RestaurantProfileForm(forms.ModelForm):
             "latitude": forms.NumberInput(
                 attrs={
                     "class": "field-input",
-                    "placeholder": "緯度 (例如 25.03396)",
-                    "step": "0.000001",
+                    "placeholder": "緯度 (例如 25.0339654)",
+                    "step": "0.0000001",
                 }
             ),
             "longitude": forms.NumberInput(
                 attrs={
                     "class": "field-input",
-                    "placeholder": "經度 (例如 121.56447)",
-                    "step": "0.000001",
+                    "placeholder": "經度 (例如 121.5644733)",
+                    "step": "0.0000001",
                 }
             ),
         }

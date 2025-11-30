@@ -41,28 +41,33 @@ class UserRegistrationForm(forms.ModelForm):
     password1 = forms.CharField(
         label="密碼",
         widget=forms.PasswordInput(
-            attrs={"placeholder": "密碼", "autocomplete": "new-password"}
+            attrs={"placeholder": "密碼", "autocomplete": "new-password", "class": "form-input"}
         ),
     )
     password2 = forms.CharField(
         label="確認密碼",
         widget=forms.PasswordInput(
-            attrs={"placeholder": "再次輸入密碼", "autocomplete": "new-password"}
+            attrs={"placeholder": "再次輸入密碼", "autocomplete": "new-password", "class": "form-input"}
         ),
     )
 
     class Meta:
         model = AppUser
         fields = ["username", "full_name", "email"]
+        labels = {
+            "username": "帳號",
+            "full_name": "姓名",
+            "email": "Email",
+        }
         widgets = {
             "username": forms.TextInput(
-                attrs={"placeholder": "使用者名稱", "autocomplete": "username"}
+                attrs={"placeholder": "使用者名稱", "autocomplete": "username", "class": "form-input"}
             ),
             "full_name": forms.TextInput(
-                attrs={"placeholder": "顯示名稱(可留空)", "autocomplete": "name"}
+                attrs={"placeholder": "顯示名稱(可留空)", "autocomplete": "name", "class": "form-input"}
             ),
             "email": forms.EmailInput(
-                attrs={"placeholder": "使用者 Email", "autocomplete": "email"}
+                attrs={"placeholder": "使用者 Email", "autocomplete": "email", "class": "form-input"}
             ),
         }
 
@@ -96,18 +101,22 @@ class UserRegistrationForm(forms.ModelForm):
 
 class UserLoginForm(forms.Form):
     identifier = forms.CharField(
-        label="帳號 (Email / 手機 / 使用者名稱)",
+        label="帳號 (使用者名稱 / Email / 手機)",
         widget=forms.TextInput(
             attrs={
-                "placeholder": "Email / 手機 / 使用者名稱",
+                "placeholder": "使用者名稱 / Email / 手機",
                 "autocomplete": "username",
+                "class": "form-input",
             }
         ),
     )
     password = forms.CharField(
         label="密碼",
         widget=forms.PasswordInput(
-            attrs={"placeholder": "密碼", "autocomplete": "current-password"}
+            attrs={"placeholder": "密碼", 
+                   "autocomplete": "current-password", 
+                   "class": "form-input"
+            }
         ),
     )
 

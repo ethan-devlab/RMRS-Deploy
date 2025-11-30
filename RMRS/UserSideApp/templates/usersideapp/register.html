@@ -1,80 +1,60 @@
+{% extends 'shared/layouts/auth_base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="zh-Hant">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Foodie · 使用者註冊</title>
-    <link rel="stylesheet" href="{% static 'usersideapp/css/User_register.css' %}">
-</head>
+{% block page_title %}Foodie · 使用者註冊{% endblock %}
+{% block auth_title %}Create User Account{% endblock %}
+{% block auth_subtitle %}建立您的使用者帳號{% endblock %}
 
-<body>
-    <div class="register-container">
-        <h2>Create User Account</h2>
-        <p>建立您的使用者帳號</p>
+{% block auth_content %}
+<form method="post" class="space-y-4" novalidate>
+    {% csrf_token %}
 
-        {% if messages %}
-        <div class="flash-messages">
-            {% for message in messages %}
-            <div class="flash-message {{ message.tags }}">{{ message }}</div>
-            {% endfor %}
-        </div>
-        {% endif %}
+    {% include 'shared/components/form_errors.html' with form=form %}
 
-        <form method="post" novalidate>
-            {% csrf_token %}
-
-            {% if form.non_field_errors %}
-            <div class="form-errors">
-                {% for error in form.non_field_errors %}
-                <p>{{ error }}</p>
-                {% endfor %}
-            </div>
-            {% endif %}
-
-            <div class="form-field">
-                {{ form.username }}
-                {% for error in form.username.errors %}
-                <p class="field-error">{{ error }}</p>
-                {% endfor %}
-            </div>
-
-            <div class="form-field">
-                {{ form.full_name }}
-                {% for error in form.full_name.errors %}
-                <p class="field-error">{{ error }}</p>
-                {% endfor %}
-            </div>
-
-            <div class="form-field">
-                {{ form.email }}
-                {% for error in form.email.errors %}
-                <p class="field-error">{{ error }}</p>
-                {% endfor %}
-            </div>
-
-            <div class="form-field">
-                {{ form.password1 }}
-                {% for error in form.password1.errors %}
-                <p class="field-error">{{ error }}</p>
-                {% endfor %}
-            </div>
-
-            <div class="form-field">
-                {{ form.password2 }}
-                {% for error in form.password2.errors %}
-                <p class="field-error">{{ error }}</p>
-                {% endfor %}
-            </div>
-
-            <button type="submit" class="register-btn">註冊</button>
-        </form>
-
-        <div class="signin">
-            已經有帳號了嗎？ <a href="{% url 'usersideapp:login' %}">回到登入頁</a>
-        </div>
+    <div class="form-group">
+        <label class="form-label" for="id_username">{{ form.username.label }}</label>
+        {{ form.username }}
+        {% for error in form.username.errors %}
+        <p class="form-error">{{ error }}</p>
+        {% endfor %}
     </div>
-</body>
 
-</html>
+    <div class="form-group">
+        <label class="form-label" for="id_full_name">{{ form.full_name.label }}</label>
+        {{ form.full_name }}
+        {% for error in form.full_name.errors %}
+        <p class="form-error">{{ error }}</p>
+        {% endfor %}
+    </div>
+
+    <div class="form-group">
+        <label class="form-label" for="id_email">{{ form.email.label }}</label>
+        {{ form.email }}
+        {% for error in form.email.errors %}
+        <p class="form-error">{{ error }}</p>
+        {% endfor %}
+    </div>
+
+    <div class="form-group">
+        <label class="form-label" for="id_password1">{{ form.password1.label }}</label>
+        {{ form.password1 }}
+        {% for error in form.password1.errors %}
+        <p class="form-error">{{ error }}</p>
+        {% endfor %}
+    </div>
+
+    <div class="form-group">
+        <label class="form-label" for="id_password2">{{ form.password2.label }}</label>
+        {{ form.password2 }}
+        {% for error in form.password2.errors %}
+        <p class="form-error">{{ error }}</p>
+        {% endfor %}
+    </div>
+
+    <button type="submit" class="btn-primary btn-block btn-lg mt-2">註冊</button>
+</form>
+{% endblock %}
+
+{% block auth_footer %}
+已經有帳號了嗎？ <a href="{% url 'usersideapp:login' %}">回到登入頁</a>
+{% endblock %}
