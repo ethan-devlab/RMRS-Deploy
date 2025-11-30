@@ -438,6 +438,7 @@ class UserPreferenceForm(MealCategoryChoiceMixin, forms.ModelForm):
             "price_range",
             "is_vegetarian",
             "avoid_spicy",
+            "recommendation_cooldown_days",
         ]
         widgets = {
             "cuisine_type": forms.TextInput(
@@ -446,6 +447,13 @@ class UserPreferenceForm(MealCategoryChoiceMixin, forms.ModelForm):
                 }
             ),
             "price_range": forms.Select(attrs={"class": "select"}),
+            "recommendation_cooldown_days": forms.NumberInput(
+                attrs={
+                    "min": 1,
+                    "max": 30,
+                    "placeholder": "1-30 天，留空使用系統預設",
+                }
+            ),
         }
 
     def __init__(self, user: AppUser | None = None, *args, **kwargs):
@@ -456,6 +464,10 @@ class UserPreferenceForm(MealCategoryChoiceMixin, forms.ModelForm):
         self.fields["price_range"].required = False
         self.fields["is_vegetarian"].label = "偏好全素"
         self.fields["avoid_spicy"].label = "避免辛辣"
+        cooldown_field = self.fields["recommendation_cooldown_days"]
+        cooldown_field.required = False
+        cooldown_field.label = "推薦冷卻天數"
+        cooldown_field.help_text = "1-30 天，可避免系統太快推薦同一道餐點。"
 
     def save(self, commit: bool = True):
         preference = super().save(commit=False)

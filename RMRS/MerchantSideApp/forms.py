@@ -10,6 +10,19 @@ from django.db.models import Q
 from .models import Meal, MerchantAccount, Restaurant
 
 
+class MerchantImageInput(forms.ClearableFileInput):
+    template_name = "merchantsideapp/widgets/image_input.html"
+    initial_text = ""
+    input_text = ""
+    clear_checkbox_label = "移除目前照片"
+
+    def __init__(self, *args, **kwargs):
+        attrs = kwargs.setdefault("attrs", {})
+        attrs.setdefault("class", "field-input file-upload-input")
+        attrs.setdefault("accept", "image/*")
+        super().__init__(*args, **kwargs)
+
+
 class MerchantRegistrationForm(forms.Form):
     restaurant_name = forms.CharField(
         label="餐廳名稱",
@@ -113,10 +126,10 @@ class MerchantRegistrationForm(forms.Form):
 
 class MerchantLoginForm(forms.Form):
     identifier = forms.CharField(
-        label="商家帳號 (Email / 手機 / 商家名稱)",
+        label="商家帳號 (商家名稱 / Email / 手機)",
         widget=forms.TextInput(
             attrs={
-                "placeholder": "Email / 手機 / 商家名稱",
+                "placeholder": "商家名稱 / Email / 手機",
                 "autocomplete": "username",
                 "class": "form-input",
             }
@@ -147,14 +160,6 @@ class MerchantLoginForm(forms.Form):
         except FieldDoesNotExist:
             return False
 
-    @staticmethod
-    def _restaurant_has_field(field_name: str) -> bool:
-        try:
-            Restaurant._meta.get_field(field_name)
-            return True
-        except FieldDoesNotExist:
-            return False
-
     def _identifier_variants(self, identifier: str) -> list[str]:
         base = identifier.strip()
         variants: list[str] = [base]
@@ -176,11 +181,6 @@ class MerchantLoginForm(forms.Form):
         for field_name in self.identifier_fields:
             if self._has_field(field_name):
                 query |= Q(**{f"{field_name}__iexact": identifier})
-        query |= Q(restaurant__name__iexact=identifier)
-        if self._restaurant_has_field("phone"):
-            query |= Q(restaurant__phone__iexact=identifier)
-        if self._restaurant_has_field("phone_number"):
-            query |= Q(restaurant__phone_number__iexact=identifier)
         if not query:
             query = Q(email__iexact=identifier)
         return query
@@ -225,6 +225,7 @@ class MealCreateForm(forms.ModelForm):
             "is_vegetarian",
             "is_spicy",
             "image_url",
+            "image_file",
         ]
         widgets = {
             "name": forms.TextInput(
@@ -248,6 +249,7 @@ class MealCreateForm(forms.ModelForm):
                     "class": "field-input",
                 }
             ),
+            "image_file": MerchantImageInput(),
         }
 
     def __init__(self, restaurant: Restaurant, *args, **kwargs):
@@ -299,19 +301,23 @@ class MealCreateForm(forms.ModelForm):
             quantity = str(raw.get("quantity", "")).strip() or None
             calories_value = raw.get("calories")
             calories_decimal = self._parse_decimal(calories_value) or Decimal("0")
-            metadata = {}
+            macro_values: dict[str, Decimal] = {}
             for key in ("protein", "carb", "fat"):
                 parsed = self._parse_decimal(raw.get(key))
                 if parsed is not None:
-                    metadata[key] = float(parsed)
-            if raw.get("notes"):
-                metadata["notes"] = str(raw["notes"]).strip()
+                    macro_values[key] = parsed
+            notes = str(raw.get("notes", "")).strip() or None
+            metadata = {"notes": notes} if notes else None
             cleaned_entries.append(
                 {
                     "name": name,
                     "quantity": quantity,
                     "calories": calories_decimal,
-                    "metadata": metadata or None,
+                    "protein": macro_values.get("protein"),
+                    "carb": macro_values.get("carb"),
+                    "fat": macro_values.get("fat"),
+                    "notes": notes,
+                    "metadata": metadata,
                 }
             )
 
@@ -329,22 +335,29 @@ class MealCreateForm(forms.ModelForm):
 class MerchantAccountForm(forms.ModelForm):
     class Meta:
         model = MerchantAccount
-        fields = ["display_name", "email"]
+        fields = ["merchant_name", "email", "phone"]
         widgets = {
-            "display_name": forms.TextInput(
+            "merchant_name": forms.TextInput(
                 attrs={
                     "class": "field-input",
-                    "placeholder": "使用者名稱",
-                    "autocomplete": "nickname",
+                    "placeholder": "設定登入時使用的名稱",
+                    "autocomplete": "username",
                 }
             ),
             "email": forms.EmailInput(
                 attrs={
                     "class": "field-input",
-                    "placeholder": "商家登入 Email",
+                    "placeholder": "商家 Email",
                     "autocomplete": "email",
                 }
-            )
+            ),
+            "phone": forms.TextInput(
+                attrs={
+                    "class": "field-input",
+                    "placeholder": "商家聯絡電話",
+                    "autocomplete": "tel",
+                }
+            ),
         }
 
     def clean_email(self):
@@ -356,11 +369,38 @@ class MerchantAccountForm(forms.ModelForm):
             raise forms.ValidationError("此 Email 已被其他帳號使用。")
         return email
 
-    def clean_display_name(self):
-        name = (self.cleaned_data.get("display_name") or "").strip()
+    def clean_merchant_name(self):
+        name = (self.cleaned_data.get("merchant_name") or "").strip()
         if not name:
-            raise forms.ValidationError("使用者名稱不可空白。")
+            raise forms.ValidationError("商家名稱不可空白。")
+        qs = MerchantAccount.objects.filter(merchant_name__iexact=name)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError("此商家名稱已被其他帳號使用。")
         return name
+
+    def clean_phone(self):
+        phone = (self.cleaned_data.get("phone") or "").strip()
+        if not phone:
+            return phone
+        qs = MerchantAccount.objects.filter(phone__iexact=phone)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError("此電話已被其他帳號使用。")
+        return phone
+
+    def save(self, commit: bool = True):
+        merchant = super().save(commit=False)
+        merchant.merchant_name = self.cleaned_data["merchant_name"].strip()
+        merchant.email = self.cleaned_data["email"].strip().lower()
+        phone = self.cleaned_data.get("phone") or None
+        merchant.phone = phone
+        if commit:
+            merchant.save()
+        self.save_m2m()
+        return merchant
 
 
 class MerchantPasswordChangeForm(forms.Form):

@@ -42,11 +42,11 @@
     <div class="main">
         <div class="main-inner">
             {% if messages %}
-                <ul class="messages">
-                    {% for message in messages %}
-                        <li class="{{ message.tags }}">{{ message }}</li>
-                    {% endfor %}
-                </ul>
+            <ul class="messages">
+                {% for message in messages %}
+                <li class="{{ message.tags }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
             {% endif %}
 
             <div class="welcome-box settings-hero">
@@ -66,14 +66,20 @@
                     <input type="hidden" name="form_type" value="account">
                     <div class="settings-form-grid">
                         <div class="field-group">
-                            <label class="field-label" for="id_display_name">顯示名稱</label>
-                            {{ account_form.display_name }}
-                            {{ account_form.display_name.errors }}
+                            <label class="field-label" for="id_merchant_name">商家名稱</label>
+                            {{ account_form.merchant_name }}
+                            {{ account_form.merchant_name.errors }}
+                            <p class="field-hint">此名稱用於登入與識別，如需調整請聯絡客服協助。</p>
                         </div>
                         <div class="field-group">
                             <label class="field-label" for="id_email">商家 Email</label>
                             {{ account_form.email }}
                             {{ account_form.email.errors }}
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label" for="id_phone">聯絡電話</label>
+                            {{ account_form.phone }}
+                            {{ account_form.phone.errors }}
                         </div>
                     </div>
                     <div class="settings-actions">

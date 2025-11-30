@@ -68,7 +68,7 @@
                         <select class="field-input" id="category-select" name="category">
                             <option value="">全部類別</option>
                             {% for category in categories %}
-                            <option value="{{ category }}" {% if category == selected_category %}selected{% endif %}>{{
+                            <option value="{{ category }}" {% if category==selected_category %}selected{% endif %}>{{
                                 category }}</option>
                             {% endfor %}
                         </select>
@@ -77,9 +77,9 @@
                         <label for="status-select">狀態</label>
                         <select class="field-input" id="status-select" name="status">
                             <option value="">全部狀態</option>
-                            <option value="available" {% if selected_status == 'available' %}selected{% endif %}>上架中
+                            <option value="available" {% if selected_status=='available' %}selected{% endif %}>上架中
                             </option>
-                            <option value="unavailable" {% if selected_status == 'unavailable' %}selected{% endif %}>已下架
+                            <option value="unavailable" {% if selected_status=='unavailable' %}selected{% endif %}>已下架
                             </option>
                         </select>
                     </div>
@@ -139,12 +139,22 @@
                                 <span>編輯</span>
                             </a>
                             <form method="post" action="{% url 'merchantsideapp:delete_meal' meal.id %}"
-                                class="delete-form" data-meal-name="{{ meal.name }}">
+                                class="status-form" data-meal-name="{{ meal.name }}"
+                                data-action-label="{% if meal.is_available %}下架{% else %}重新上架{% endif %}">
                                 {% csrf_token %}
+                                <input type="hidden" name="action"
+                                    value="{% if meal.is_available %}deactivate{% else %}activate{% endif %}">
+                                {% if meal.is_available %}
                                 <button class="row-btn action-down" type="submit">
                                     <span class="btn-icon" aria-hidden="true">⇣</span>
                                     <span>下架</span>
                                 </button>
+                                {% else %}
+                                <button class="row-btn action-up" type="submit">
+                                    <span class="btn-icon" aria-hidden="true">⇡</span>
+                                    <span>重新上架</span>
+                                </button>
+                                {% endif %}
                             </form>
                         </div>
                     </div>
@@ -176,6 +186,15 @@
                         </div>
                         <div class="archived-actions">
                             <span class="archived-status">已下架</span>
+                            <form method="post" action="{% url 'merchantsideapp:delete_meal' meal.id %}"
+                                class="status-form" data-meal-name="{{ meal.name }}" data-action-label="重新上架">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="activate">
+                                <button class="row-btn action-up" type="submit">
+                                    <span class="btn-icon" aria-hidden="true">⇡</span>
+                                    <span>重新上架</span>
+                                </button>
+                            </form>
                             <a class="row-btn action-edit" href="{% url 'merchantsideapp:edit_meal' meal.id %}">
                                 <span class="btn-icon" aria-hidden="true">✎</span>
                                 <span>編輯</span>

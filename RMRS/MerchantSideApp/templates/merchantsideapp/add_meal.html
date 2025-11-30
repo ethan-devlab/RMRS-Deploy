@@ -42,11 +42,11 @@
     <div class="main">
         <div class="main-inner">
             {% if messages %}
-                <ul class="messages">
-                    {% for message in messages %}
-                        <li class="{{ message.tags }}">{{ message }}</li>
-                    {% endfor %}
-                </ul>
+            <ul class="messages">
+                {% for message in messages %}
+                <li class="{{ message.tags }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
             {% endif %}
             <div class="add-card">
                 <div class="add-form-section">
@@ -54,36 +54,41 @@
                         <div>
                             <p class="add-subtitle">{{ page_title|default:"新增餐點" }}</p>
                             {% if is_edit and meal %}
-                                <h2 class="add-title">正在編輯：{{ meal.name }}</h2>
+                            <h2 class="add-title">正在編輯：{{ meal.name }}</h2>
                             {% else %}
-                                <h2 class="add-title">餐點基本資料</h2>
+                            <h2 class="add-title">餐點基本資料</h2>
                             {% endif %}
                         </div>
                         {% if is_edit %}
-                            <a class="add-btn ghost" href="{% url 'merchantsideapp:add_meal' %}">＋ 改為新增</a>
+                        <a class="add-btn ghost" href="{% url 'merchantsideapp:add_meal' %}">＋ 改為新增</a>
                         {% endif %}
                     </div>
-                    <form method="post" class="add-form" novalidate>
+                    <form method="post" enctype="multipart/form-data" class="add-form" novalidate>
                         {% csrf_token %}
                         {% if form.non_field_errors %}
-                            <div class="form-errors">
-                                {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
-                            </div>
+                        <div class="form-errors">
+                            {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+                        </div>
                         {% endif %}
 
                         <div class="field-row two-cols">
                             <div class="field-group">
-                                <label class="field-label" for="{{ form.name.id_for_label }}">品項名稱 <span class="req">*</span></label>
+                                <label class="field-label" for="{{ form.name.id_for_label }}">品項名稱 <span
+                                        class="req">*</span></label>
                                 {{ form.name }}
                                 {% if form.name.errors %}
-                                    <div class="field-errors">{% for error in form.name.errors %}<p>{{ error }}</p>{% endfor %}</div>
+                                <div class="field-errors">
+                                    {% for error in form.name.errors %}<p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
                                 {% endif %}
                             </div>
                             <div class="field-group">
-                                <label class="field-label" for="{{ form.category.id_for_label }}">品項類別 <span class="req">*</span></label>
+                                <label class="field-label" for="{{ form.category.id_for_label }}">品項類別 <span
+                                        class="req">*</span></label>
                                 {{ form.category }}
                                 {% if form.category.errors %}
-                                    <div class="field-errors">{% for error in form.category.errors %}<p>{{ error }}</p>{% endfor %}</div>
+                                <div class="field-errors">{% for error in form.category.errors %}<p>{{ error }}</p>{% endfor %}</div>
                                 {% endif %}
                             </div>
                         </div>
@@ -92,25 +97,50 @@
                             <label class="field-label" for="{{ form.description.id_for_label }}">品項敘述</label>
                             {{ form.description }}
                             {% if form.description.errors %}
-                                <div class="field-errors">{% for error in form.description.errors %}<p>{{ error }}</p>{% endfor %}</div>
+                            <div class="field-errors">{% for error in form.description.errors %}<p>{{ error }}</p>
+                                {%endfor %}</div>
                             {% endif %}
                         </div>
 
                         <div class="field-row two-cols">
                             <div class="field-group short">
-                                <label class="field-label" for="{{ form.price.id_for_label }}">價格（元） <span class="req">*</span></label>
+                                <label class="field-label" for="{{ form.price.id_for_label }}">價格（元） <span
+                                        class="req">*</span></label>
                                 {{ form.price }}
                                 {% if form.price.errors %}
-                                    <div class="field-errors">{% for error in form.price.errors %}<p>{{ error }}</p>{% endfor %}</div>
+                                <div class="field-errors">{% for error in form.price.errors %}<p>{{ error }}</p>
+                                    {% endfor %}</div>
                                 {% endif %}
                             </div>
                             <div class="field-group">
                                 <label class="field-label" for="{{ form.image_url.id_for_label }}">餐點照片（URL）</label>
                                 {{ form.image_url }}
                                 {% if form.image_url.errors %}
-                                    <div class="field-errors">{% for error in form.image_url.errors %}<p>{{ error }}</p>{% endfor %}</div>
+                                <div class="field-errors">{% for error in form.image_url.errors %}<p>{{ error }}</p>
+                                    {% endfor %}</div>
                                 {% endif %}
                             </div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label" for="{{ form.image_file.id_for_label }}">或上傳餐點照片</label>
+                            {{ form.image_file }}
+                            <p class="field-hint">支援 jpg / png，建議 5MB 以內</p>
+                            {% if form.image_file.errors %}
+                            <div class="field-errors">{% for error in form.image_file.errors %}<p>{{ error }}</p>
+                                {% endfor %}</div>
+                            {% endif %}
+                            {% if is_edit and meal %}
+                            <div class="upload-preview">
+                                <p class="upload-preview-label">目前餐點照片</p>
+                                {% with current_image=meal.get_image_source %}
+                                {% if current_image %}
+                                <img src="{{ current_image }}" alt="{{ meal.name }} 目前圖片" class="upload-preview-image">
+                                {% else %}
+                                <div class="upload-preview-placeholder">尚未上傳餐點照片</div>
+                                {% endif %}
+                                {% endwith %}
+                            </div>
+                            {% endif %}
                         </div>
 
                         <div class="toggle-row">
@@ -124,18 +154,19 @@
                             </label>
                         </div>
                         {% if form.is_vegetarian.errors %}
-                            <div class="field-errors">{% for error in form.is_vegetarian.errors %}<p>{{ error }}</p>{% endfor %}</div>
+                        <div class="field-errors">{% for error in form.is_vegetarian.errors %}<p>{{ error }}</p>
+                            {% endfor %}</div>
                         {% endif %}
                         {% if form.is_spicy.errors %}
-                            <div class="field-errors">{% for error in form.is_spicy.errors %}<p>{{ error }}</p>{% endfor %}</div>
+                        <div class="field-errors">{% for error in form.is_spicy.errors %}<p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
                         {% endif %}
-
-                        <input type="file" id="meal-photo" accept="image/*" style="display:none;">
 
                         <div class="nutrition-section">
                             <div class="nutrition-header">
                                 <h3>餐點營養成分</h3>
-                                <p class="nutrition-hint">新增每份營養數值，將會儲存在 meal_components.metadata 欄位中。</p>
+                                <p class="nutrition-hint">新增每份營養數值，將會儲存在 nutrition_info 資料表中。</p>
                                 <div class="nutrition-tags">
                                     <span class="nutrition-chip">每 1 份</span>
                                     <span class="nutrition-chip subtle">以標準 100g/100ml 計</span>
@@ -154,11 +185,13 @@
                                         </div>
                                         <div class="nutrition-field">
                                             <label class="nutrition-label" for="nutrition-calories">熱量 (kcal)</label>
-                                            <input type="number" step="0.1" min="0" id="nutrition-calories" placeholder="0">
+                                            <input type="number" step="0.1" min="0" id="nutrition-calories"
+                                                placeholder="0">
                                         </div>
                                         <div class="nutrition-field">
                                             <label class="nutrition-label" for="nutrition-protein">蛋白質 (g)</label>
-                                            <input type="number" step="0.1" min="0" id="nutrition-protein" placeholder="0">
+                                            <input type="number" step="0.1" min="0" id="nutrition-protein"
+                                                placeholder="0">
                                         </div>
                                         <div class="nutrition-field">
                                             <label class="nutrition-label" for="nutrition-carb">碳水 (g)</label>
@@ -175,8 +208,10 @@
                                         <div class="nutrition-actions">
                                             <div class="nutrition-meta">輸入完成後點選下方按鈕，將成分加入本次餐點。</div>
                                             <div class="nutrition-action-buttons">
-                                                <button type="button" class="add-btn secondary" id="nutrition-add-btn">加入營養成分</button>
-                                                <button type="button" class="add-btn ghost" id="nutrition-cancel-btn" hidden>取消編輯</button>
+                                                <button type="button" class="add-btn secondary"
+                                                    id="nutrition-add-btn">加入營養成分</button>
+                                                <button type="button" class="add-btn ghost" id="nutrition-cancel-btn"
+                                                    hidden>取消編輯</button>
                                             </div>
                                         </div>
                                     </div>
@@ -185,7 +220,8 @@
                                     <div class="nutrition-preview-header">
                                         <div>
                                             <p class="preview-title">本次新增成分</p>
-                                            <p class="preview-sub">已加入 <span id="nutrition-count">0</span> 項，按住可拖曳重新排序（即將推出）。</p>
+                                            <p class="preview-sub">已加入 <span id="nutrition-count">0</span>
+                                                項，按住可拖曳重新排序（即將推出）。</p>
                                         </div>
                                         <span class="preview-chip">營養資訊預覽</span>
                                     </div>
@@ -195,7 +231,9 @@
                             </div>
                             {{ form.nutrition_payload }}
                             {% if form.nutrition_payload.errors %}
-                                <div class="field-errors">{% for error in form.nutrition_payload.errors %}<p>{{ error }}</p>{% endfor %}</div>
+                            <div class="field-errors">{% for error in form.nutrition_payload.errors %}<p>
+                                    {{ error }}</p>
+                                {% endfor %}</div>
                             {% endif %}
                         </div>
 

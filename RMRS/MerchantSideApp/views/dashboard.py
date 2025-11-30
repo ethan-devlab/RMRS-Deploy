@@ -1,4 +1,5 @@
 import json
+from decimal import Decimal
 
 from django.contrib import messages
 from django.db import transaction
@@ -13,7 +14,7 @@ from ..forms import (
     MerchantPasswordChangeForm,
     RestaurantProfileForm,
 )
-from ..models import Restaurant, Meal
+from ..models import Restaurant, Meal, NutritionInfo
 from UserSideApp.models import MealComponent
 
 
@@ -58,23 +59,103 @@ def _extract_ingredients(meal_components):
 
 def _persist_nutrition_components(meal, entries):
     MealComponent.objects.filter(meal=meal).delete()
+    if entries:
+        MealComponent.objects.bulk_create(
+            [
+                MealComponent(
+                    meal=meal,
+                    name=entry["name"],
+                    quantity=entry["quantity"],
+                    calories=entry["calories"],
+                    metadata=entry["metadata"],
+                )
+                for entry in entries
+            ],
+        )
+    _persist_meal_nutrition(meal, entries)
+
+
+def _coerce_decimal(value: Decimal | float | str | int | None) -> Decimal:
+    if isinstance(value, Decimal):
+        return value
+    if value in (None, ""):
+        return Decimal("0")
+    return Decimal(str(value))
+
+
+def _coerce_float(value: Decimal | float | str | int | None) -> float | None:
+    if value in (None, ""):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):  # pragma: no cover - defensive
+        return None
+
+
+def _persist_meal_nutrition(meal, entries):
     if not entries:
+        NutritionInfo.objects.filter(meal=meal).delete()
         return
-    MealComponent.objects.bulk_create(
-        [
-            MealComponent(
-                meal=meal,
-                name=entry["name"],
-                quantity=entry["quantity"],
-                calories=entry["calories"],
-                metadata=entry["metadata"],
-            )
-            for entry in entries
-        ],
+
+    has_nutrition = False
+    totals = {
+        "calories": Decimal("0"),
+        "protein": Decimal("0"),
+        "carbohydrate": Decimal("0"),
+        "fat": Decimal("0"),
+    }
+
+    for entry in entries:
+        calories = entry.get("calories")
+        if calories is not None:
+            totals["calories"] += _coerce_decimal(calories)
+            has_nutrition = has_nutrition or _coerce_decimal(calories) > 0
+        for source_key, total_key in (("protein", "protein"), ("carb", "carbohydrate"), ("fat", "fat")):
+            macro_value = entry.get(source_key)
+            if macro_value is not None:
+                totals[total_key] += _coerce_decimal(macro_value)
+                has_nutrition = True
+
+    if not has_nutrition:
+        NutritionInfo.objects.filter(meal=meal).delete()
+        return
+
+    existing = getattr(meal, "nutrition", None)
+    if existing is None:
+        existing = NutritionInfo.objects.filter(meal=meal).first()
+    sodium_value = getattr(existing, "sodium", Decimal("0")) if existing else Decimal("0")
+
+    breakdown_payload = [
+        {
+            "name": entry.get("name"),
+            "quantity": entry.get("quantity"),
+            "calories": _coerce_float(entry.get("calories")) or 0.0,
+            "protein": _coerce_float(entry.get("protein")),
+            "carb": _coerce_float(entry.get("carb")),
+            "fat": _coerce_float(entry.get("fat")),
+            "notes": entry.get("notes"),
+        }
+        for entry in entries
+    ]
+
+    NutritionInfo.objects.update_or_create(
+        meal=meal,
+        defaults={
+            "calories": totals["calories"],
+            "protein": totals["protein"],
+            "fat": totals["fat"],
+            "carbohydrate": totals["carbohydrate"],
+            "sodium": sodium_value,
+            "breakdown": breakdown_payload,
+        },
     )
 
 
 def _build_nutrition_payload(meal):
+    nutrition = getattr(meal, "nutrition", None)
+    if nutrition and nutrition.breakdown:
+        return json.dumps(nutrition.breakdown, ensure_ascii=False)
+
     entries = []
     for component in meal.nutrition_components.all().order_by("id"):
         metadata = component.metadata or {}
@@ -135,7 +216,7 @@ def add_meal(request):
         return redirect("merchantsideapp:login")
 
     if request.method == "POST":
-        form = MealCreateForm(restaurant, request.POST)
+        form = MealCreateForm(restaurant, request.POST, request.FILES)
         if form.is_valid():
             with transaction.atomic():
                 meal = form.save()
@@ -220,6 +301,7 @@ def meal_detail(request, meal_id):
         merchant
         and getattr(merchant, "restaurant_id", None) == restaurant.id
     )
+    image_source = meal.get_image_source()
 
     return render(
         request,
@@ -231,6 +313,7 @@ def meal_detail(request, meal_id):
             "ingredients": ingredients,
             "allergens": allergens,
             "can_edit": can_edit,
+            "image_source": image_source,
         },
     )
 
@@ -248,7 +331,7 @@ def edit_meal(request, meal_id):
     )
 
     if request.method == "POST":
-        form = MealCreateForm(restaurant, request.POST, instance=meal)
+        form = MealCreateForm(restaurant, request.POST, request.FILES, instance=meal)
         if form.is_valid():
             with transaction.atomic():
                 updated_meal = form.save()
@@ -290,20 +373,31 @@ def delete_meal(request, meal_id):
 
     meal = get_object_or_404(restaurant.meals, pk=meal_id)
     if request.method != "POST":
-        messages.warning(request, "請使用下架按鈕完成操作。")
+        messages.warning(request, "請使用狀態切換按鈕完成操作。")
         return redirect("merchantsideapp:manage_meals")
 
-    if not meal.is_available:
-        messages.info(request, f"「{meal.name}」已經是下架狀態。")
+    action = request.POST.get("action", "deactivate")
+    if action not in {"activate", "deactivate"}:
+        messages.error(request, "無法判斷欲更新的餐點狀態。")
         return redirect("merchantsideapp:manage_meals")
 
-    meal.is_available = False
+    desired_state = action == "activate"
+    if meal.is_available == desired_state:
+        state_label = "上架" if desired_state else "下架"
+        messages.info(request, f"「{meal.name}」已經是{state_label}狀態。")
+        return redirect("merchantsideapp:manage_meals")
+
+    meal.is_available = desired_state
     meal.updated_at = timezone.now()
     meal.save(update_fields=["is_available", "updated_at"])
-    messages.success(
-        request,
-        f"已將「{meal.name}」移至已下架清單，可於需要時再次編輯上架。",
-    )
+
+    if desired_state:
+        messages.success(request, f"已重新上架「{meal.name}」，立即回到菜單中。")
+    else:
+        messages.success(
+            request,
+            f"已將「{meal.name}」移至已下架清單，可於需要時再次編輯上架。",
+        )
     return redirect("merchantsideapp:manage_meals")
 
 

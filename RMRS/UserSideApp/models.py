@@ -50,6 +50,12 @@ class UserPreference(models.Model):
 	)
 	is_vegetarian = models.BooleanField(default=False)
 	avoid_spicy = models.BooleanField(default=False)
+	recommendation_cooldown_days = models.PositiveSmallIntegerField(
+		blank=True,
+		null=True,
+		help_text="Cooldown days before recommending the same meal again.",
+		validators=[MinValueValidator(1), MaxValueValidator(30)],
+	)
 	created_at = models.DateTimeField(auto_now_add=True, db_default=Now())
 	updated_at = models.DateTimeField(auto_now=True, db_default=Now())
 

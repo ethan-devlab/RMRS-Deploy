@@ -29,8 +29,8 @@
             </div>
 
             <div class="meal-media">
-                {% if meal.image_url %}
-                <img src="{{ meal.image_url }}" alt="{{ meal.name }} 圖片" class="meal-image">
+                {% if image_source %}
+                <img src="{{ image_source }}" alt="{{ meal.name }} 圖片" class="meal-image">
                 {% else %}
                 <div class="meal-image meal-image--placeholder">尚未上傳餐點照片</div>
                 {% endif %}

@@ -43,8 +43,7 @@
         {% if block.record %}
         <div class="meal-detail">
             <p class="meal-title">{{ block.record.meal_name }}</p>
-            <p class="meal-macros">蛋白質 {{ block.record.protein_grams }} g · 碳水 {{ block.record.carb_grams }} g · 脂肪 {{
-                block.record.fat_grams }} g</p>
+            <p class="meal-macros">蛋白質 {{ block.record.protein_grams }} g · 碳水 {{ block.record.carb_grams }} g · 脂肪 {{ block.record.fat_grams }} g</p>
             {% with component_list=block.record.components.all %}
             {% if component_list %}
             <ul class="component-list">

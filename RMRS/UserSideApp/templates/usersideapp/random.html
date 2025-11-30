@@ -95,6 +95,9 @@
     <div class="section-head">
         <h3>智慧推薦</h3>
         <p class="label" id="primary-reason">{{ primary_reason }}</p>
+        <p class="label muted" id="recommendation-cooldown-hint" data-template="系統會避免推薦過去 {days} 天內你選過的餐點。">
+            系統會避免推薦過去 {{ cooldown_days }} 天內你選過的餐點。
+        </p>
     </div>
     <div class="alert info" id="recommendation-alert" {% if not recommendation_alert %}hidden{% endif %}>{{
         recommendation_alert|default_if_none:"" }}</div>
@@ -103,8 +106,17 @@
         <div class="recommendation-card">
             <div class="card-title-row">
                 <div>
-                    <h4>{{ card.meal.name }}</h4>
-                    <p class="muted">{{ card.restaurant.name }}</p>
+                    <h4>
+                        <a class="recommendation-link" href="{% url 'merchantsideapp:meal_detail' card.meal.id %}">
+                            {{ card.meal.name }}
+                        </a>
+                    </h4>
+                    <p class="muted">
+                        <a class="recommendation-link recommendation-link--muted"
+                            href="{% url 'merchantsideapp:restaurant_detail' card.restaurant.id %}">
+                            {{ card.restaurant.name }}
+                        </a>
+                    </p>
                 </div>
                 {% if card.favorite_count %}
                 <span class="badge hot">❤️ {{ card.favorite_count }}</span>
@@ -158,8 +170,17 @@
             <div class="recommendation-card">
                 <div class="card-title-row">
                     <div>
-                        <h4>{{ card.meal.name }}</h4>
-                        <p class="muted">{{ card.restaurant.name }}</p>
+                        <h4>
+                            <a class="recommendation-link" href="{% url 'merchantsideapp:meal_detail' card.meal.id %}">
+                                {{ card.meal.name }}
+                            </a>
+                        </h4>
+                        <p class="muted">
+                            <a class="recommendation-link recommendation-link--muted"
+                                href="{% url 'merchantsideapp:restaurant_detail' card.restaurant.id %}">
+                                {{ card.restaurant.name }}
+                            </a>
+                        </p>
                     </div>
                     {% if card.favorite_count %}
                     <span class="badge hot">❤️ {{ card.favorite_count }}</span>

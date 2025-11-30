@@ -8,6 +8,7 @@ from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
 from MerchantSideApp.models import Meal, Restaurant
+from RecommendationSystem.services import recent_selected_meal_ids
 
 from .models import (
     AppUser,
@@ -422,11 +423,15 @@ class RecommendationEngine:
         self.user = user
 
     def _base_queryset(self):
-        return (
+        qs = (
             Meal.objects.filter(is_available=True, restaurant__is_active=True)
             .select_related("restaurant")
             .annotate(favorite_count=Count("favorited_by"))
         )
+        if getattr(self.user, "pk", None):
+            recent_ids = recent_selected_meal_ids(self.user)
+            qs = qs.exclude(pk__in=recent_ids)
+        return qs
 
     def _ensure_limit(self, limit: Optional[object]) -> int:
         try:

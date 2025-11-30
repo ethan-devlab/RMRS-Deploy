@@ -7,11 +7,16 @@ from django.contrib import messages
 from django.db.models import Q, Sum
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import escape
 from django.views.decorators.http import require_POST
 
 from MerchantSideApp.models import Meal, Restaurant
+from RecommendationSystem.services import (
+    get_recommendation_cooldown_days,
+    record_user_choice,
+)
 
 from ..auth_utils import get_current_user, user_login_required
 from ..forms import (
@@ -118,6 +123,8 @@ def _serialize_card(card: dict) -> dict:
             price_label = restaurant.get_price_range_display()
         except Exception:  # pragma: no cover - defensive
             price_label = restaurant.price_range
+    meal_url = reverse("merchantsideapp:meal_detail", args=[meal.id])
+    restaurant_url = reverse("merchantsideapp:restaurant_detail", args=[restaurant.id])
     return {
         "meal": {
             "id": meal.id,
@@ -125,6 +132,7 @@ def _serialize_card(card: dict) -> dict:
             "description": meal.description or "",
             "isVegetarian": bool(meal.is_vegetarian),
             "isSpicy": bool(meal.is_spicy),
+            "url": meal_url,
         },
         "restaurant": {
             "id": restaurant.id,
@@ -134,6 +142,7 @@ def _serialize_card(card: dict) -> dict:
             "priceLabel": price_label or "",
             "city": restaurant.city or "",
             "district": restaurant.district or "",
+            "url": restaurant_url,
         },
         "favoriteCount": card.get("favorite_count", 0),
         "reason": card.get("reason") or "",
@@ -159,6 +168,7 @@ def _build_random_context(user, data=None):
     primary_meals = []
     recommendation_alert = None
     action = (data or {}).get("action") if data else None
+    cooldown_days = get_recommendation_cooldown_days(user)
 
     if data:
         if action == "use_preferences":
@@ -228,6 +238,7 @@ def _build_random_context(user, data=None):
         "secondary_sections": secondary_sections,
         "recommendation_alert": recommendation_alert,
         "preference_snapshot": preference_snapshot,
+        "cooldown_days": cooldown_days,
     }
 
 
@@ -468,6 +479,7 @@ def random_recommendation_data(request):
         "alert": context["recommendation_alert"],
         "preferenceSnapshot": context["preference_snapshot"],
         "formErrors": _collect_form_errors(context["filter_form"]),
+        "cooldownDays": context["cooldown_days"],
     }
     return JsonResponse(data)
 
@@ -543,6 +555,8 @@ def record_meal(request):
         if meal_form.is_valid():
             record = meal_form.save()
             _save_components(record, meal_form.components)
+            if record.source_meal_id:
+                record_user_choice(user, record.source_meal)
             recalculate_weekly_summary(user, record.date)
             if editing_record and original_record_date and original_record_date != record.date:
                 recalculate_weekly_summary(user, original_record_date)

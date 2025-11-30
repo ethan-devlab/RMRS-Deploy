@@ -12,6 +12,12 @@
         {% csrf_token %}
         <input type="hidden" name="form_type" value="account">
         <div class="form-grid">
+            <div class="form-group read-only-field">
+                <label for="user-username">登入帳號</label>
+                <input id="user-username" type="text" value="{{ current_user.username }}" class="readonly-input"
+                    readonly>
+                <small class="readonly-hint">帳號為系統識別用，無法直接修改。</small>
+            </div>
             <div class="form-group">
                 <label for="id_full_name">顯示名稱</label>
                 {{ account_form.full_name }}
@@ -28,7 +34,6 @@
                 {{ account_form.phone.errors }}
             </div>
         </div>
-        <p class="label">登入帳號：{{ current_user.username }}</p>
         <button class="primary-btn" type="submit">更新帳戶</button>
     </form>
 </div>
@@ -99,6 +104,14 @@
                     <span>避免辛辣</span>
                 </label>
                 {{ preference_form.avoid_spicy.errors }}
+            </div>
+            <div class="form-group">
+                <label for="id_recommendation_cooldown_days">推薦冷卻天數</label>
+                {{ preference_form.recommendation_cooldown_days }}
+                {% if preference_form.recommendation_cooldown_days.help_text %}
+                <small class="label muted">{{ preference_form.recommendation_cooldown_days.help_text }}</small>
+                {% endif %}
+                {{ preference_form.recommendation_cooldown_days.errors }}
             </div>
         </div>
         <button class="primary-btn" type="submit">儲存偏好</button>

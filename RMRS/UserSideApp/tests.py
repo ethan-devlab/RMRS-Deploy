@@ -7,6 +7,8 @@ from django.test import TestCase
 from django.utils import timezone
 
 from MerchantSideApp.models import Meal, Restaurant, NutritionInfo
+from RecommendationSystem.models import RecommendationHistory
+from RecommendationSystem.services import DEFAULT_COOLDOWN_DAYS
 
 from .auth_utils import SESSION_USER_KEY
 from .models import (
@@ -302,6 +304,13 @@ class UserPortalTestCase(TestCase):
 		self.assertAlmostEqual(float(record.protein_grams), 40.0)
 		self.assertAlmostEqual(float(record.carb_grams), 70.0)
 		self.assertAlmostEqual(float(record.fat_grams), 20.0)
+		self.assertTrue(
+			RecommendationHistory.objects.filter(
+				user=self.user,
+				meal=nutrition_meal,
+				was_selected=True,
+			).exists()
+		)
 
 	def test_restaurant_meals_api_returns_nutrition(self):
 		self._login()
@@ -341,6 +350,7 @@ class UserPortalTestCase(TestCase):
 			"price_range": UserPreference.PriceRange.MEDIUM,
 			"is_vegetarian": "on",
 			"avoid_spicy": "on",
+			"recommendation_cooldown_days": "9",
 		}
 		response = self.client.post(
 			reverse("usersideapp:settings"),
@@ -354,6 +364,7 @@ class UserPortalTestCase(TestCase):
 		self.assertEqual(preference.price_range, UserPreference.PriceRange.MEDIUM)
 		self.assertTrue(preference.is_vegetarian)
 		self.assertTrue(preference.avoid_spicy)
+		self.assertEqual(preference.recommendation_cooldown_days, 9)
 
 	def test_user_can_update_account_info(self):
 		self._login()
@@ -565,6 +576,23 @@ class UserPortalTestCase(TestCase):
 		self.assertTrue(meal_names.issubset({"草莓蛋糕", "檸檬塔"}))
 		self.assertNotIn("經典飯盒", meal_names)
 
+	def test_random_page_displays_cooldown_hint(self):
+		self._login()
+		response = self.client.get(reverse("usersideapp:random"))
+		self.assertEqual(response.status_code, 200)
+		expected = f"系統會避免推薦過去 {DEFAULT_COOLDOWN_DAYS} 天內你選過的餐點。"
+		self.assertContains(response, expected)
+
+	def test_random_page_uses_user_defined_cooldown_hint(self):
+		self._login()
+		UserPreference.objects.create(
+			user=self.user,
+			recommendation_cooldown_days=5,
+		)
+		response = self.client.get(reverse("usersideapp:random"))
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, "系統會避免推薦過去 5 天內你選過的餐點。")
+
 	def test_user_can_edit_review_via_hidden_field(self):
 		self._login()
 		review = Review.objects.create(
@@ -692,6 +720,15 @@ class UserPortalTestCase(TestCase):
 		self.assertEqual(response.status_code, 200)
 		self.assertContains(response, "味噌湯麵")
 
+	def test_random_page_displays_meal_and_restaurant_links(self):
+		self._login()
+		response = self.client.get(reverse("usersideapp:random"))
+		self.assertEqual(response.status_code, 200)
+		meal_url = reverse("merchantsideapp:meal_detail", args=[self.meal.id])
+		restaurant_url = reverse("merchantsideapp:restaurant_detail", args=[self.restaurant.id])
+		self.assertContains(response, meal_url)
+		self.assertContains(response, restaurant_url)
+
 	def test_random_page_filter_form_limits_results(self):
 		self._login()
 		cheap_restaurant = Restaurant.objects.create(
@@ -755,6 +792,29 @@ class UserPortalTestCase(TestCase):
 		payload = response.json()
 		self.assertIn("primary", payload)
 		self.assertGreaterEqual(len(payload["primary"].get("cards", [])), 1)
+		card = payload["primary"]["cards"][0]
+		meal_url = reverse("merchantsideapp:meal_detail", args=[card["meal"]["id"]])
+		restaurant_url = reverse(
+			"merchantsideapp:restaurant_detail", args=[card["restaurant"]["id"]]
+		)
+		self.assertEqual(card["meal"].get("url"), meal_url)
+		self.assertEqual(card["restaurant"].get("url"), restaurant_url)
+		self.assertIn("cooldownDays", payload)
+		self.assertEqual(payload["cooldownDays"], DEFAULT_COOLDOWN_DAYS)
+
+	def test_random_api_returns_user_cooldown_days(self):
+		self._login()
+		UserPreference.objects.create(
+			user=self.user,
+			recommendation_cooldown_days=4,
+		)
+		response = self.client.post(
+			reverse("usersideapp:random_data"),
+			{"action": "surprise", "limit": 1},
+		)
+		self.assertEqual(response.status_code, 200)
+		payload = response.json()
+		self.assertEqual(payload["cooldownDays"], 4)
 
 	def test_random_api_reports_validation_errors(self):
 		self._login()
