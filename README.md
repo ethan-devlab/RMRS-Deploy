@@ -157,13 +157,24 @@ Create the database in MySQL/MariaDB:
 CREATE DATABASE IF NOT EXISTS meal_recommendation;
 CREATE USER IF NOT EXISTS 'rmrs_user'@'localhost' IDENTIFIED BY 'rmrs_password';
 GRANT ALL PRIVILEGES ON *.* TO 'rmrs_user'@'localhost';
+FLUSH PRIVILEGES;
 ```
-
 ### Migrate Database Schema
 
+#### Option 1: Using Django Migrations (Recommended)
 ```bash
 cd RMRS
 python manage.py migrate
+```
+
+#### Option 2: Using SQL Scripts (Alternative)
+```bash
+mysql -u root -p meal_recommendation < database/schema.sql
+```
+
+### Load Sample Data
+```bash
+mysql -u root -p meal_recommendation < database/sample_data.sql
 ```
 
 ### Create a Superuser (Admin Access)
@@ -234,7 +245,7 @@ The project uses `Asia/Taipei` timezone with `USE_TZ = False`. All datetime oper
 ### Run Django Tests
 
 ```bash
-python RMRS/manage.py test
+python RMRS/manage.py test MerchantSideApp UserSideApp RecommendationSystem
 ```
 
 ## 📡 API Overview

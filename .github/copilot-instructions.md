@@ -22,7 +22,7 @@ Purpose: give AI coding agents the minimal, high-value context to be productive 
   - `TIME_ZONE` is `Asia/Taipei` and `USE_TZ = False` — datetime behavior is local-time.
 
 **Project-specific workflows & files to inspect**
-- Database / seed / utilities: `database/` — contains `cli.py`, `db_manager.py`, `schema.sql`, `sample_data.sql`, and `test_database.py` (standalone DB helpers and sample SQL).
+- Database / seed / utilities: `database/` — contains `schema.sql`, `sample_data.sql`, and `test_database.py` (standalone DB helpers and sample SQL).
 - Recommendation engine: `database/recommendation_engine.py` — standalone logic for generating suggestions; may be run directly for experiments.
 - Templates and static assets: app-local under `*/templates/*` and `*/static/*`. There is also `all_templates/` with front-end examples for Merchant/User.
 - Django management entrypoint: `RMRS/manage.py` — use for migrations, tests, and running server.

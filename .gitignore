@@ -169,6 +169,12 @@ all_templates
 Merchant
 docs
 
+# database
+database/cli.py
+database/queries.sql
+database/.env.example
+database/README.md
+
 # MacOS files
 .DS_Store
 
