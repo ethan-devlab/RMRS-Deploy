@@ -335,8 +335,15 @@ class MealCreateForm(forms.ModelForm):
 class MerchantAccountForm(forms.ModelForm):
     class Meta:
         model = MerchantAccount
-        fields = ["email", "phone"]
+        fields = ["merchant_name", "email", "phone"]
         widgets = {
+            "merchant_name": forms.TextInput(
+                attrs={
+                    "class": "field-input",
+                    "placeholder": "商家名稱",
+                    "autocomplete": "username",
+                }
+            ),
             "email": forms.EmailInput(
                 attrs={
                     "class": "field-input",
@@ -352,6 +359,17 @@ class MerchantAccountForm(forms.ModelForm):
                 }
             ),
         }
+
+    def clean_merchant_name(self):
+        name = self.cleaned_data.get("merchant_name", "").strip()
+        if not name:
+            raise forms.ValidationError("商家名稱不可空白。")
+        qs = MerchantAccount.objects.filter(merchant_name__iexact=name)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError("此商家名稱已被其他帳號使用。")
+        return name
 
     def clean_email(self):
         email = self.cleaned_data["email"].strip().lower()
@@ -375,6 +393,7 @@ class MerchantAccountForm(forms.ModelForm):
 
     def save(self, commit: bool = True):
         merchant = super().save(commit=False)
+        merchant.merchant_name = self.cleaned_data["merchant_name"].strip()
         merchant.email = self.cleaned_data["email"].strip().lower()
         phone = self.cleaned_data.get("phone") or None
         merchant.phone = phone

@@ -20,6 +20,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # load .env
 load_dotenv(Path(BASE_DIR) / 'env/.env')
 
+SUPPORT_EMAIL = os.getenv("SUPPORT_EMAIL", "support@foodie.app")
+COMPANY_NAME = os.getenv("COMPANY_NAME", "Foodie Technology Co., Ltd.")
+COMPANY_LEGAL_NAME = os.getenv("COMPANY_LEGAL_NAME", COMPANY_NAME)
+COMPANY_REGISTRATION = os.getenv("COMPANY_REGISTRATION", "統編 12345678")
+COMPANY_ADDRESS = os.getenv("COMPANY_ADDRESS", "100 台北市中正區忠孝西路一段 1 號 10F")
+COMPANY_PHONE = os.getenv("COMPANY_PHONE", "+886-2-0000-0000")
+COMPANY_SITE = os.getenv("COMPANY_SITE", "https://foodie.app")
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
@@ -58,6 +66,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'RMRS.urls'
@@ -72,6 +81,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'RMRS.context_processors.support_email',
             ],
         },
     },
@@ -132,7 +142,7 @@ USE_TZ = False  # Should be False to use local time (Asia/Taipei)
 
 STATIC_URL = '/static/'
 
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = BASE_DIR / 'staticfiles'   # production
 
 STATICFILES_DIRS = [
     BASE_DIR / 'static',

@@ -1,0 +1,202 @@
+/* =========================================
+   Health Advice Page CSS
+   Template: health.html
+========================================= */
+
+/* Health Header */
+.health-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+}
+
+.health-left p {
+    margin: 0;
+    color: #6b7280;
+}
+
+.health-metrics {
+    margin-top: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.health-metric {
+    background: #f3f4f6;
+    border-radius: 12px;
+    padding: 10px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 120px;
+}
+
+.health-metric .label {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.health-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.health-pill {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(17, 24, 39, 0.04);
+    font-size: 13px;
+}
+
+/* Health Status Colors */
+.health-status-good,
+.health-status-caution,
+.health-status-alert,
+.health-status-neutral {
+    font-weight: 600;
+}
+
+.health-status-good {
+    color: #16a34a;
+}
+
+.health-status-caution {
+    color: #b45309;
+}
+
+.health-status-alert {
+    color: #b91c1c;
+}
+
+.health-status-neutral {
+    color: #6b7280;
+}
+
+.health-range {
+    font-size: 12px;
+    color: #94a3b8;
+    margin: 0;
+}
+
+/* Health Tags */
+.health-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
+.health-tag {
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+}
+
+.health-tag.green {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.health-tag.yellow {
+    background: #fef9c3;
+    color: #92400e;
+}
+
+.health-tag.blue {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.health-tag.neutral {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+/* Today Advice Card */
+.health-today-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.health-today-main {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.health-today-icon {
+    font-size: 28px;
+    margin-top: 2px;
+}
+
+.health-today-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.health-today-desc {
+    font-size: 13px;
+    color: #4b5563;
+}
+
+/* Health List */
+.health-list {
+    margin: 6px 0 0 0;
+    padding-left: 18px;
+    font-size: 13px;
+    color: #4b5563;
+}
+
+.health-list.small {
+    font-size: 12px;
+}
+
+/* Three Column Health Grid */
+.health-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.health-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.health-card-title {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.health-card-text {
+    font-size: 13px;
+    color: #4b5563;
+}
+
+/* Lifestyle Card */
+.health-lifestyle-card {
+    font-size: 13px;
+    color: #4b5563;
+}
+
+@media (max-width: 768px) {
+    .health-header {
+        flex-direction: column;
+    }
+
+    .health-right {
+        align-items: flex-start;
+    }
+
+    .health-grid {
+        grid-template-columns: 1fr;
+    }
+}

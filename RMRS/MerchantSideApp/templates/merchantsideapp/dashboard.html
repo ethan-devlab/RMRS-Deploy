@@ -94,7 +94,7 @@
         <h3 class="font-semibold text-gray-900 mb-2">餐廳資訊</h3>
         <p class="text-sm text-gray-500 mb-4">快速查看餐廳詳細資訊、位置與目前菜單，以便分享給消費者。</p>
         <a class="btn-outline btn-block" id="btn-go-restaurant"
-            href="{% url 'merchantsideapp:restaurant_detail' restaurant.id %}">查看餐廳頁面</a>
+            href="{% url 'merchantsideapp:restaurant_detail' restaurant.slug %}">查看餐廳頁面</a>
     </div>
     {% endif %}
 </div>

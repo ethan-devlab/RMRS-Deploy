@@ -97,12 +97,12 @@ def manage_meals(request):
     )
 
 
-def meal_detail(request, meal_id):
+def meal_detail(request, meal_slug):
     """Display meal details (public view)."""
     merchant = get_current_merchant(request)
     meal = get_object_or_404(
         Meal.objects.select_related("restaurant", "nutrition").prefetch_related("nutrition_components"),
-        pk=meal_id,
+        slug=meal_slug,
     )
     restaurant = meal.restaurant
     nutrition = _build_display_nutrition(meal)

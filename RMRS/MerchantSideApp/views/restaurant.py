@@ -7,12 +7,12 @@ from ..auth_utils import get_current_merchant, merchant_login_required
 from ..models import Restaurant
 
 
-def restaurant_detail(request, restaurant_id):
+def restaurant_detail(request, restaurant_slug):
     """Display restaurant details (public view)."""
     merchant = get_current_merchant(request)
     restaurant = get_object_or_404(
         Restaurant.objects.prefetch_related("meals"),
-        pk=restaurant_id,
+        slug=restaurant_slug,
     )
 
     meals_qs = restaurant.meals.order_by("-updated_at", "-id")

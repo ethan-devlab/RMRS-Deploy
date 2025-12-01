@@ -1,6 +1,24 @@
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models.functions import Now
+from django.urls import reverse
+from django.utils.crypto import get_random_string
+from django.utils.text import slugify
+
+
+SLUG_MAX_LENGTH = 150
+SLUG_BASE_LENGTH = SLUG_MAX_LENGTH - 6  # leave room for suffixes
+
+
+def _build_unique_slug(model_cls, base_value: str | None, fallback_prefix: str, exclude_pk=None) -> str:
+    base_slug = slugify(base_value or "")[:SLUG_BASE_LENGTH]
+    if not base_slug:
+        base_slug = f"{fallback_prefix}-{get_random_string(6)}"
+    slug_candidate = base_slug
+    while model_cls.objects.filter(slug=slug_candidate).exclude(pk=exclude_pk).exists():
+        slug_candidate = f"{base_slug}-{get_random_string(4)}"
+        slug_candidate = slug_candidate[:SLUG_MAX_LENGTH]
+    return slug_candidate
 
 
 class Restaurant(models.Model):
@@ -12,6 +30,7 @@ class Restaurant(models.Model):
         HIGH = "高", "高"
 
     name = models.CharField(max_length=100)
+    slug = models.SlugField(max_length=SLUG_MAX_LENGTH, unique=True, blank=True)
     address = models.CharField(max_length=255, blank=True, null=True)
     city = models.CharField(max_length=50, blank=True, null=True)
     district = models.CharField(max_length=50, blank=True, null=True)
@@ -42,6 +61,18 @@ class Restaurant(models.Model):
     def __str__(self) -> str:
         return self.name
 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = self._generate_unique_slug()
+        super().save(*args, **kwargs)
+
+    def _generate_unique_slug(self) -> str:
+        base_value = self.name or f"restaurant-{get_random_string(6)}"
+        return _build_unique_slug(Restaurant, base_value, "restaurant", exclude_pk=self.pk)
+
+    def get_absolute_url(self) -> str:
+        return reverse("merchantsideapp:restaurant_detail", args=[self.slug])
+
 
 class Meal(models.Model):
     """Individual dishes offered by a restaurant."""
@@ -52,6 +83,7 @@ class Meal(models.Model):
         on_delete=models.CASCADE,
     )
     name = models.CharField(max_length=100)
+    slug = models.SlugField(max_length=SLUG_MAX_LENGTH, unique=True, blank=True)
     description = models.TextField(blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     category = models.CharField(max_length=50, blank=True, null=True)
@@ -84,6 +116,21 @@ class Meal(models.Model):
 
     def __str__(self) -> str:
         return f"{self.name} ({self.restaurant.name})"
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = self._generate_unique_slug()
+        super().save(*args, **kwargs)
+
+    def _generate_unique_slug(self) -> str:
+        restaurant_name = getattr(self.restaurant, "name", "") if self.restaurant_id else ""
+        base_value = f"{restaurant_name}-{self.name}" if restaurant_name else self.name
+        if not base_value:
+            base_value = f"meal-{get_random_string(6)}"
+        return _build_unique_slug(Meal, base_value, "meal", exclude_pk=self.pk)
+
+    def get_absolute_url(self) -> str:
+        return reverse("merchantsideapp:meal_detail", args=[self.slug])
 
     def get_image_source(self) -> str:
         """Prefer uploaded files over remote URLs when rendering."""
