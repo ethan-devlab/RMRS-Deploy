@@ -28,3 +28,8 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+handler400 = 'RMRS.views.error_400'
+handler403 = 'RMRS.views.error_403'
+handler404 = 'RMRS.views.error_404'
+handler500 = 'RMRS.views.error_500'

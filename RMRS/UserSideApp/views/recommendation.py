@@ -41,11 +41,12 @@ def _serialize_card(card: dict) -> dict:
             price_label = restaurant.get_price_range_display()
         except Exception:  # pragma: no cover - defensive
             price_label = restaurant.price_range
-    meal_url = reverse("merchantsideapp:meal_detail", args=[meal.id])
-    restaurant_url = reverse("merchantsideapp:restaurant_detail", args=[restaurant.id])
+    meal_url = reverse("merchantsideapp:meal_detail", args=[meal.slug])
+    restaurant_url = reverse("merchantsideapp:restaurant_detail", args=[restaurant.slug])
     return {
         "meal": {
             "id": meal.id,
+            "slug": meal.slug,
             "name": meal.name,
             "description": meal.description or "",
             "isVegetarian": bool(meal.is_vegetarian),
@@ -54,6 +55,7 @@ def _serialize_card(card: dict) -> dict:
         },
         "restaurant": {
             "id": restaurant.id,
+            "slug": restaurant.slug,
             "name": restaurant.name,
             "cuisineType": restaurant.cuisine_type or "",
             "priceRange": restaurant.price_range or "",

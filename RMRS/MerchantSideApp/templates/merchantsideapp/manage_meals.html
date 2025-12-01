@@ -65,13 +65,13 @@
                 <tr class="hover:bg-gray-50" data-meal-id="{{ meal.id }}">
                     <td class="px-4 py-4">
                         <a class="font-medium text-gray-900 hover:text-primary-600"
-                            href="{% url 'merchantsideapp:meal_detail' meal.id %}">{{ meal.name }}</a>
+                            href="{% url 'merchantsideapp:meal_detail' meal.slug %}">{{ meal.name }}</a>
                         <p class="text-xs text-gray-400 mt-0.5">
                             {{ meal.description|default:"尚未提供餐點描述"|truncatechars:40 }}</p>
                         <div class="flex gap-1 mt-1">
                             {% if meal.is_vegetarian %}<span class="pill-success text-xs">素食</span>{% endif %}
                             {% if meal.is_spicy %}<span class="pill-warning text-xs">辛辣</span>{% endif %}
-                            {% if meal.nutrition_count %}<span class="pill-gray text-xs">營養 
+                            {% if meal.nutrition_count %}<span class="pill-gray text-xs">營養
                                 {{ meal.nutrition_count }}項</span>{% endif %}
                         </div>
                     </td>
@@ -93,7 +93,7 @@
                     <td class="px-4 py-4">
                         <div class="flex items-center justify-end gap-2">
                             <a class="text-gray-500 hover:text-primary-600"
-                                href="{% url 'merchantsideapp:meal_detail' meal.id %}" title="詳情">👁</a>
+                                href="{% url 'merchantsideapp:meal_detail' meal.slug %}" title="詳情">👁</a>
                             <a class="text-gray-500 hover:text-primary-600"
                                 href="{% url 'merchantsideapp:edit_meal' meal.id %}" title="編輯">✎</a>
                             <form method="post" action="{% url 'merchantsideapp:delete_meal' meal.id %}"

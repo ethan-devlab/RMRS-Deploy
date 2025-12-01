@@ -1,0 +1,214 @@
+/* =========================================
+   Random Recommendation Page CSS
+   Template: random.html
+========================================= */
+
+.preference-chip {
+    background: #111827;
+    color: #fff;
+    padding: 12px 18px;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 14px;
+}
+
+/* Recommendation Filter */
+.recommendation-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: relative;
+}
+
+.recommendation-filter .filter-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.recommendation-filter .filter-section {
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    padding: 20px;
+    background: linear-gradient(145deg, #ffffff, #f8fafc);
+}
+
+.recommendation-filter .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.recommendation-filter .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.recommendation-filter .form-group label,
+.recommendation-filter .group-label {
+    font-weight: 600;
+    color: #111827;
+    font-size: 14px;
+}
+
+.recommendation-filter .form-group input,
+.recommendation-filter .form-group select {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid #d1d5db;
+    padding: 11px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    box-sizing: border-box;
+    background: #fff;
+}
+
+.recommendation-filter .filter-section--inline .form-grid {
+    grid-template-columns: minmax(0, 2fr) minmax(160px, 1fr);
+    align-items: center;
+}
+
+.recommendation-filter.is-loading::after {
+    content: "更新中...";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.75);
+    border-radius: 16px;
+    font-weight: 600;
+    color: #111827;
+}
+
+/* Preference Toggle */
+.preference-toggle {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.checkbox-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    font-weight: 500;
+    color: #374151;
+}
+
+.checkbox-pill input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+}
+
+/* Limit Control */
+.limit-control {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.limit-control input {
+    max-width: 140px;
+}
+
+.limit-hint {
+    font-size: 12px;
+}
+
+/* Filter Actions */
+.filter-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+/* Recommendation Grid */
+.recommendation-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
+}
+
+.recommendation-grid.compact {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+/* Recommendation Card */
+.recommendation-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    padding: 16px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 180px;
+}
+
+.card-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.card-title-row h4 {
+    margin: 0;
+}
+
+/* Recommendation Links */
+.recommendation-link {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.recommendation-link:hover {
+    color: #2563eb;
+    border-color: #2563eb;
+}
+
+.recommendation-link--muted {
+    color: #6b7280;
+}
+
+.recommendation-link--muted:hover {
+    color: #2563eb;
+}
+
+/* Recommendation Meta & Tags */
+.recommendation-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.recommendation-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+@media (max-width: 768px) {
+    .recommendation-filter .filter-section--inline .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-actions {
+        justify-content: stretch;
+    }
+}

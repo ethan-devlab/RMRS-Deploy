@@ -303,7 +303,7 @@ class MerchantMealImageUploadTests(TestCase):
 		self.assertTrue(meal.image_file.name.startswith("meals/photos/"))
 		self.assertTrue(meal.image_file.storage.exists(meal.image_file.name))
 		detail = self.client.get(
-			reverse("merchantsideapp:meal_detail", args=[meal.id])
+			reverse("merchantsideapp:meal_detail", args=[meal.slug])
 		)
 		self.assertContains(detail, meal.image_file.url)
 		self.assertNotContains(detail, "https://example.com/fallback.jpg")
@@ -459,7 +459,7 @@ class MerchantMealManagementTests(TestCase):
 		self.assertContains(response, "涼拌手作豆腐")
 
 	def test_meal_detail_public_access(self):
-		url = reverse("merchantsideapp:meal_detail", args=[self.available_meal.id])
+		url = reverse("merchantsideapp:meal_detail", args=[self.available_meal.slug])
 		response = self.client.get(url)
 		self.assertEqual(response.status_code, 200)
 		self.assertContains(response, "暖心番茄燉飯")
@@ -471,7 +471,7 @@ class MerchantMealManagementTests(TestCase):
 
 	def test_meal_detail_marks_owner_can_edit(self):
 		self._login()
-		url = reverse("merchantsideapp:meal_detail", args=[self.available_meal.id])
+		url = reverse("merchantsideapp:meal_detail", args=[self.available_meal.slug])
 		response = self.client.get(url)
 		self.assertEqual(response.status_code, 200)
 		self.assertTrue(response.context["can_edit"])
@@ -480,10 +480,10 @@ class MerchantMealManagementTests(TestCase):
 	def test_meal_detail_shows_image_or_placeholder(self):
 		self.available_meal.image_url = "https://example.com/meal.jpg"
 		self.available_meal.save(update_fields=["image_url"])
-		url = reverse("merchantsideapp:meal_detail", args=[self.available_meal.id])
+		url = reverse("merchantsideapp:meal_detail", args=[self.available_meal.slug])
 		response = self.client.get(url)
 		self.assertContains(response, "https://example.com/meal.jpg")
-		placeholder_url = reverse("merchantsideapp:meal_detail", args=[self.archived_meal.id])
+		placeholder_url = reverse("merchantsideapp:meal_detail", args=[self.archived_meal.slug])
 		response_placeholder = self.client.get(placeholder_url)
 		self.assertContains(response_placeholder, "尚未上傳餐點照片")
 
@@ -545,7 +545,7 @@ class MerchantDashboardTests(TestCase):
 		self.assertFalse(self.restaurant.is_active)
 
 	def test_restaurant_detail_accessible_without_login(self):
-		url = reverse("merchantsideapp:restaurant_detail", args=[self.restaurant.id])
+		url = reverse("merchantsideapp:restaurant_detail", args=[self.restaurant.slug])
 		response = self.client.get(url)
 		self.assertEqual(response.status_code, 200)
 		self.assertContains(response, "星級餐館")
@@ -553,7 +553,7 @@ class MerchantDashboardTests(TestCase):
 
 	def test_restaurant_detail_displays_stats_and_meals(self):
 		self._login()
-		url = reverse("merchantsideapp:restaurant_detail", args=[self.restaurant.id])
+		url = reverse("merchantsideapp:restaurant_detail", args=[self.restaurant.slug])
 		response = self.client.get(url)
 		self.assertEqual(response.status_code, 200)
 		self.assertContains(response, "星級餐館")
@@ -566,9 +566,9 @@ class MerchantDashboardTests(TestCase):
 		self.assertTrue(response.context["can_edit"])
 
 	def test_restaurant_detail_contains_meal_links(self):
-		url = reverse("merchantsideapp:restaurant_detail", args=[self.restaurant.id])
+		url = reverse("merchantsideapp:restaurant_detail", args=[self.restaurant.slug])
 		response = self.client.get(url)
-		meal_url = reverse("merchantsideapp:meal_detail", args=[self.meal_new.id])
+		meal_url = reverse("merchantsideapp:meal_detail", args=[self.meal_new.slug])
 		self.assertContains(response, f'data-meal-url="{meal_url}"')
 		self.assertContains(response, "查看餐點")
 

@@ -15,25 +15,46 @@
     {% block extra_css %}{% endblock %}
 </head>
 
-<body class="min-h-screen bg-auth flex items-center justify-center p-4">
-    <div class="card-glass w-full max-w-md auth-card">
-        <div class="text-center mb-6">
-            <h2 class="text-2xl font-bold text-gray-900 mb-1">{% block auth_title %}{% endblock %}</h2>
-            <p class="text-gray-500 text-sm">{% block auth_subtitle %}{% endblock %}</p>
+<body class="min-h-screen bg-auth flex flex-col">
+    <main class="flex-1 flex items-center justify-center p-4">
+        <div class="card-glass w-full max-w-md auth-card">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-1">{% block auth_title %}{% endblock %}</h2>
+                <p class="text-gray-500 text-sm">{% block auth_subtitle %}{% endblock %}</p>
+            </div>
+
+            {% block auth_alerts %}
+            {% include 'shared/components/alerts.html' %}
+            {% endblock %}
+
+            {% block auth_content %}{% endblock %}
+
+            {% block auth_footer_container %}
+            <div class="mt-6 text-center text-sm text-gray-600">
+                {% block auth_footer %}{% endblock %}
+            </div>
+            {% endblock %}
         </div>
+    </main>
 
-        {% block auth_alerts %}
-        {% include 'shared/components/alerts.html' %}
-        {% endblock %}
-
-        {% block auth_content %}{% endblock %}
-
-        {% block auth_footer_container %}
-        <div class="mt-6 text-center text-sm text-gray-600">
-            {% block auth_footer %}{% endblock %}
+    {% block auth_page_footer %}
+    <footer class="mt-8 text-center text-xs text-gray-500 space-y-2 py-2">
+        <div class="space-y-1">
+            <p class="font-semibold text-gray-700">{{ company_name|default:"Foodie" }}</p>
+            {% if company_registration %}
+            <p class="text-gray-400">{{ company_registration }}</p>
+            {% endif %}
         </div>
-        {% endblock %}
-    </div>
+        <div class="space-y-1">
+            {% if company_address %}<p>📍 {{ company_address }}</p>{% endif %}
+            {% if company_phone %}<p>☎ {{ company_phone }}</p>{% endif %}
+            {% if support_email %}<p><a href="mailto:{{ support_email }}" class="text-primary-600 hover:underline">✉ {{ support_email }}</a></p>{% endif %}
+            {% if company_site %}<p><a href="{{ company_site }}" target="_blank" rel="noopener"
+                    class="text-primary-600 hover:underline">🌐 官方網站</a></p>{% endif %}
+        </div>
+        <p>© {% now "Y" %} {{ company_legal_name|default:company_name|default:"Foodie" }} · All rights reserved.</p>
+    </footer>
+    {% endblock %}
 
     {% block extra_js %}{% endblock %}
 </body>

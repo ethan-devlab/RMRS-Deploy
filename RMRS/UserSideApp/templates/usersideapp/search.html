@@ -15,6 +15,7 @@
         height: 100%;
         border: 0;
     }
+
     .search-input {
         padding-left: 2.75rem;
         width: 100%;
@@ -145,11 +146,11 @@
             {% for meal in meals %}
             <article class="card hover:shadow-lg transition-shadow">
                 <h3 class="font-semibold text-gray-900 mb-1">
-                    <a href="{% url 'merchantsideapp:meal_detail' meal.id %}" class="hover:text-primary-600">
+                    <a href="{% url 'merchantsideapp:meal_detail' meal.slug %}" class="hover:text-primary-600">
                         {{ meal.name }}</a>
                 </h3>
                 <p class="text-sm text-gray-500 mb-2">
-                    由 <a href="{% url 'merchantsideapp:restaurant_detail' meal.restaurant.id %}"
+                    由 <a href="{% url 'merchantsideapp:restaurant_detail' meal.restaurant.slug %}"
                         class="text-primary-600 hover:underline">{{ meal.restaurant.name }}</a>
                     {% if meal.category %} · {{ meal.category }}{% endif %}
                 </p>
@@ -186,7 +187,7 @@
             <article class="card hover:shadow-lg transition-shadow">
                 <div class="flex items-start justify-between mb-2">
                     <h3 class="font-semibold text-gray-900">
-                        <a href="{% url 'merchantsideapp:restaurant_detail' restaurant.id %}"
+                        <a href="{% url 'merchantsideapp:restaurant_detail' restaurant.slug %}"
                             class="hover:text-primary-600">{{ restaurant.name }}</a>
                     </h3>
                     {% if restaurant.rating %}

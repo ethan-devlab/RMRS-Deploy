@@ -1,0 +1,640 @@
+@import url("merchant_homepage.css");
+
+/* Additional styling for add-meal form */
+.add-card {
+    background: #ffffff;
+    border-radius: 18px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+    padding: 18px 20px 22px;
+    margin-top: 10px;
+}
+
+.upload-banner {
+    border-radius: 14px;
+    border: 1px dashed #fecaca;
+    background: linear-gradient(135deg, #fff1f2, #ffe4f2);
+    padding: 16px 18px;
+    display: flex;
+    transform: translateY(-1px);
+
+    .nutrition-edit:hover,
+    .nutrition-remove:hover {
+        background: #fde68a;
+    }
+
+    box-shadow: 0 12px 26px rgba(248, 113, 113, 0.75);
+}
+
+.upload-hint {
+    padding: 0;
+}
+
+.messages li {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: #065f46;
+    border-radius: 14px;
+    padding: 10px 14px;
+    font-size: 14px;
+}
+
+.add-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.field-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.field-row.two-cols {
+    flex-direction: row;
+}
+
+.field-row.two-cols>.field-group {
+    flex: 1;
+}
+
+.field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.field-group.short {
+    max-width: 260px;
+}
+
+.field-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.req {
+    color: #ef4444;
+}
+
+.field-input {
+    border-radius: 999px;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    padding: 10px 14px;
+    font-size: 13px;
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.field-input.textarea {
+    border-radius: 18px;
+    min-height: 70px;
+    resize: vertical;
+    line-height: 1.5;
+}
+
+.field-input:focus {
+    border-color: #f97373;
+    background: #ffffff;
+    box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.35);
+}
+
+.add-actions {
+    margin-top: 6px;
+    display: flex;
+    gap: 10px;
+}
+
+.add-btn {
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: none;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.add-btn.primary {
+    background: #111827;
+    color: #ffffff;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.35);
+}
+
+.add-btn.primary:hover {
+    background: #020617;
+    transform: translateY(-1px);
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.45);
+}
+
+.add-btn.secondary {
+    background: #fef3c7;
+    color: #9a3412;
+}
+
+.add-btn.secondary:hover {
+    background: #fde68a;
+}
+
+.add-btn.ghost {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.add-btn.ghost:hover {
+    background: #e5e7eb;
+}
+
+.form-errors,
+.field-errors {
+    color: #b91c1c;
+    font-size: 13px;
+}
+
+.field-errors {
+    margin-top: 0.5rem;
+    background: #fde8e8;
+    color: #b42318;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+.field-hint {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+#id_image_file {
+    border-radius: 18px;
+    border: 1px dashed #fdba74;
+    background: #fff7ed;
+    padding: 18px;
+    font-size: 13px;
+    color: #92400e;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+}
+
+#id_image_file:hover {
+    border-color: #f97316;
+    box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.25);
+}
+
+#id_image_file:focus {
+    border-color: #ea580c;
+    box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.25);
+    outline: none;
+}
+
+#id_image_file::file-selector-button {
+    background: #f97316;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 999px;
+    margin-right: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+#id_image_file::file-selector-button:hover {
+    background: #ea580c;
+    transform: translateY(-1px);
+}
+
+#id_image_file::file-selector-button:active {
+    transform: translateY(0);
+}
+
+.image-input-control input[type="file"] {
+    border-radius: 18px;
+    border: 1px dashed #fdba74;
+    background: #fff7ed;
+    padding: 18px;
+    font-size: 13px;
+    color: #92400e;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.image-input-control input[type="file"]:hover {
+    border-color: #f97316;
+    box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.25);
+}
+
+.image-input-control input[type="file"]:focus {
+    border-color: #ea580c;
+    box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.25);
+    outline: none;
+}
+
+.image-input-control input[type="file"]::file-selector-button {
+    background: #f97316;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 999px;
+    margin-right: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.image-input-control input[type="file"]::file-selector-button:hover {
+    background: #ea580c;
+    transform: translateY(-1px);
+}
+
+.image-input-control input[type="file"]::file-selector-button:active {
+    transform: translateY(0);
+}
+
+.image-clear-control {
+    margin-bottom: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #fff1f2;
+    border: 1px dashed rgba(248, 113, 113, 0.4);
+    color: #9f1239;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.image-clear-control input[type="checkbox"] {
+    accent-color: #ea580c;
+}
+
+.upload-preview {
+    margin-top: 12px;
+    padding: 14px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #fff1f2, #fef9c3);
+    border: 1px dashed rgba(234, 88, 12, 0.45);
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.upload-preview-label {
+    width: 100%;
+    margin: 0 0 6px 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #9a3412;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.upload-preview-image {
+    max-width: 220px;
+    border-radius: 14px;
+    box-shadow: 0 8px 20px rgba(249, 115, 22, 0.25);
+    border: 1px solid rgba(249, 115, 22, 0.2);
+}
+
+.upload-preview-placeholder {
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px dashed rgba(148, 163, 184, 0.7);
+    color: #475569;
+    font-size: 13px;
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.field-errors p,
+.form-errors p {
+    margin: 4px 0 0 0;
+}
+
+.toggle-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #374151;
+}
+
+.toggle-input {
+    width: 18px;
+    height: 18px;
+}
+
+.nutrition-section {
+    border-top: 1px dashed #e5e7eb;
+    padding-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.nutrition-header h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.nutrition-hint {
+    margin: 4px 0 0 0;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.nutrition-tags {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.nutrition-chip {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #fee2e2;
+    color: #9f1239;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.nutrition-chip.subtle {
+    background: #fef9c3;
+    color: #854d0e;
+}
+
+.nutrition-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: 18px;
+}
+
+.nutrition-card {
+    border-radius: 20px;
+    border: 1px solid #f3f4f6;
+    background: #ffffff;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+    padding: 18px 20px;
+}
+
+.preview-card {
+    background: linear-gradient(135deg, #fff7ed, #ffe4f2);
+    border: none;
+    box-shadow: 0 18px 42px rgba(248, 113, 113, 0.25);
+}
+
+.nutrition-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px 16px;
+    align-items: flex-end;
+}
+
+.nutrition-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.nutrition-field.full {
+    grid-column: 1 / -1;
+}
+
+.nutrition-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.nutrition-form input {
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    padding: 11px 14px;
+    font-size: 13px;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.nutrition-preview-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.preview-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: #7c2d12;
+}
+
+.preview-sub {
+    margin: 4px 0 0 0;
+    font-size: 12px;
+    color: #a16207;
+}
+
+.preview-chip {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.55);
+    font-size: 12px;
+    font-weight: 600;
+    color: #9f1239;
+    box-shadow: 0 4px 10px rgba(255, 255, 255, 0.45);
+}
+
+.nutrition-card.preview-card .nutrition-error {
+    color: #7f1d1d;
+}
+
+.nutrition-card.preview-card .nutrition-list {
+    border-radius: 16px;
+    background: #ffffff;
+    padding: 10px;
+}
+
+.nutrition-form input:focus {
+    border-color: #fb7185;
+    background: #fff;
+    box-shadow: 0 0 0 1px rgba(251, 113, 133, 0.25);
+}
+
+.nutrition-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    background: #fff7ed;
+    border: 1px dashed #fdba74;
+    border-radius: 16px;
+    padding: 12px 16px;
+    flex-wrap: wrap;
+}
+
+.nutrition-meta {
+    font-size: 12px;
+    color: #9a3412;
+}
+
+.nutrition-actions .add-btn {
+    flex-shrink: 0;
+}
+
+.nutrition-error {
+    color: #b91c1c;
+    font-size: 13px;
+}
+
+.nutrition-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.nutrition-empty {
+    text-align: center;
+    font-size: 13px;
+    color: #64748b;
+    padding: 14px 0;
+}
+
+.nutrition-item {
+    background: linear-gradient(120deg, #fff7ed, #fff);
+    border-radius: 16px;
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid rgba(251, 146, 60, 0.35);
+    box-shadow: 0 12px 30px rgba(251, 146, 60, 0.18);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.nutrition-item:hover {
+    border-color: #fb923c;
+    box-shadow: 0 14px 34px rgba(251, 146, 60, 0.28);
+    transform: translateY(-1px);
+}
+
+.nutrition-item.is-editing {
+    border-color: #fb7185;
+    box-shadow: 0 16px 36px rgba(251, 113, 133, 0.35);
+}
+
+.nutrition-item strong {
+    display: block;
+    font-size: 14px;
+    color: #7c2d12;
+}
+
+.nutrition-item .meta {
+    font-size: 12px;
+    color: #b45309;
+}
+
+.nutrition-count {
+    font-weight: 700;
+}
+
+.nutrition-card.preview-card .nutrition-remove {
+    color: #b91c1c;
+}
+
+.nutrition-item-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.nutrition-action {
+    position: relative;
+    border-radius: 12px;
+    padding: 6px 18px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid transparent;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.nutrition-action::before {
+    font-size: 13px;
+}
+
+.nutrition-edit {
+    background: rgba(250, 204, 21, 0.15);
+    color: #78350f;
+    border-color: rgba(250, 204, 21, 0.6);
+    box-shadow: 0 8px 16px rgba(249, 115, 22, 0.25);
+}
+
+.nutrition-edit::before {
+    content: "✏";
+}
+
+.nutrition-edit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px rgba(249, 115, 22, 0.35);
+    border-color: rgba(250, 204, 21, 0.9);
+}
+
+.nutrition-remove {
+    background: rgba(251, 113, 133, 0.12);
+    color: #7f1d1d;
+    border-color: rgba(251, 113, 133, 0.55);
+    box-shadow: 0 8px 16px rgba(251, 113, 133, 0.25);
+}
+
+.nutrition-remove::before {
+    content: "✕";
+}
+
+.nutrition-remove:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px rgba(251, 113, 133, 0.35);
+    border-color: rgba(251, 113, 133, 0.9);
+}
+
+@media (max-width: 1024px) {
+    .nutrition-panel {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .field-row.two-cols {
+        flex-direction: column;
+    }
+
+    .field-group.short {
+        max-width: 100%;
+    }
+
+    .nutrition-form {
+        grid-template-columns: 1fr;
+    }
+}

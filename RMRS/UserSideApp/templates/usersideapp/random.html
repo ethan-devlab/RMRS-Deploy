@@ -83,7 +83,8 @@
         <div class="flex flex-wrap gap-3 pt-2">
             <button class="btn-primary" type="submit" name="action" value="filters">取得推薦</button>
             <button class="btn-secondary" type="submit" name="action" value="use_preferences">套用我的偏好</button>
-            <button class="text-sm font-medium text-primary hover:text-primary-dark hover:underline px-4 py-2 border-primary-200 border rounded-full transition"
+            <button
+                class="text-sm font-medium text-primary hover:text-primary-dark hover:underline px-4 py-2 border-primary-200 border rounded-full transition"
                 type="submit" name="action" value="surprise">給我驚喜</button>
         </div>
     </form>
@@ -110,16 +111,16 @@
                 <div>
                     <h4 class="font-bold text-slate-800">
                         <a class="hover:text-primary hover:underline"
-                            href="{% url 'merchantsideapp:meal_detail' card.meal.id %}">{{ card.meal.name }}</a>
+                            href="{% url 'merchantsideapp:meal_detail' card.meal.slug %}">{{ card.meal.name }}</a>
                     </h4>
                     <p class="text-sm text-slate-500">
                         <a class="hover:text-primary hover:underline"
-                            href="{% url 'merchantsideapp:restaurant_detail' card.restaurant.id %}">
+                            href="{% url 'merchantsideapp:restaurant_detail' card.restaurant.slug %}">
                             {{ card.restaurant.name }}</a>
                     </p>
                 </div>
                 {% if card.favorite_count %}
-                <span class="px-2 py-1 rounded-full bg-red-100 text-red-600 text-xs font-medium">❤️ 
+                <span class="px-2 py-1 rounded-full bg-red-100 text-red-600 text-xs font-medium">❤️
                     {{ card.favorite_count }}</span>
                 {% endif %}
             </div>
@@ -169,16 +170,16 @@
                     <div>
                         <h4 class="font-semibold text-sm text-slate-800">
                             <a class="hover:text-primary hover:underline"
-                                href="{% url 'merchantsideapp:meal_detail' card.meal.id %}">{{ card.meal.name }}</a>
+                                href="{% url 'merchantsideapp:meal_detail' card.meal.slug %}">{{ card.meal.name }}</a>
                         </h4>
                         <p class="text-xs text-slate-500">
                             <a class="hover:text-primary hover:underline"
-                                href="{% url 'merchantsideapp:restaurant_detail' card.restaurant.id %}">
+                                href="{% url 'merchantsideapp:restaurant_detail' card.restaurant.slug %}">
                                 {{ card.restaurant.name }}</a>
                         </p>
                     </div>
                     {% if card.favorite_count %}
-                    <span class="px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 text-xs">❤️ 
+                    <span class="px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 text-xs">❤️
                         {{ card.favorite_count }}</span>
                     {% endif %}
                 </div>

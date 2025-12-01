@@ -1,0 +1,146 @@
+/* =========================================
+   Today Meal Page CSS
+   Template: today_meal.html
+========================================= */
+
+/* Welcome 區塊排版調整 */
+.today-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+}
+
+.today-left h1 {
+    margin-bottom: 6px;
+}
+
+.today-left p {
+    margin: 0;
+    color: #6b7280;
+}
+
+.today-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.today-date-pill {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(17, 24, 39, 0.06);
+    font-size: 13px;
+}
+
+.today-summary {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    font-size: 13px;
+    color: #4b5563;
+}
+
+.today-summary strong {
+    font-weight: 700;
+}
+
+/* 小總覽卡片（早餐 / 午餐 / 晚餐 / 點心） */
+.today-stats-row {
+    margin-bottom: 28px;
+}
+
+.mini-card {
+    padding: 16px 18px;
+}
+
+.mini-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.mini-value {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.mini-note {
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+/* 餐次詳細卡片區 */
+.meal-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.meal-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.meal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.meal-tag {
+    font-size: 13px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #e5e7eb;
+}
+
+.meal-tag.breakfast {
+    background: #fee2e2;
+}
+
+.meal-tag.lunch {
+    background: #d1fae5;
+}
+
+.meal-tag.dinner {
+    background: #e0f2fe;
+}
+
+.meal-tag.snack {
+    background: #fef3c7;
+}
+
+.meal-kcal {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.meal-empty {
+    font-size: 13px;
+    color: #9ca3af;
+    margin: 0;
+}
+
+.meal-add-btn {
+    align-self: flex-start;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: none;
+    font-size: 13px;
+    cursor: pointer;
+    background: #111827;
+    color: #ffffff;
+    transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.meal-add-btn:hover {
+    background: #020617;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.25);
+}

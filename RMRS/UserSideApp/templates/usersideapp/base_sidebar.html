@@ -98,7 +98,7 @@
                     </a>
                 </li>
                 <li class="mt-4 pt-4 border-t border-gray-200">
-                    <form method="post" action="{% url 'usersideapp:logout' %}" >
+                    <form method="post" action="{% url 'usersideapp:logout' %}">
                         {% csrf_token %}
                         <button type="submit"
                             class="sidebar-item w-full text-left text-red-500 hover:text-red-600 hover:bg-red-50"
@@ -130,10 +130,34 @@
     </div>
 
     <!-- Main content -->
-    <div class="flex-1 ml-18 transition-all duration-300" id="main-content">
-        <div class="p-6">
+    <div class="flex-1 ml-18 transition-all duration-300 flex flex-col min-h-screen" id="main-content">
+        <div class="p-6 flex-1 flex flex-col">
             {% include 'shared/components/alerts.html' %}
-            {% block content %}{% endblock %}
+            <div class="flex-1">
+                {% block content %}{% endblock %}
+            </div>
+            <footer class="mt-12 border-t border-gray-200 pt-6 text-sm text-gray-500 space-y-3">
+                <div class="space-y-1">
+                    <p class="font-semibold text-gray-700">{{ company_name|default:"Foodie" }}</p>
+                    {% if company_registration %}
+                    <p class="text-xs text-gray-400">{{ company_registration }}</p>
+                    {% endif %}
+                </div>
+                <div class="space-y-1">
+                    {% if company_address %}<p>📍 {{ company_address }}</p>{% endif %}
+                    {% if company_phone %}<p>☎ {{ company_phone }}</p>{% endif %}
+                    {% if support_email %}
+                    <p><a href="mailto:{{ support_email }}" class="text-primary-600 hover:underline">
+                        ✉ {{ support_email }}</a></p>       
+                    {% endif %}
+                    {% if company_site %}
+                    <p><a href="{{ company_site }}" target="_blank" rel="noopener"
+                            class="text-primary-600 hover:underline">🌐 官方網站</a></p>
+                    {% endif %}
+                </div>
+                <p class="text-xs text-gray-400">© {% now "Y" %} 
+                    {{ company_legal_name|default:company_name|default:"Foodie" }} · All rights reserved.</p>
+            </footer>
         </div>
     </div>
 

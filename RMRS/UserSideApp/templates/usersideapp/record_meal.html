@@ -111,19 +111,22 @@
             <div class="form-group">
                 <label class="form-label" for="id_meal_type">餐次</label>
                 {{ meal_form.meal_type }}
-                {% if meal_form.meal_type.errors %}<p class="form-error">{{ meal_form.meal_type.errors.0 }}</p>{% endif %}
+                {% if meal_form.meal_type.errors %}<p class="form-error">{{ meal_form.meal_type.errors.0 }}</p>
+                {% endif %}
             </div>
             <div class="form-group">
                 <label class="form-label" for="id_meal_name">餐點名稱</label>
                 {{ meal_form.meal_name }}
-                {% if meal_form.meal_name.errors %}<p class="form-error">{{ meal_form.meal_name.errors.0 }}</p>{% endif %}
+                {% if meal_form.meal_name.errors %}<p class="form-error">{{ meal_form.meal_name.errors.0 }}</p>
+                {% endif %}
             </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="form-group">
                 <label class="form-label" for="id_restaurant">餐廳</label>
                 {{ meal_form.restaurant }}
-                {% if meal_form.restaurant.errors %}<p class="form-error">{{ meal_form.restaurant.errors.0 }}</p>{% endif %}
+                {% if meal_form.restaurant.errors %}<p class="form-error">{{ meal_form.restaurant.errors.0 }}</p>
+                {% endif %}
             </div>
             <div class="form-group">
                 <label class="form-label" for="id_source_meal">選擇餐點</label>
@@ -211,7 +214,7 @@
         <header
             class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-100">
             <div>
-                <p class="font-semibold text-slate-800">{{ record.date|date:"m/d" }} · 
+                <p class="font-semibold text-slate-800">{{ record.date|date:"m/d" }} ·
                     {{ record.get_meal_type_display }}</p>
                 <p class="text-sm text-slate-500">{{ record.meal_name }}</p>
             </div>
@@ -246,11 +249,11 @@
             <p>
                 來源：
                 <a class="text-primary hover:underline"
-                    href="{% url 'merchantsideapp:restaurant_detail' record.source_meal.restaurant.id %}"
+                    href="{% url 'merchantsideapp:restaurant_detail' record.source_meal.restaurant.slug %}"
                     target="_blank" rel="noopener">{{ record.source_meal.restaurant.name }}</a>
                 ·
                 <a class="text-primary hover:underline"
-                    href="{% url 'merchantsideapp:meal_detail' record.source_meal.id %}" target="_blank"
+                    href="{% url 'merchantsideapp:meal_detail' record.source_meal.slug %}" target="_blank"
                     rel="noopener">{{ record.source_meal.name }}</a>
             </p>
             {% endif %}

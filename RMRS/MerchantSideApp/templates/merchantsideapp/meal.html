@@ -143,7 +143,7 @@
 
             <!-- Actions -->
             <div class="flex flex-wrap items-center justify-between gap-4 pt-6">
-                <a href="{% url 'merchantsideapp:restaurant_detail' restaurant.id %}"
+                <a href="{% url 'merchantsideapp:restaurant_detail' restaurant.slug %}"
                     class="text-primary hover:text-primary-dark hover:underline font-medium">
                     ← 返回 {{ restaurant.name|default:"餐廳" }} 菜單
                 </a>

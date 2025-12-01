@@ -681,7 +681,7 @@ class UserPortalTestCase(TestCase):
 		)
 		self.assertEqual(response.status_code, 200)
 		self.assertContains(response, self.meal.name)
-		meal_url = reverse("merchantsideapp:meal_detail", args=[self.meal.id])
+		meal_url = reverse("merchantsideapp:meal_detail", args=[self.meal.slug])
 		self.assertContains(response, meal_url)
 
 	def test_search_displays_restaurant_links(self):
@@ -691,7 +691,7 @@ class UserPortalTestCase(TestCase):
 			{"keyword": self.restaurant.name},
 		)
 		self.assertEqual(response.status_code, 200)
-		restaurant_url = reverse("merchantsideapp:restaurant_detail", args=[self.restaurant.id])
+		restaurant_url = reverse("merchantsideapp:restaurant_detail", args=[self.restaurant.slug])
 		self.assertContains(response, restaurant_url)
 
 	def test_random_page_defaults_to_preferences(self):
@@ -724,8 +724,8 @@ class UserPortalTestCase(TestCase):
 		self._login()
 		response = self.client.get(reverse("usersideapp:random"))
 		self.assertEqual(response.status_code, 200)
-		meal_url = reverse("merchantsideapp:meal_detail", args=[self.meal.id])
-		restaurant_url = reverse("merchantsideapp:restaurant_detail", args=[self.restaurant.id])
+		meal_url = reverse("merchantsideapp:meal_detail", args=[self.meal.slug])
+		restaurant_url = reverse("merchantsideapp:restaurant_detail", args=[self.restaurant.slug])
 		self.assertContains(response, meal_url)
 		self.assertContains(response, restaurant_url)
 
@@ -793,9 +793,9 @@ class UserPortalTestCase(TestCase):
 		self.assertIn("primary", payload)
 		self.assertGreaterEqual(len(payload["primary"].get("cards", [])), 1)
 		card = payload["primary"]["cards"][0]
-		meal_url = reverse("merchantsideapp:meal_detail", args=[card["meal"]["id"]])
+		meal_url = reverse("merchantsideapp:meal_detail", args=[card["meal"]["slug"]])
 		restaurant_url = reverse(
-			"merchantsideapp:restaurant_detail", args=[card["restaurant"]["id"]]
+			"merchantsideapp:restaurant_detail", args=[card["restaurant"]["slug"]]
 		)
 		self.assertEqual(card["meal"].get("url"), meal_url)
 		self.assertEqual(card["restaurant"].get("url"), restaurant_url)
