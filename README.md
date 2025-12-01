@@ -58,6 +58,7 @@ RandomMealRecommendationSystem/
 │   ├── env/                        # Environment files (.env)
 │   ├── media/                      # User uploads (meal photos)
 │   ├── static/                     # Shared static assets
+│   ├── staticfiles/                # Shared static assets in production
 │   ├── templates/                  # Shared templates
 │   ├── RMRS/                       # Django settings module
 │   │   ├── settings.py
@@ -80,10 +81,9 @@ RandomMealRecommendationSystem/
 │       └── views/                  # Recommendation API endpoints
 ├── database/                       # Standalone DB utilities
 │   ├── schema.sql                  # Database schema
-│   ├── sample_data.sql             # Test data
+│   ├── sample_data.sql             # Sample data
 │   ├── db_manager.py               # DB helper functions
-│   ├── recommendation_engine.py    # Standalone recommendation logic
-│   └── cli.py                      # Database CLI tool
+│   └── recommendation_engine.py    # Standalone recommendation logic
 ├── requirements.txt                # Python dependencies
 └── README.md
 ```

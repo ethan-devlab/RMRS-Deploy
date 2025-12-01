@@ -30,6 +30,7 @@
       <excludeFolder url="file://$MODULE_DIR$/RMRS/node_modules/tailwindcss/dist" />
       <excludeFolder url="file://$MODULE_DIR$/RMRS/node_modules/tapable/lib" />
       <excludeFolder url="file://$MODULE_DIR$/all_templates" />
+      <excludeFolder url="file://$MODULE_DIR$/RMRS/node_modules" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.12 (python)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
