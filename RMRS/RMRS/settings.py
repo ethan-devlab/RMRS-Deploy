@@ -38,10 +38,12 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "t")
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
+ALLOWED_HOSTS += ['127.0.0.1']   # for local testing
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://" + host.strip() for host in ALLOWED_HOSTS if host.strip()
+    "https://*" + host.strip() for host in ALLOWED_HOSTS if host.strip()
     ]
+CSRF_TRUSTED_ORIGINS += ["127.0.0.1"]  # for local testing
 
 if not DEBUG:
     # Https
