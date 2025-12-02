@@ -43,7 +43,7 @@ ALLOWED_HOSTS += ['127.0.0.1']   # for local testing
 CSRF_TRUSTED_ORIGINS = [
     "https://*" + host.strip() for host in ALLOWED_HOSTS if host.strip()
     ]
-CSRF_TRUSTED_ORIGINS += ["127.0.0.1"]  # for local testing
+CSRF_TRUSTED_ORIGINS += ["http://127.0.0.1"]  # for local testing
 
 if not DEBUG:
     # Https

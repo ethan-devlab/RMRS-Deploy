@@ -100,8 +100,8 @@
             系統會避免推薦過去 {{ cooldown_days }} 天內你選過的餐點。
         </p>
     </div>
-    <div class="alert-info mb-4" id="recommendation-alert" {% if not recommendation_alert %}hidden{% endif %}>{{
-        recommendation_alert|default_if_none:"" }}</div>
+    <div class="alert-info mb-4" id="recommendation-alert" {% if not recommendation_alert %}hidden{% endif %}>
+        {{ recommendation_alert|default_if_none:"" }}</div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="primary-recommendation-grid"
         data-empty-text="暫時沒有符合條件的餐點，試著調整條件或點擊「給我驚喜」。">
         {% for card in primary_recommendations %}
