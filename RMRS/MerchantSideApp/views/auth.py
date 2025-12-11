@@ -4,7 +4,9 @@ from django.shortcuts import redirect, render
 from ..auth_utils import get_current_merchant, login_merchant, logout_merchant
 from ..forms import MerchantLoginForm, MerchantRegistrationForm
 
+from django_ratelimit.decorators import ratelimit
 
+@ratelimit(key="ip", rate="5/m", block=True)
 def login_view(request):
     if get_current_merchant(request):
         messages.info(request, "您已登入商家帳號。")
@@ -24,6 +26,7 @@ def login_view(request):
     return render(request, "merchantsideapp/login.html", {"form": form})
 
 
+@ratelimit(key="ip", rate="5/m", block=True)
 def register_view(request):
     if get_current_merchant(request):
         messages.info(request, "您已登入商家帳號。")
@@ -42,6 +45,7 @@ def register_view(request):
     return render(request, "merchantsideapp/register.html", {"form": form})
 
 
+@ratelimit(key="ip", rate="5/m", block=True)
 def logout_view(request):
     logout_merchant(request)
     messages.success(request, "您已成功登出商家帳號。")

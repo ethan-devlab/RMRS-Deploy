@@ -4,7 +4,10 @@ from django.shortcuts import redirect, render
 from ..auth_utils import get_current_user, login_user, logout_user
 from ..forms import UserLoginForm, UserRegistrationForm
 
+from django_ratelimit.decorators import ratelimit
 
+
+@ratelimit(key="ip", rate="5/m", block=True)
 def login_view(request):
     if get_current_user(request):
         messages.info(request, "您已登入。")
@@ -23,6 +26,7 @@ def login_view(request):
     return render(request, "usersideapp/login.html", {"form": form})
 
 
+@ratelimit(key="ip", rate="5/m", block=True)
 def register_view(request):
     if get_current_user(request):
         messages.info(request, "您已登入。")
@@ -41,6 +45,7 @@ def register_view(request):
     return render(request, "usersideapp/register.html", {"form": form})
 
 
+@ratelimit(key="ip", rate="5/m", block=True)
 def logout_view(request):
     logout_user(request)
     messages.success(request, "您已成功登出。")
