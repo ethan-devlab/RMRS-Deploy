@@ -123,6 +123,26 @@ class MerchantAuthTests(TestCase):
 		self.assertEqual(response.status_code, 302)
 		self.assertEqual(self.client.session.get(SESSION_MERCHANT_KEY), self.merchant.pk)
 
+	def test_login_rotates_session_key(self):
+		session = self.client.session
+		session["prelogin"] = "1"
+		session.save()
+		original_key = session.session_key
+		self.assertIsNotNone(original_key)
+
+		response = self.client.post(
+			reverse("merchantsideapp:login"),
+			{
+				"identifier": self.merchant.email,
+				"password": "SecurePass!23",
+			},
+		)
+		self.assertEqual(response.status_code, 302)
+
+		new_key = self.client.session.session_key
+		self.assertNotEqual(original_key, new_key)
+		self.assertEqual(self.client.session.get(SESSION_MERCHANT_KEY), self.merchant.pk)
+
 	def test_login_accepts_merchant_name_identifier(self):
 		response = self.client.post(
 			reverse("merchantsideapp:login"),

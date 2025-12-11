@@ -12,15 +12,14 @@ ViewFunc = TypeVar("ViewFunc", bound=Callable[..., HttpResponse])
 
 
 def login_user(request: HttpRequest, user: AppUser) -> None:
+    # Rotate the session key on login to prevent session fixation.
+    request.session.cycle_key()
     request.session[SESSION_USER_KEY] = user.pk
-    request.session.modified = True
     request.session.set_expiry(0)  # Session expires on browser close
 
 
 def logout_user(request: HttpRequest) -> None:
-    if SESSION_USER_KEY in request.session:
-        del request.session[SESSION_USER_KEY]
-        request.session.modified = True
+    request.session.flush()
 
 
 def get_current_user(request: HttpRequest) -> Optional[AppUser]:

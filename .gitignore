@@ -173,6 +173,9 @@ database/
 .github/
 class_diagram.txt
 
+# zeabur
+project.yaml
+
 # database
 database/cli.py
 database/queries.sql

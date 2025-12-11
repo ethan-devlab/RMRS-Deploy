@@ -65,6 +65,20 @@ class UserAuthTests(TestCase):
 		self.assertRedirects(response, reverse("usersideapp:home"))
 		self.assertEqual(self.client.session.get(SESSION_USER_KEY), self.phone_user.pk)
 
+	def test_login_rotates_session_key(self):
+		session = self.client.session
+		session["prelogin"] = "1"
+		session.save()
+		original_key = session.session_key
+		self.assertIsNotNone(original_key)
+
+		response = self._post_login(self.user.email)
+		self.assertRedirects(response, reverse("usersideapp:home"))
+
+		new_key = self.client.session.session_key
+		self.assertNotEqual(original_key, new_key)
+		self.assertEqual(self.client.session.get(SESSION_USER_KEY), self.user.pk)
+
 	def test_login_with_phone_identifier(self):
 		response = self._post_login(self.user.phone)
 		self.assertRedirects(response, reverse("usersideapp:home"))
